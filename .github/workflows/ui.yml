@@ -32,13 +32,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Install nix
         uses: cachix/install-nix-action@19effe9fe722874e6d46dd7182e4b8b7a43c4a99 # v31.10.0
 
       - uses: cachix/cachix-action@v16
         with:
-          name: flake-forge
+          name: loudgolem-nur-pkgs-0
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
 
       - name: Setup GitHub Pages
@@ -46,7 +48,7 @@ jobs:
 
       - name: Encode version information
         run: |
-          commit="$(git rev-parse --short HEAD)"
+          commit="$(git rev-parse --short HEAD~1)"
           sed -i "s/:master/$commit/g" ui/src/Main/View.elm
 
       - name: Build UI
