@@ -11,6 +11,18 @@
   options = {
     enable = lib.mkEnableOption "container image output";
 
+    name = lib.mkOption {
+      type = lib.types.str;
+      default = "container";
+      description = "Name of the generated container.";
+    };
+
+    tag = lib.mkOption {
+      type = lib.types.str;
+      default = "latest";
+      description = "Tag of the generated container.";
+    };
+
     requirements = lib.mkOption {
       type = lib.types.listOf lib.types.package;
       default = [ ];
@@ -22,6 +34,15 @@
           paths = self;
           pathsToLink = [ "/bin" ];
         });
+    };
+
+    # NOTE: config is reserved by the module system
+    imageConfig = lib.mkOption {
+      type = with lib.types; lazyAttrsOf anything;
+      default = { };
+      description = ''
+        OCI image configuration as specified in <https://specs.opencontainers.org/image-spec/config/#properties>.
+      '';
     };
 
     result = {
@@ -59,7 +80,10 @@
 
   config = {
     result.nimi.config = {
-      settings.container.copyToRoot = config.requirements;
+      settings.container = {
+        copyToRoot = config.requirements;
+        inherit (config) imageConfig;
+      };
 
       services = lib.mapAttrs (serviceName: service: {
         imports = [
@@ -82,17 +106,9 @@
 
     result.recipe = nimi.mkContainerImage { inherit (config.result.nimi) config; };
 
-    result.imageBuilder =
-      let
-        # TODO: get from nimi settings
-        container = {
-          name = "container";
-          tag = "latest";
-        };
-      in
-      pkgs.writeShellScript "build-oci" ''
-        ${config.result.recipe.copyTo}/bin/copy-to \
-          oci-archive:${container.name}.tar:${container.name}:${container.tag}
-      '';
+    result.imageBuilder = pkgs.writeShellScript "build-oci" ''
+      ${config.result.recipe.copyTo}/bin/copy-to \
+        oci-archive:${config.name}.tar:${config.name}:${config.tag}
+    '';
   };
 }
