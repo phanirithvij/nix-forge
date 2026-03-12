@@ -15,13 +15,16 @@ import Markdown
 
 viewer : ModelSelect -> Html UpdateSelect
 viewer model =
-    div [ class "container" ]
-        [ header [] [ viewerTitle ]
-        , nav [] [ model |> viewerSearchInput ]
-        , main_ []
-            [ section [] [ model |> viewerFocus ]
-            ]
-        , footer [] [ viewerPoweredBy ]
+    div
+        [ class "min-vh-100 container"
+        , style "display" "flex"
+        , style "flex-direction" "column"
+        ]
+        [ header [ class "py-3" ] [ viewerTitle ]
+        , nav [ class "mb-4" ] [ model |> viewerSearchInput ]
+        , main_ [ class "flex-grow-1" ]
+            [ section [] [ model |> viewerFocus ] ]
+        , footer [ class "mt-auto py-3 border-top" ] [ viewerPoweredBy ]
         ]
 
 
