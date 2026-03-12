@@ -1,14 +1,16 @@
 {
-  inputs,
-  config,
   lib,
+  inputs,
   flake-parts-lib,
   ...
 }:
 
 let
-  inherit (flake-parts-lib) mkPerSystemOption;
+  inherit (flake-parts-lib)
+    mkPerSystemOption
+    ;
 in
+
 {
   imports = [
     ../assertions-warnings.nix

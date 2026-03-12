@@ -16,7 +16,7 @@
         let
           eval = lib.evalModules {
             modules = modules;
-            specialArgs = { inherit flake-parts-lib; };
+            specialArgs = { inherit flake-parts-lib inputs; };
           };
           doc = pkgs.nixosOptionsDoc {
             warningsAreErrors = false;
