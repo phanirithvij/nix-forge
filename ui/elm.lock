@@ -96,6 +96,12 @@
         "sha256": "1hyhq0vvs9b26vv5gdf7j7hmhxj0zg0dqm95m30i91k8m8wkyhs7"
     },
     {
+        "author": "mpizenberg",
+        "package": "elm-url-navigation-port",
+        "version": "1.1.0",
+        "sha256": "04gm52qn9rd4llabdj5gbf0g4yk43w4h9anvm4gpdwz1i835q3p2"
+    },
+    {
         "author": "pablohirafuji",
         "package": "elm-markdown",
         "version": "2.0.6",
