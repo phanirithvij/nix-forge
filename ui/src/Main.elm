@@ -7,7 +7,7 @@ import Http
 import Main.Config exposing (..)
 import Main.Config.App exposing (..)
 import Main.Model exposing (..)
-import Main.Navigation
+import Main.Ports.Navigation
 import Main.Route exposing (..)
 import Main.Update exposing (..)
 import Main.View
@@ -50,4 +50,4 @@ cmdGetConfig =
 
 subscriptions : Model -> Sub Update
 subscriptions _ =
-    Navigation.onEvent Main.Navigation.onNavEvent Update_GotNavigationEvent
+    Navigation.onEvent Main.Ports.Navigation.onNavEvent Update_GotNavigationEvent

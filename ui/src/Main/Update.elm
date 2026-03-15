@@ -3,12 +3,12 @@ module Main.Update exposing (..)
 import AppUrl exposing (AppUrl)
 import Dict
 import Http
-import Main.Clipboard as Clipboard
 import Main.Config exposing (..)
 import Main.Config.App exposing (..)
 import Main.Http as Http
 import Main.Model exposing (..)
-import Main.Navigation
+import Main.Ports.Clipboard as Clipboard
+import Main.Ports.Navigation
 import Main.Route as Route exposing (..)
 import Navigation
 
@@ -34,10 +34,10 @@ update upd model =
                         , model_focus = ModelFocus_Search
                         , model_search = search
                       }
-                      -- , Navigation.pushUrlWithState Main.Navigation.navCmd
+                      -- , Navigation.pushUrlWithState Main.Ports.Navigation.navCmd
                       --     (Route_ route |> Main.Route.toAppUrl)
                       --     (model.apps |> Json.Encode.dict identity Main.Config.App.appEncoder)
-                    , Navigation.pushUrl Main.Navigation.navCmd
+                    , Navigation.pushUrl Main.Ports.Navigation.navCmd
                         (route |> Route.toAppUrl)
                     )
 
@@ -63,7 +63,7 @@ update upd model =
                                         }
                       }
                     , Cmd.none
-                      --, Navigation.pushUrl Main.Navigation.navCmd
+                      --, Navigation.pushUrl Main.Ports.Navigation.navCmd
                       --    (route |> Route.toAppUrl)
                     )
 
@@ -79,7 +79,7 @@ update upd model =
 
         Update_NavigateTo url ->
             ( model
-            , Navigation.pushUrl Main.Navigation.navCmd url
+            , Navigation.pushUrl Main.Ports.Navigation.navCmd url
             )
 
         Update_CopyCode code ->
