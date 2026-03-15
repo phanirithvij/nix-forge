@@ -36,7 +36,7 @@ type alias AppName =
 
 appName : String -> Maybe AppName
 appName s =
-    if String.all (\c -> 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z' || '0' <= c && c <= '9' || c == '-') s then
+    if String.length s > 0 && String.all (\c -> 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z' || '0' <= c && c <= '9' || c == '-') s then
         Just s
 
     else
@@ -46,7 +46,17 @@ appName s =
 appDecoder : Decode.Decoder App
 appDecoder =
     Decode.map7 App
-        (Decode.field "name" (Decode.map (appName >> Maybe.withDefault "") Decode.string))
+        (Decode.field "name" Decode.string
+            |> Decode.andThen
+                (\uncheckedName ->
+                    case appName uncheckedName of
+                        Nothing ->
+                            Decode.fail <| "Invalid application name: " ++ uncheckedName
+
+                        Just validName ->
+                            Decode.succeed validName
+                )
+        )
         (Decode.field "description" Decode.string)
         (Decode.field "version" Decode.string)
         (Decode.field "usage" Decode.string)

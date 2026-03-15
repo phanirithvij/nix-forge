@@ -10,7 +10,7 @@ type alias Config =
 
     -- Warning(safety): unfortunately, Elm just cannot create a `Dict AppName App`
     -- https://github.com/elm/compiler/blob/master/hints/comparing-custom-types.md#wrapped-types
-    , config_apps : Dict String App
+    , config_apps : Dict AppName App
     }
 
 
