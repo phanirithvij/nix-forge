@@ -1,70 +1,167 @@
 module Main.Update exposing (..)
 
-import AppUrl
-import Browser
-import Browser.Navigation as Nav
+import Dict
+import Http
+import Main.Clipboard as Clipboard
 import Main.Config exposing (..)
 import Main.Config.App exposing (..)
+import Main.Http as Http
 import Main.Model exposing (..)
+import Main.Navigation
 import Main.Route as Route exposing (..)
-import Main.Select exposing (..)
-import Main.Select.Model as Select exposing (..)
-import Main.Select.Update as Select exposing (..)
-import Url
+import Navigation
+
+
+type alias Updater =
+    Model -> ( Model, Cmd Update )
 
 
 type Update
-    = Update_Select UpdateSelect
+    = Update_Chain (List Update)
+    | Update_CopyCode String
+    | Update_Config (Result Http.Error Config)
+    | Update_Navigation Navigation.Event
     | Update_Route Route
-    | Update_UrlChange Url.Url
-    | Update_LinkClicked Browser.UrlRequest
+    | Update_SetModalTab ModalTab
+    | Update_ToggleRunModal Bool
+    | Update_Updater Updater
 
 
-runUpdater : (model -> Model) -> (update -> Update) -> Model -> Updater model update -> ( Model, Cmd Update )
-runUpdater model_ update_ model upd =
-    case upd of
-        Updater_Cmd ( newModel, newCmd ) ->
-            ( model_ newModel, newCmd |> Cmd.map update_ )
-
-        Updater_Model newModel ->
-            ( model_ newModel, Cmd.none )
-
-        Updater_Route route_ ->
-            model |> update (Update_Route route_)
-
-
-appendCmd : Cmd cmd -> ( model, Cmd cmd ) -> ( model, Cmd cmd )
-appendCmd next ( m, prev ) =
-    ( m, [ prev, next ] |> Cmd.batch )
-
-
-update : Update -> Model -> ( Model, Cmd Update )
+update : Update -> Updater
 update upd model =
     case upd of
+        Update_Chain ups ->
+            let
+                chain msg1 ( model1, cmds1 ) =
+                    let
+                        ( model2, cmds2 ) =
+                            update msg1 model1
+                    in
+                    ( model2, Cmd.batch [ cmds1, cmds2 ] )
+            in
+            ups |> List.foldl chain ( model, Cmd.none )
+
+        Update_Navigation event ->
+            case event.appUrl |> Route.fromAppUrl of
+                Err err ->
+                    ( { model | model_focus = ModelFocus_Error { msg = Route.showRouteError err } }
+                    , Cmd.none
+                    )
+
+                Ok route ->
+                    model |> updateConfig (updateRoute route)
+
         Update_Route route ->
-            case route of
-                Route_Select routeSelect ->
-                    case model of
-                        Model_Select modelSelect ->
-                            modelSelect
-                                |> Select.router routeSelect
-                                |> runUpdater Model_Select Update_Select model
-                                |> appendCmd (route |> Route.toString |> Nav.pushUrl modelSelect.modelSelect_navKey)
+            ( model
+            , Navigation.pushUrl Main.Navigation.navCmd (route |> Route.toAppUrl)
+            )
 
-        Update_Select up ->
-            case model of
-                Model_Select modelSelect ->
-                    modelSelect
-                        |> Select.updater up
-                        |> runUpdater Model_Select Update_Select model
+        Update_CopyCode code ->
+            ( model
+            , Clipboard.copyToClipboard code
+            )
 
-        Update_LinkClicked (Browser.Internal url) ->
-            case url |> AppUrl.fromUrl |> Route.fromAppUrl of
-                Nothing ->
-                    ( model, Cmd.none )
+        Update_Config res ->
+            case res of
+                Ok config ->
+                    ( { model | model_config = config }
+                    , Cmd.none
+                    )
 
-                Just route ->
-                    model |> update (Update_Route route)
+                Err err ->
+                    ( { model | model_focus = ModelFocus_Error { msg = Http.errorToString err } }
+                    , Cmd.none
+                    )
 
-        _ ->
-            ( model, Cmd.none )
+        Update_ToggleRunModal visibility ->
+            case model.model_focus of
+                ModelFocus_App state ->
+                    ( { model
+                        | model_focus =
+                            ModelFocus_App
+                                { state
+                                    | modelFocusApp_showRunModal = visibility
+                                }
+                      }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model
+                    , Cmd.none
+                    )
+
+        Update_SetModalTab tab ->
+            case model.model_focus of
+                ModelFocus_App modelFocusApp ->
+                    ( { model
+                        | model_focus =
+                            ModelFocus_App
+                                { modelFocusApp
+                                    | modelFocusApp_activeModalTab = tab
+                                }
+                      }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model
+                    , Cmd.none
+                    )
+
+        Update_Updater up ->
+            model |> up
+
+
+updateRoute : Route -> Updater
+updateRoute route model =
+    case route of
+        Route_Search search ->
+            ( { model
+                | model_route = route
+                , model_focus = ModelFocus_Search
+                , model_search = search
+              }
+            , Cmd.none
+            )
+
+        Route_App appName ->
+            ( { model
+                | model_route = route
+                , model_focus =
+                    case model.model_config.config_apps |> Dict.get appName of
+                        Just app ->
+                            ModelFocus_App
+                                { modelFocusApp_app = app
+                                , modelFocusApp_showRunModal = False
+                                , modelFocusApp_activeModalTab = ModalTab_Programs
+                                }
+
+                        Nothing ->
+                            ModelFocus_Error
+                                { msg =
+                                    "No such app: "
+                                        ++ appName
+                                        ++ ". Available: "
+                                        ++ String.concat (model.model_config.config_apps |> Dict.keys)
+                                }
+              }
+            , Cmd.none
+            )
+
+
+{-| `updateConfig up` populate `model_config` if empty, then run `up`.
+`up` is thus always run after `model_config` has been updated.
+-}
+updateConfig : Updater -> Updater
+updateConfig up model =
+    if Dict.isEmpty model.model_config.config_apps then
+        ( model
+        , Http.get
+            { url = "/forge-config.json"
+            , expect = Http.expectJson (\res -> Update_Chain [ Update_Config res, Update_Updater up ]) Main.Config.decodeConfig
+            }
+        )
+
+    else
+        model |> up

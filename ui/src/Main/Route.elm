@@ -2,73 +2,74 @@ module Main.Route exposing (..)
 
 import AppUrl exposing (AppUrl)
 import Dict
+import Json.Decode
+import Json.Encode
 import List.Extra as List
-import Main.Config.App as App
-
-
-type Updater model cmd
-    = Updater_Route Route
-    | Updater_Model model
-    | Updater_Cmd ( model, Cmd cmd )
+import Main.Config.App
 
 
 type Route
-    = Route_Select RouteSelect
+    = Route_Search String
+    | Route_App Main.Config.App.AppName
 
 
-type RouteSelect
-    = RouteSelect_Search String
-    | RouteSelect_App App.AppName
+type RouteError
+    = RouteError_Parsing String
+    | RouteError_Unknown AppUrl
 
 
-type Slug
-    = Slug String
+showRouteError : RouteError -> String
+showRouteError err =
+    case err of
+        RouteError_Parsing s ->
+            "RouteError_Parsing: " ++ s
+
+        RouteError_Unknown url ->
+            "RouteError_Unknown: " ++ AppUrl.toString url
 
 
-fromAppUrl : AppUrl -> Maybe Route
+fromAppUrl : AppUrl -> Result RouteError Route
 fromAppUrl url =
     case url.path of
         [] ->
-            Just (Route_Select (RouteSelect_Search ""))
+            Ok (Route_Search "")
 
         [ "app" ] ->
             case url.queryParameters |> Dict.get "q" |> Maybe.andThen List.uncons of
-                Just ( q, _ ) ->
-                    Just (Route_Select (RouteSelect_Search q))
-
                 Nothing ->
-                    Nothing
+                    Ok (Route_Search "")
+
+                Just ( q, _ ) ->
+                    Ok (Route_Search q)
 
         [ "app", app ] ->
-            case app |> App.appName of
-                Nothing ->
-                    Nothing
+            case app |> Json.Encode.string |> Json.Decode.decodeValue Main.Config.App.decodeAppName of
+                Err e ->
+                    Err (RouteError_Parsing (Json.Decode.errorToString e))
 
-                Just name ->
-                    Just (Route_Select (RouteSelect_App name))
+                Ok n ->
+                    Ok (Route_App n)
 
         _ ->
-            Nothing
+            Err (RouteError_Unknown url)
 
 
 toAppUrl : Route -> AppUrl
-toAppUrl page =
-    case page of
-        Route_Select rt ->
-            case rt of
-                RouteSelect_Search pattern ->
-                    case pattern of
-                        "" ->
-                            [ "app" ] |> AppUrl.fromPath
+toAppUrl route =
+    case route of
+        Route_Search pattern ->
+            case pattern of
+                "" ->
+                    [ "app" ] |> AppUrl.fromPath
 
-                        _ ->
-                            { path = [ "app" ]
-                            , queryParameters = [ ( "q", [ pattern ] ) ] |> Dict.fromList
-                            , fragment = Nothing
-                            }
+                _ ->
+                    { path = [ "app" ]
+                    , queryParameters = [ ( "q", [ pattern ] ) ] |> Dict.fromList
+                    , fragment = Nothing
+                    }
 
-                RouteSelect_App name ->
-                    [ "app", name ] |> AppUrl.fromPath
+        Route_App name ->
+            [ "app", name ] |> AppUrl.fromPath
 
 
 toString : Route -> String

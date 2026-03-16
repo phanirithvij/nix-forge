@@ -1,17 +1,16 @@
 module Main.Config.App exposing (..)
 
-import Dict exposing (Dict)
-import Json.Decode as Decode
+import Json.Decode as Decode exposing (Decoder)
 
 
 type alias App =
-    { name : AppName
-    , description : String
-    , version : String
-    , usage : String
-    , programs : AppPrograms
-    , containers : AppContainers
-    , oci : Dict String AppOci
+    { app_name : AppName
+    , app_description : String
+    , app_version : String
+    , app_usage : String
+    , app_programs : AppPrograms
+    , app_container : AppContainer
+    , app_vm : AppNixosVm
     }
 
 
@@ -20,12 +19,12 @@ type alias AppPrograms =
     }
 
 
-type alias AppContainers =
+type alias AppContainer =
     { enable : Bool
     }
 
 
-type alias AppOci =
+type alias AppNixosVm =
     { enable : Bool
     }
 
@@ -34,40 +33,44 @@ type alias AppName =
     String
 
 
-appName : String -> Maybe AppName
-appName s =
-    if String.all (\c -> 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z' || '0' <= c && c <= '9' || c == '-') s then
-        Just s
-
-    else
-        Nothing
-
-
-appDecoder : Decode.Decoder App
-appDecoder =
+decodeApp : Decoder App
+decodeApp =
     Decode.map7 App
-        (Decode.field "name" (Decode.map (appName >> Maybe.withDefault "") Decode.string))
+        (Decode.field "name" decodeAppName)
         (Decode.field "description" Decode.string)
         (Decode.field "version" Decode.string)
         (Decode.field "usage" Decode.string)
-        (Decode.field "programs" appProgramsDecoder)
-        (Decode.field "containers" appContainersDecoder)
-        (Decode.field "vm" appOciDecoder |> Decode.map (\oci -> [ ( "default", oci ) ] |> Dict.fromList))
+        (Decode.field "programs" decodeAppPrograms)
+        (Decode.field "container" decodeAppContainer)
+        (Decode.field "nixos" decodeAppNixosVm)
 
 
-appProgramsDecoder : Decode.Decoder AppPrograms
-appProgramsDecoder =
+decodeAppName : Decoder AppName
+decodeAppName =
+    Decode.string
+        |> Decode.andThen
+            (\s ->
+                if String.length s > 0 && String.all (\c -> 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z' || '0' <= c && c <= '9' || c == '-' || c == '_') s then
+                    Decode.succeed s
+
+                else
+                    Decode.fail <| "Invalid application name: " ++ s
+            )
+
+
+decodeAppPrograms : Decoder AppPrograms
+decodeAppPrograms =
     Decode.map AppPrograms
         (Decode.field "enable" Decode.bool)
 
 
-appContainersDecoder : Decode.Decoder AppContainers
-appContainersDecoder =
-    Decode.map AppContainers
+decodeAppContainer : Decoder AppContainer
+decodeAppContainer =
+    Decode.map AppContainer
         (Decode.field "enable" Decode.bool)
 
 
-appOciDecoder : Decode.Decoder AppOci
-appOciDecoder =
-    Decode.map AppOci
+decodeAppNixosVm : Decoder AppNixosVm
+decodeAppNixosVm =
+    Decode.map AppNixosVm
         (Decode.field "enable" Decode.bool)
