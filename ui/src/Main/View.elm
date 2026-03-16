@@ -46,7 +46,7 @@ viewTitle =
             , style "text-decoration" "none"
             , style "cursor" "pointer"
             ]
-            [ text "ngi-nix forge" ]
+            [ text "NGI Nix Forge" ]
         ]
 
 
@@ -296,12 +296,13 @@ viewTabContent repositoryUrl model =
 viewPoweredBy : Html update
 viewPoweredBy =
     div
-        [ class "text-secondary fs-8"
+        [ class "text-secondary"
         , style "display" "flex"
         , style "flex-wrap" "wrap"
         , style "flex-direction" "row"
         , style "justify-content" "space-evenly"
         , style "column-gap" "1ex"
+        , style "font-size" "0.8em"
         ]
         [ span []
             [ text "Powered by "
@@ -314,7 +315,6 @@ viewPoweredBy =
                 [ text "Nixpkgs" ]
             , text " and "
             , a [ href "https://elm-lang.org", target "_blank" ] [ text "Elm" ]
-            , text ". "
             ]
         , span []
             [ text "Developed by "
@@ -322,7 +322,7 @@ viewPoweredBy =
                 [ href "https://nixos.org/community/teams/ngi/"
                 , target "_blank"
                 ]
-                [ text "Nix@NGI team." ]
+                [ text "Nix@NGI team" ]
             ]
         , span []
             [ text " Contribute or report issues at "
@@ -331,8 +331,23 @@ viewPoweredBy =
                 , target "_blank"
                 ]
                 [ text "ngi-nix/ngi-nix-forge" ]
-            , text "."
             ]
+        , let
+            commit =
+                ":master"
+          in
+          if not (String.contains "master" commit) then
+            span []
+                [ text " Version "
+                , a
+                    [ href ("https://github.com/ngi-nix/ngi-nix-forge/commit/" ++ commit)
+                    , target "_blank"
+                    ]
+                    [ text commit ]
+                ]
+
+          else
+            text ""
         ]
 
 
