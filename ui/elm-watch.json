@@ -6,6 +6,12 @@
                 "src/Main.elm"
             ],
             "output": "build/js/Elm.js"
+        },
+        "options": {
+            "inputs": [
+               "src/Options.elm"
+            ],
+            "output": "build/js/OptionsElm.js"
         }
     }
 }
