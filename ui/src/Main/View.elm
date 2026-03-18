@@ -2,15 +2,17 @@ module Main.View exposing (..)
 
 import Dict
 import Html exposing (Html, a, button, div, footer, form, h2, h5, header, input, li, main_, nav, p, section, small, span, text, ul)
-import Html.Attributes exposing (class, href, name, placeholder, style, tabindex, target, type_, value)
+import Html.Attributes exposing (attribute, class, href, name, placeholder, style, tabindex, target, title, type_, value)
 import Html.Events exposing (onInput, stopPropagationOn)
 import Json.Decode as Decode
 import Main.Config exposing (..)
 import Main.Config.App exposing (..)
 import Main.Error
 import Main.Helpers.Html exposing (..)
+import Main.Icons exposing (circleHalf, moonStarsFill, sunFill)
 import Main.Model exposing (..)
 import Main.Route as Route exposing (..)
+import Main.Theme exposing (Theme(..))
 import Main.Update exposing (..)
 import Main.View.Instructions exposing (..)
 
@@ -29,6 +31,7 @@ view model =
                 ]
                 [ viewTitle
                 , model |> viewSearchInput
+                , model |> viewThemeToggle
                 ]
             ]
         , div []
@@ -84,6 +87,26 @@ viewSearchInput model =
                 ]
                 [ text "Search" ]
             ]
+        ]
+
+
+viewThemeToggle : Model -> Html Update
+viewThemeToggle model =
+    button
+        [ class "btn btn-outline-secondary d-flex align-items-center ms-3"
+        , title "Toggle dark mode"
+        , attribute "aria-label" "Toggle dark mode"
+        , onClick Update_CycleTheme
+        ]
+        [ case model.model_theme of
+            Theme_Auto ->
+                circleHalf
+
+            Theme_Dark ->
+                moonStarsFill
+
+            Theme_Light ->
+                sunFill
         ]
 
 

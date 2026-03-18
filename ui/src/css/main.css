@@ -71,6 +71,10 @@ body {
   background-color: #f8f9fa;
 }
 
+[data-bs-theme="dark"] .m-app-card:hover {
+  background-color: #2a3036;
+}
+
 /* Default: small screens */
 .m-app-grid {
     display: grid;
