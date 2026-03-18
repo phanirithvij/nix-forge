@@ -47,6 +47,7 @@
       imports = [
         (import ./forge/flake-module.nix { inherit inputs; })
         ./flake/develop.nix
+        ./flake/packages.nix
         ./flake/checks.nix
         ./flake/templates.nix
       ];
@@ -56,16 +57,18 @@
       # Export flake module for use in other projects
       flake.flakeModules.default = import ./forge/flake-module.nix { inherit inputs; };
 
-      perSystem = { system, ... }: {
-        _module.args.nimi = inputs.nimi.packages.${system}.nimi;
+      perSystem =
+        { system, ... }:
+        {
+          _module.args.nimi = inputs.nimi.packages.${system}.nimi;
 
-        forge = {
-          repositoryUrl = "github:imincik/nix-forge";
-          recipeDirs = {
-            packages = "recipes/packages";
-            apps = "recipes/apps";
+          forge = {
+            repositoryUrl = "github:ngi-nix/ngi-nix-forge";
+            recipeDirs = {
+              packages = "recipes/packages";
+              apps = "recipes/apps";
+            };
           };
         };
-      };
     };
 }

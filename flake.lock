@@ -77,11 +77,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1771178957,
-        "narHash": "sha256-vfwz/D1ggRJdny/XaL62Mx2t8VIyaA1YtLuRZ7wjnrg=",
+        "lastModified": 1773319688,
+        "narHash": "sha256-VWQIfsmhECCEjnjI50AGvRFvSUQzuA0aIijWTVRlSbU=",
         "owner": "weyl-ai",
         "repo": "nimi",
-        "rev": "08a12bcddbca92b770f239da195188edd4d2f45a",
+        "rev": "0e5a513ff37c4e1a7e1f9e8ea80810f7baf23b12",
         "type": "github"
       },
       "original": {

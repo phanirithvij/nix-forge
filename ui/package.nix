@@ -1,9 +1,11 @@
 {
   buildElmApplication,
+  fetchzip,
+  jq,
   symlinkJoin,
 
   _forge-config,
-  _forge-options,
+  ...
 }:
 
 let
@@ -13,44 +15,48 @@ let
     src = ./.;
     elmLock = ./elm.lock;
     entry = [ "src/Main.elm" ];
-    output = "main.js";
-    doMinification = true;
-    enableOptimizations = true;
-  };
-
-  options = buildElmApplication {
-    pname = "forge-ui-options";
-    version = "0.1.0";
-    src = ./.;
-    elmLock = ./elm.lock;
-    entry = [ "src/OptionsMain.elm" ];
-    output = "options.js";
+    output = "js/Elm.js";
     doMinification = true;
     enableOptimizations = true;
   };
 
   agentsFile = ../AGENTS.md;
+
+  bootstrapCss = fetchzip rec {
+    pname = "bootstrap";
+    version = "5.3.8";
+    url = "https://github.com/twbs/bootstrap/releases/download/v${version}/bootstrap-${version}-dist.zip";
+    hash = "sha256-StRhHJIRGzguLlo0BGOAMy0PCCmMovzgU/5xZJgVrqQ=";
+  };
 in
 symlinkJoin {
   name = "forge-ui";
-  paths = [
-    main
-    options
-  ];
+  paths = [ main ];
   postBuild = ''
+    pushd $out
+
     # Copy static files
-    cp ${./src/index.html} $out/index.html
-    cp ${./src/options.html} $out/options.html
-    cp -r ${./src/resources} $out/resources
-    chmod -R u+w $out/resources
-    cp ${agentsFile} $out/resources/AGENTS.md
+    cp ${./src/index.html} index.html
+    cp -aR ${./src/css}/. css
+    cp -aR ${./src/js}/. js
+    chmod -R u+w css js
+    cp ${bootstrapCss}/css/bootstrap.min.css css/bootstrap.min.css
 
     # Symlink config files
-    ln -s ${_forge-config} $out/forge-config.json
-    ln -s ${_forge-options} $out/options.json
+    ln -s ${_forge-config} forge-config.json
 
-    # Rename minimized Elm outputs
-    mv $out/main.min.js $out/main.js
-    mv $out/options.min.js $out/options.js
+    # Rename minimized Elm output
+    mv js/Elm.min.js js/Elm.js
+
+    # github pages SPA workaround for routing
+    for app in $(${jq}/bin/jq '.apps.[].name' -r forge-config.json); do
+      mkdir -p "app/$app"
+      ln -s $out/index.html "app/$app/index.html"
+    done
+    # search route
+    ln -s $out/index.html "app/index.html"
+
+    popd
   '';
+  passthru = { inherit bootstrapCss; };
 }
