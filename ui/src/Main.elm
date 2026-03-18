@@ -8,6 +8,7 @@ import Main.Config.App exposing (..)
 import Main.Model exposing (..)
 import Main.Route exposing (..)
 import Main.Subscriptions
+import Main.Theme exposing (themeFromString)
 import Main.Update exposing (..)
 import Main.View
 import Url
@@ -31,6 +32,7 @@ init href =
             , model_search = ""
             , model_page = Page_Search
             , model_errors = []
+            , model_theme = themeFromString flags.theme
             }
     in
     case href |> Url.fromString of

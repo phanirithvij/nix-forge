@@ -8,7 +8,9 @@ import Main.Error exposing (..)
 import Main.Model exposing (..)
 import Main.Ports.Clipboard as Clipboard
 import Main.Ports.Navigation
+import Main.Ports.ThemeSwitch as ThemeSwitch
 import Main.Route as Route exposing (..)
+import Main.Theme exposing (cycleTheme, themeToString)
 import Navigation
 
 
@@ -23,6 +25,7 @@ type Update
     | Update_Navigation Navigation.Event
     | Update_Route Route
     | Update_Updater Updater
+    | Update_CycleTheme
     | Update_NoOp
 
 
@@ -58,6 +61,15 @@ update upd model =
         Update_CopyCode code ->
             ( model
             , Clipboard.copyToClipboard code
+            )
+
+        Update_CycleTheme ->
+            let
+                nextTheme =
+                    cycleTheme model.model_theme
+            in
+            ( { model | model_theme = nextTheme }
+            , ThemeSwitch.saveTheme (themeToString nextTheme)
             )
 
         Update_Config res ->
