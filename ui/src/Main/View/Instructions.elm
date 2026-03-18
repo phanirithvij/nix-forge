@@ -134,5 +134,29 @@ viewPageAppInstructions model pageApp =
             text ""
         , viewInstructionsNixInstall model
         , hr [ ] [ ]
+        , ul
+            [ class "nav nav-tabs mb-1 position-absolute"
+            , style "right" "2rem"
+            ]
+            [ li [ class "nav-item" ]
+                [ Html.button
+                    [ class ("nav-link " ++ "active")
+
+                    -- [ class ("nav-link " ++ activeClass)
+                    , style "cursor" "pointer"
+                    , style "color" "black"
+                    ]
+                    [ text "nix flakes" ]
+                ]
+            , li [ class "nav-item" ]
+                [ Html.button
+                    [ class "nav-link "
+                    , style "cursor" "pointer"
+                    , style "color" "cadetblue"
+                    , style "border" "none"
+                    ]
+                    [ text "nix-shell" ]
+                ]
+            ]
         , instructions
         ]
