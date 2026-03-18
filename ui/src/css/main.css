@@ -75,6 +75,12 @@ body {
   background-color: #2a3036;
 }
 
+/* Hide the annoying border around search bar that bootstrap adds */
+.form-control:focus {
+  box-shadow: none !important;
+  border-color: royalblue;
+}
+
 /* Default: small screens */
 .m-app-grid {
   display: grid;

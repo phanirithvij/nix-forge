@@ -2,8 +2,8 @@ module Main.View exposing (..)
 
 import Dict
 import Html exposing (Html, a, div, footer, h2, h5, header, input, li, main_, nav, p, section, small, span, text, ul)
-import Html.Attributes exposing (attribute, class, href, name, placeholder, style, tabindex, target, title, type_, value)
-import Html.Events exposing (onInput, stopPropagationOn)
+import Html.Attributes exposing (attribute, class, href, id, name, placeholder, style, tabindex, target, title, type_, value)
+import Html.Events exposing (onInput, preventDefaultOn, stopPropagationOn)
 import Json.Decode as Decode
 import Main.Config exposing (..)
 import Main.Config.App exposing (..)
@@ -90,7 +90,19 @@ viewSearchInput model =
             , type_ "search"
             , placeholder "Search apps"
             , value model.model_search
-            , onInput (\search -> Update_Route (Route_Search { routeSearch_pattern = search }))
+            , id "main-search-bar"
+            , onInput Update_SearchInput
+            , preventDefaultOn "keydown"
+                (Decode.field "key" Decode.string
+                    |> Decode.andThen
+                        (\key ->
+                            if key == "Escape" then
+                                Decode.succeed ( Update_CancelSearch, True )
+
+                            else
+                                Decode.fail "Not Escape"
+                        )
+                )
             ]
             []
         ]
