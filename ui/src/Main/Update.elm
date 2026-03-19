@@ -236,7 +236,7 @@ updateConfig up model =
     if Dict.isEmpty model.model_config.config_apps then
         ( model
         , Http.get
-            { url = "/forge-config.json"
+            { url = "forge-config.json"
             , expect =
                 Http.expectJson
                     (\res ->
