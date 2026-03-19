@@ -42,9 +42,24 @@ initRouteApp name =
     }
 
 
+{-| BUILD TIME CONFIG:
+replaced with deployment root in github workflow script eg. "/ngi-nix-forge/"
+-}
+deployRoot : String
+deployRoot =
+    ":baseUrl"
+
+
+deployPath : List String
+deployPath =
+    deployRoot
+        |> String.split "/"
+        |> List.filter (\seg -> seg /= "" && seg /= ":" ++ "baseUrl")
+
+
 fromAppUrl : AppUrl -> Result ErrorRoute Route
 fromAppUrl url =
-    case url.path of
+    case url.path |> List.drop (List.length deployPath) of
         [] ->
             Ok (Route_Search { routeSearch_pattern = "" })
 
@@ -104,16 +119,19 @@ toAppUrl route =
         Route_Search routeSearch ->
             case routeSearch.routeSearch_pattern of
                 "" ->
-                    [ "" ] |> AppUrl.fromPath
+                    { path = deployPath
+                    , queryParameters = Dict.empty
+                    , fragment = Nothing
+                    }
 
                 q ->
-                    { path = [ "app" ]
+                    { path = deployPath ++ [ "app" ]
                     , queryParameters = [ ( "q", [ q ] ) ] |> Dict.fromList
                     , fragment = Nothing
                     }
 
         Route_App routeApp ->
-            { path = [ "app", routeApp.routeApp_name ]
+            { path = deployPath ++ [ "app", routeApp.routeApp_name ]
             , queryParameters =
                 [ ( "showRun"
                   , if routeApp.routeApp_runShown then

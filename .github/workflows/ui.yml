@@ -49,6 +49,18 @@ jobs:
           commit="$(git rev-parse --short HEAD)"
           sed -i "s/:master/$commit/g" ui/src/Main/View.elm
 
+      - name: Configure the baseUrl
+        run: |
+          set -x
+          repo_name="${{ github.event.repository.name }}"
+          if [[ "$repo_name" == *.github.io ]]; then
+            deploy_root="/"
+          else
+            deploy_root="/$repo_name/"
+          fi
+          sed -i "s|:baseUrl|$deploy_root|g" ui/src/Main/Route.elm
+          sed -i "s|:baseUrl|$deploy_root|g" ui/src/index.html
+
       - name: Build UI
         run: nix build .#_forge-ui --accept-flake-config
 

@@ -59,7 +59,7 @@ view model =
 viewTitle : Html Update
 viewTitle =
     a
-        [ href "/"
+        [ href (Route_Search { routeSearch_pattern = "" } |> Route.toString)
         , style "color" "inherit"
         , style "text-decoration" "none"
         , style "cursor" "pointer"
