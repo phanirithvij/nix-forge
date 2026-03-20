@@ -32,15 +32,15 @@
     ```
   '';
 
-  services.python-web = {
-    command = pkgs.mypkgs.python-web;
-  };
-
   programs = {
     enable = true;
     requirements = [
       pkgs.curl
     ];
+  };
+
+  services.python-web = {
+    command = pkgs.mypkgs.python-web;
   };
 
   container = {
