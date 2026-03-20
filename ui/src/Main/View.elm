@@ -1,7 +1,7 @@
 module Main.View exposing (..)
 
 import Dict
-import Html exposing (Html, a, div, footer, h3, h5, header, input, li, main_, nav, p, section, small, span, text, ul)
+import Html exposing (Html, a, button, div, footer, h3, h5, header, input, li, main_, nav, p, section, small, span, text, ul)
 import Html.Attributes exposing (attribute, class, href, id, name, placeholder, style, tabindex, target, title, type_, value)
 import Html.Events exposing (onInput, preventDefaultOn, stopPropagationOn)
 import Json.Decode as Decode
@@ -9,9 +9,9 @@ import Main.Config exposing (..)
 import Main.Config.App exposing (..)
 import Main.Error
 import Main.Helpers.Html exposing (..)
+import Main.Helpers.Nix exposing (..)
 import Main.Icons exposing (circleHalf, moonStarsFill, search, sunFill)
 import Main.Model exposing (..)
-import Main.Nix exposing (showNixUrl)
 import Main.Route as Route exposing (..)
 import Main.Subscriptions exposing (decodeEscapeKey)
 import Main.Theme exposing (Theme(..))
@@ -52,7 +52,7 @@ view model =
             [ section [] [ model |> viewPage ] ]
         , footer
             [ class "mt-auto py-3 border-top" ]
-            [ viewPoweredBy ]
+            [ viewPoweredBy model ]
         ]
 
 
@@ -243,7 +243,7 @@ viewPageApp model pageApp =
                         [ text ("v" ++ pageApp.pageApp_app.app_version) ]
                     ]
                 ]
-            , Html.button
+            , button
                 [ class "btn btn-success"
                 , let
                     route =
@@ -311,7 +311,7 @@ viewPageAppRun model pageApp =
                     [ div [ class "modal-content" ]
                         [ div [ class "modal-header" ]
                             [ h5 [ class "modal-title" ] [ text ("Run " ++ pageApp.pageApp_route.routeApp_name) ]
-                            , Html.button
+                            , button
                                 [ class "btn-close"
                                 , let
                                     route =
@@ -360,7 +360,7 @@ viewPageAppRunOuputs model pageApp =
 viewPageAppRunOuput : Model -> PageApp -> AppOutput -> Html Update
 viewPageAppRunOuput model pageApp appOutput =
     li [ class "nav-item" ]
-        [ Html.button
+        [ button
             [ class
                 ([ "nav-link"
                  , if Just appOutput == pageApp.pageApp_route.routeApp_runOutput then
@@ -384,8 +384,8 @@ viewPageAppRunOuput model pageApp appOutput =
         ]
 
 
-viewPoweredBy : Html update
-viewPoweredBy =
+viewPoweredBy : Model -> Html update
+viewPoweredBy model =
     div
         [ class "text-secondary"
         , style "display" "flex"
@@ -420,10 +420,10 @@ viewPoweredBy =
         , span []
             [ text " Contribute or report issues at "
             , a
-                [ href "https://github.com/ngi-nix/forge"
+                [ href (model.model_config.config_repository |> showNixUrl)
                 , target "_blank"
                 ]
-                [ text "ngi-nix/forge" ]
+                [ text (model.model_config.config_repository |> showGithubRepoSlug) ]
             , text "."
             ]
         , let
@@ -434,7 +434,7 @@ viewPoweredBy =
             span []
                 [ text " Version "
                 , a
-                    [ href ("https://github.com/ngi-nix/forge/commit/" ++ commit)
+                    [ href ((model.model_config.config_repository |> showNixUrl) ++ "/commit/" ++ commit)
                     , target "_blank"
                     ]
                     [ text commit ]

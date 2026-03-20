@@ -30,6 +30,7 @@ type alias RouteApp =
       -- but this requires https://github.com/toastal/either
       routeApp_name : AppName
     , routeApp_runShown : Bool
+    , routeApp_flakeInstructions : Bool
     , routeApp_runOutput : Maybe AppOutput
     }
 
@@ -38,6 +39,7 @@ initRouteApp : AppName -> RouteApp
 initRouteApp name =
     { routeApp_name = name
     , routeApp_runShown = False
+    , routeApp_flakeInstructions = True
     , routeApp_runOutput = Nothing
     }
 
@@ -82,6 +84,13 @@ fromAppUrl url =
                             { routeApp_name = name
                             , routeApp_runShown =
                                 case url.queryParameters |> Dict.get "showRun" |> Maybe.andThen List.uncons of
+                                    Nothing ->
+                                        False
+
+                                    Just _ ->
+                                        True
+                            , routeApp_flakeInstructions =
+                                case url.queryParameters |> Dict.get "flake" |> Maybe.andThen List.uncons of
                                     Nothing ->
                                         False
 
@@ -135,6 +144,13 @@ toAppUrl route =
             , queryParameters =
                 [ ( "showRun"
                   , if routeApp.routeApp_runShown then
+                        [ "" ]
+
+                    else
+                        []
+                  )
+                , ( "flake"
+                  , if routeApp.routeApp_flakeInstructions then
                         [ "" ]
 
                     else

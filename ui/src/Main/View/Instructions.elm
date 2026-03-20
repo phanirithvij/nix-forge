@@ -1,17 +1,18 @@
 module Main.View.Instructions exposing (..)
 
-import Html exposing (Html, a, br, details, div, h2, h4, hr, li, p, small, summary, text, ul)
+import Html exposing (Html, a, br, button, details, div, h4, hr, li, p, small, summary, text, ul)
 import Html.Attributes exposing (attribute, class, href, id, style, target)
 import Main.Config.App exposing (..)
 import Main.Helpers.Html exposing (..)
 import Main.Helpers.Markdown as Markdown
+import Main.Helpers.Nix exposing (..)
 import Main.Model exposing (..)
 import Main.Route exposing (..)
 import Main.Update exposing (..)
 
 
 viewInstructionsUsage : Model -> PageApp -> Html Update
-viewInstructionsUsage model pageApp =
+viewInstructionsUsage _ pageApp =
     if not (String.isEmpty pageApp.pageApp_app.app_usage) then
         div [ id "usage", class "mt-4" ]
             [ h4 [ class "mb-3" ] [ text "Usage Instructions" ]
@@ -25,31 +26,61 @@ viewInstructionsUsage model pageApp =
         text ""
 
 
-viewInstructionsNixInstall : Model -> Html Update
-viewInstructionsNixInstall _ =
+viewInstructionsNixInstall : Model -> PageApp -> Bool -> Html Update
+viewInstructionsNixInstall model pageApp flakes =
     div [ class "accordion" ]
         [ details [ class "accordion-item" ]
             [ summary [ class "accordion-button accordion-header fw-bold" ]
                 [ text "Install Nix" ]
             , div [ class "accordion-body" ]
-                [ p [ class "mb-1" ]
+                ([ ul
+                    [ class "nav nav-underline mb-1"
+                    ]
+                    [ viewFlakeNavItem model pageApp True
+                    , viewFlakeNavItem model pageApp False
+                    ]
+                 , br [] []
+                 , p [ class "mb-1" ]
                     [ text "1. Install Nix "
                     , a [ href "https://github.com/NixOS/nix-installer#nix-installer", target "_blank" ]
                         [ text "(learn more about this installer)." ]
                     ]
-                , codeBlock Update_CopyCode <|
+                 , codeBlock Update_CopyCode <|
                     String.join "\n"
                         [ "curl -sSfL https://artifacts.nixos.org/nix-installer | sh -s -- install" ]
-                , small [ class "mb-1" ]
+                 , small [ class "mb-1" ]
                     [ text "to uninstall, run:" ]
-                , codeBlock Update_CopyCode <|
+                 , codeBlock Update_CopyCode <|
                     "/nix/nix-installer uninstall"
-                , p [ class "mt-3 mb-1" ]
+                 , p [ class "mt-3 mb-1" ]
                     [ text "2. Accept binaries pre-built by Nix Forge (optional, highly recommended) " ]
-                , codeBlock Update_CopyCode <|
+                 , codeBlock Update_CopyCode <|
                     String.join "\n"
-                        [ "export NIX_CONFIG='accept-flake-config = true'" ]
-                ]
+                        [ "NL='"
+                        , "'"
+                        , "export NIX_CONFIG=\"$NIX_CONFIG${NL}accept-flake-config = true\""
+                        ]
+                 , p [ class "mt-3 mb-1" ]
+                    [ text "3. Configure substitutors (optional, highly recommended)" ]
+                 , codeBlock Update_CopyCode <|
+                    String.join "\n"
+                        [ "export NIX_CONFIG=\"$NIX_CONFIG${NL}\"'substituters = https://cache.nixos.org/ https://ngi.cachix.org/"
+                        , "trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= ngi.cachix.org-1:n+CAL72ROC3qQuLxIHpV+Tw5t42WhXmMhprAGkRSrOw='"
+                        ]
+                 ]
+                    ++ (if flakes then
+                            [ p [ class "mt-3 mb-1" ]
+                                [ text "4. Configure Flakes" ]
+                            , codeBlock Update_CopyCode <|
+                                String.join "\n"
+                                    [ "export NIX_CONFIG=\"$NIX_CONFIG${NL}\"experimental-features = flakes nix-command"
+                                    ]
+                            ]
+
+                        else
+                            []
+                       )
+                )
             ]
         ]
 
@@ -58,26 +89,16 @@ viewPageAppInstructions : Model -> PageApp -> Html Update
 viewPageAppInstructions model pageApp =
     let
         instructions =
-            case pageApp.pageApp_route.routeApp_runOutput of
-                Nothing ->
+            case ( pageApp.pageApp_route.routeApp_runOutput, pageApp.pageApp_route.routeApp_flakeInstructions ) of
+                ( Nothing, _ ) ->
                     text "There is no such output for this application"
 
-                Just output ->
+                ( Just output, flakes ) ->
                     div []
                         [ case output of
                             AppOutput_Shell ->
                                 if pageApp.pageApp_app.app_programs.enable then
-                                    div []
-                                        [ p [ style "margin-bottom" "0em" ] [ text "Enter a shell environment with CLI and GUI programs." ]
-                                        , br [] []
-                                        , codeBlock Update_CopyCode <|
-                                            String.concat
-                                                [ "nix shell "
-                                                , model.model_config.config_repository
-                                                , "#"
-                                                , pageApp.pageApp_app.app_name
-                                                ]
-                                        ]
+                                    programsInstructions model pageApp flakes
 
                                 else
                                     text ""
@@ -132,31 +153,151 @@ viewPageAppInstructions model pageApp =
 
           else
             text ""
-        , viewInstructionsNixInstall model
-        , hr [ ] [ ]
+        , viewInstructionsNixInstall model pageApp pageApp.pageApp_route.routeApp_flakeInstructions
+        , hr [] []
         , ul
-            [ class "nav nav-tabs mb-1 position-absolute"
-            , style "right" "2rem"
+            [ class "nav nav-underline mb-1"
             ]
-            [ li [ class "nav-item" ]
-                [ Html.button
-                    [ class ("nav-link " ++ "active")
-
-                    -- [ class ("nav-link " ++ activeClass)
-                    , style "cursor" "pointer"
-                    , style "color" "black"
-                    ]
-                    [ text "nix flakes" ]
-                ]
-            , li [ class "nav-item" ]
-                [ Html.button
-                    [ class "nav-link "
-                    , style "cursor" "pointer"
-                    , style "color" "cadetblue"
-                    , style "border" "none"
-                    ]
-                    [ text "nix-shell" ]
-                ]
+            [ viewFlakeNavItem model pageApp True
+            , viewFlakeNavItem model pageApp False
             ]
+        , br [] []
         , instructions
         ]
+
+
+viewFlakeNavItem : Model -> PageApp -> Bool -> Html Update
+viewFlakeNavItem model pageApp isFlakes =
+    let
+        currentRoute =
+            pageApp.pageApp_route
+
+        isActive =
+            currentRoute.routeApp_flakeInstructions == isFlakes
+
+        btnClasses =
+            [ "nav-link"
+            , if isActive then
+                "active"
+
+              else
+                ""
+            , if isFlakes then
+                "text-primary-emphasis"
+
+              else
+                "text-secondary-emphasis"
+            ]
+                |> String.join " "
+
+        badgeClasses =
+            if isActive then
+                "badge rounded-pill "
+                    ++ (if isFlakes then
+                            "text-bg-primary"
+
+                        else
+                            "text-bg-secondary"
+                       )
+
+            else
+                "d-none"
+    in
+    li [ class "nav-item" ]
+        [ button
+            [ class btnClasses
+            , style "cursor" "pointer"
+            , onClick
+                (Update_Route
+                    (Route_App
+                        { currentRoute
+                            | routeApp_flakeInstructions = isFlakes
+
+                            -- | routeApp_flakeInstructions = not currentRoute.routeApp_flakeInstructions
+                        }
+                    )
+                )
+            ]
+            [ text
+                (if isFlakes then
+                    "Flakes "
+
+                 else
+                    "Non-flakes "
+                )
+            , small [ class badgeClasses ]
+                [ text
+                    (if isFlakes then
+                        "Recommended"
+
+                     else
+                        "Legacy"
+                    )
+                ]
+            ]
+        ]
+
+
+cloneRepoInstructions : Model -> Bool -> List (Html Update)
+cloneRepoInstructions model flakes =
+    if flakes then
+        [ text "" ]
+
+    else
+        [ p [ style "margin-bottom" "0em" ]
+            [ text "Clone and enter the nix forge git repository."
+            ]
+        , br [] []
+
+        -- TODO: SHOULD not do git clone! use nix-shell -E fetchTarball -p something
+        , codeBlock Update_CopyCode <|
+            String.join " "
+                [ "git clone"
+                , model.model_config.config_repository |> showNixUrl
+                , "&&"
+                , "cd forge"
+                ]
+        ]
+
+
+programsInstructions : Model -> PageApp -> Bool -> Html Update
+programsInstructions model pageApp flakes =
+    div []
+        ((if flakes then
+            [ p [ style "margin-bottom" "0em" ]
+                [ text "Create and enter a shell environment for (CLI, GUI) programs." ]
+            , br [] []
+            ]
+
+          else
+            []
+         )
+            ++ cloneRepoInstructions model flakes
+            ++ (if not flakes then
+                    [ p [ style "margin-bottom" "0em" ]
+                        [ text "Build and run the (CLI, GUI) application." ]
+                    , br [] []
+                    ]
+
+                else
+                    []
+               )
+            ++ [ codeBlock Update_CopyCode <|
+                    String.join "\n" <|
+                        if flakes then
+                            [ String.concat
+                                [ "nix shell "
+                                , model.model_config.config_repository
+                                , "#"
+                                , pageApp.pageApp_app.app_name
+                                ]
+                            ]
+
+                        else
+                            [ String.concat
+                                [ "nix-build -A "
+                                , pageApp.pageApp_app.app_name
+                                ]
+                            ]
+               ]
+        )

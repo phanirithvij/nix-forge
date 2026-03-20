@@ -1,4 +1,4 @@
-module Main.Nix exposing (..)
+module Main.Helpers.Nix exposing (..)
 
 
 type alias NixUrl =
@@ -15,3 +15,8 @@ showNixUrl url =
 
     else
         url
+
+
+showGithubRepoSlug : NixUrl -> String
+showGithubRepoSlug url =
+    String.dropLeft 7 url
