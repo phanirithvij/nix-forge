@@ -202,7 +202,7 @@ viewPageSearchApp model app =
             [ small []
                 (List.concat
                     [ if app.app_programs.enable then
-                        [ span [ class "badge bg-secondary me-1" ] [ text "programs" ] ]
+                        [ span [ class "badge bg-secondary me-1" ] [ text "shell" ] ]
 
                       else
                         []
@@ -329,7 +329,7 @@ viewPageAppRunOuputs model pageApp =
         enabled : AppOutput -> Bool
         enabled tab =
             case tab of
-                AppOutput_Programs ->
+                AppOutput_Shell ->
                     pageApp.pageApp_app.app_programs.enable
 
                 AppOutput_Container ->
@@ -339,7 +339,7 @@ viewPageAppRunOuputs model pageApp =
                     pageApp.pageApp_app.app_vm.enable
     in
     ul [ class "nav nav-pills mb-4" ]
-        ([ AppOutput_Programs
+        ([ AppOutput_Shell
          , AppOutput_Container
          , AppOutput_VM
          ]
