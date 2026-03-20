@@ -10,6 +10,13 @@
   version = "1.0.0";
   description = "Say hello in multiple languages.";
 
+  programs = {
+    enable = true;
+    requirements = [
+      pkgs.mypkgs.hello
+    ];
+  };
+
   services.greet = {
     command = pkgs.mypkgs.hello;
     argv = [
@@ -17,13 +24,6 @@
       "$GREETING"
     ];
     environment = [ "GREETING=Hello, how are you ?" ];
-  };
-
-  programs = {
-    enable = true;
-    requirements = [
-      pkgs.mypkgs.hello
-    ];
   };
 
   container = {
