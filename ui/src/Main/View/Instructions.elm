@@ -238,28 +238,6 @@ viewFlakeNavItem model pageApp isFlakes =
         ]
 
 
-cloneRepoInstructions : Model -> Bool -> List (Html Update)
-cloneRepoInstructions model flakes =
-    if flakes then
-        [ text "" ]
-
-    else
-        [ p [ style "margin-bottom" "0em" ]
-            [ text "Clone and enter the nix forge git repository."
-            ]
-        , br [] []
-
-        -- TODO: SHOULD not do git clone! use nix-shell -E fetchTarball -p something
-        , codeBlock Update_CopyCode <|
-            String.join " "
-                [ "git clone"
-                , model.model_config.config_repository |> showNixUrl
-                , "&&"
-                , "cd forge"
-                ]
-        ]
-
-
 programsInstructions : Model -> PageApp -> Bool -> Html Update
 programsInstructions model pageApp flakes =
     div []
@@ -272,7 +250,6 @@ programsInstructions model pageApp flakes =
           else
             []
          )
-            ++ cloneRepoInstructions model flakes
             ++ (if not flakes then
                     [ p [ style "margin-bottom" "0em" ]
                         [ text "Build and run the (CLI, GUI) application." ]
@@ -295,8 +272,12 @@ programsInstructions model pageApp flakes =
 
                         else
                             [ String.concat
-                                [ "nix-build -A "
+                                [ "nix-shell \\\n"
+                                , "  -I forge=\"https://github.com/ngi-nix/forge/archive/master.tar.gz\" \\\n"
+                                , "  -p '(import <forge> {})"
+                                , "."
                                 , pageApp.pageApp_app.app_name
+                                , "' "
                                 ]
                             ]
                ]
