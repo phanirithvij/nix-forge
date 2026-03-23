@@ -69,6 +69,9 @@ in
               in
               # Passthru
               appDrv.overrideAttrs (_: {
+                shellHook = ''
+                  echo ${app.usage}
+                '';
                 passthru = appPassthru app appDrv;
               });
 
