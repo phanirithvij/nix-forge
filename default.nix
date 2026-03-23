@@ -28,10 +28,6 @@ let
     nimi = def.nimi-def.nimi;
     nimiLib = def.nimi.passthru;
 
-    mox = flake.outputs.packages.x86_64-linux.mox;
-
-    app = call ./nimi.nix { inherit (default) nimi mox; };
-
     debug = eval {
       imports = [
         # ./forge/flake-module.nix
