@@ -1,8 +1,8 @@
 module Main.View exposing (..)
 
 import Dict
-import Html exposing (Html, a, code, div, footer, h3, h5, header, input, li, main_, nav, p, section, small, span, text, ul)
-import Html.Attributes exposing (attribute, class, href, id, name, placeholder, style, tabindex, target, title, type_, value)
+import Html exposing (Html, a, code, div, footer, h3, h5, h6, header, input, li, main_, nav, p, section, small, span, text, ul)
+import Html.Attributes exposing (attribute, class, href, id, name, placeholder, rel, style, tabindex, target, title, type_, value)
 import Html.Events exposing (onInput, preventDefaultOn, stopPropagationOn)
 import Json.Decode as Decode
 import Main.Config exposing (..)
@@ -289,10 +289,67 @@ viewPageApp model pageApp =
             , style "padding-bottom" "0.5rem"
             ]
             [ text pageApp.pageApp_app.app_description ]
+        , viewPageAppNgiSubgrants model pageApp
         , viewInstructionsUsage model pageApp
         , viewRecipeLink model pageApp
         , viewPageAppRun model pageApp
         ]
+
+
+hasAnyGrants : AppNgiSubgrants -> Bool
+hasAnyGrants subgrants =
+    not (List.isEmpty subgrants.commons)
+        || not (List.isEmpty subgrants.core)
+        || not (List.isEmpty subgrants.entrust)
+        || not (List.isEmpty subgrants.review)
+
+
+viewGrantCategory : String -> List String -> Html msg
+viewGrantCategory categoryName grants =
+    if List.isEmpty grants then
+        text ""
+
+    else
+        div [ class "mb-3" ]
+            [ h6 [] [ text categoryName ]
+            , ul [ class "list-group" ]
+                (List.map
+                    (\grantName ->
+                        li [ class "list-group-item" ]
+                            [ a
+                                [ href ("https://nlnet.nl/project/" ++ grantName ++ "/")
+                                , target "_blank"
+                                , rel "noopener noreferrer"
+                                ]
+                                [ text grantName ]
+                            ]
+                    )
+                    grants
+                )
+            ]
+
+
+viewPageAppNgiSubgrants : Model -> PageApp -> Html msg
+viewPageAppNgiSubgrants model pageApp =
+    let
+        subgrants =
+            pageApp.pageApp_app.app_grants
+    in
+    if hasAnyGrants subgrants then
+        div [ class "subgrants-container mt-4" ]
+            [ p [] [ text "This project is funded by NLnet through these subgrants:" ]
+            , viewGrantCategory "Commons" subgrants.commons
+            , viewGrantCategory "Core" subgrants.core
+            , viewGrantCategory "Entrust" subgrants.entrust
+            , viewGrantCategory "Review" subgrants.review
+            ]
+
+    else
+        text ""
+
+
+
+-- Hides the entire section (including intro text) if all arrays are empty
 
 
 viewRecipeLink : Model -> PageApp -> Html update
