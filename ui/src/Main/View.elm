@@ -1,7 +1,7 @@
 module Main.View exposing (..)
 
 import Dict
-import Html exposing (Html, a, code, div, footer, h3, h5, h6, header, input, li, main_, nav, p, section, small, span, text, ul)
+import Html exposing (Html, a, code, div, footer, h3, h5, h6, header, hr, input, li, main_, nav, p, section, small, span, text, ul)
 import Html.Attributes exposing (attribute, class, href, id, name, placeholder, rel, style, tabindex, target, title, type_, value)
 import Html.Events exposing (onInput, preventDefaultOn, stopPropagationOn)
 import Json.Decode as Decode
@@ -254,6 +254,7 @@ viewPageApp model pageApp =
             [ style "display" "flex"
             , style "justify-content" "space-between"
             , style "align-items" "center"
+            , class "mb-4"
             ]
             [ div []
                 [ h3 [ style "margin" "0" ]
@@ -270,18 +271,103 @@ viewPageApp model pageApp =
                 ]
                 [ text "Run" ]
             ]
-        , div
-            [ class "mb-4"
-            , style "margin-bottom" "1rem"
-            , style "border-bottom" "1px solid #dee2e6"
-            , style "padding-bottom" "0.5rem"
-            ]
-            [ text pageApp.pageApp_app.app_description ]
-        , viewPageAppNgiSubgrants model pageApp
-        , viewInstructionsUsage model pageApp
+        , viewPageAppTabs model pageApp
+        , viewPageAppTabContent model pageApp
         , viewRecipeLink model pageApp
         , viewPageAppRun model pageApp
         ]
+
+
+viewPageAppTabs : Model -> PageApp -> Html Update
+viewPageAppTabs model pageApp =
+    let
+        activeTab =
+            pageApp.pageApp_route.routeApp_activeTab
+
+        tabLink : AppTab -> String -> Html Update
+        tabLink tab label =
+            li [ class "nav-item" ]
+                [ Html.button
+                    [ class "nav-link"
+                    , class
+                        (if activeTab == Just tab then
+                            "active"
+
+                         else
+                            ""
+                        )
+                    , style "cursor" "pointer"
+                    , style "background" "transparent"
+                    , let
+                        route =
+                            pageApp.pageApp_route
+                      in
+                      onClick (Update_Route (Route_App { route | routeApp_activeTab = Just tab }))
+                    ]
+                    [ text label ]
+                ]
+    in
+    ul [ class "nav nav-underline mb-4" ]
+        [ tabLink AppTab_Description "Description"
+        , tabLink AppTab_Metadata "Metadata"
+        ]
+
+
+viewPageAppTabContent : Model -> PageApp -> Html Update
+viewPageAppTabContent model pageApp =
+    div [ class "tab-content mb-4" ]
+        [ case pageApp.pageApp_route.routeApp_activeTab of
+            Just tab ->
+                case tab of
+                    AppTab_Description ->
+                        viewTabDescription model pageApp
+
+                    AppTab_Metadata ->
+                        viewTabMetadata model pageApp
+
+            Nothing ->
+                viewTabDescription model pageApp
+        ]
+
+
+viewTabDescription : Model -> PageApp -> Html Update
+viewTabDescription model pageApp =
+    div []
+        [ p [ class "lead" ] [ text pageApp.pageApp_app.app_description ]
+        , viewInstructionsUsage model pageApp
+        ]
+
+
+viewTabMetadata : Model -> PageApp -> Html Update
+viewTabMetadata model pageApp =
+    div [ class "row" ]
+        [ div [ class "col-md-6" ]
+            [ h5 [ class "mb-3" ] [ text "Resources" ]
+            , ul [ class "list-group list-group-flush" ]
+                [ li [ class "list-group-item bg-transparent px-0" ]
+                    [ a [ href "#", target "_blank" ] [ text "Homepage" ] ]
+                , li [ class "list-group-item bg-transparent px-0" ]
+                    [ a [ href "#", target "_blank" ] [ text "Documentation" ] ]
+                , li [ class "list-group-item bg-transparent px-0" ]
+                    [ a [ href "#", target "_blank" ] [ text "Source Repository" ] ]
+                ]
+            ]
+        , div [ class "col-md-6" ]
+            [ h5
+                [ class "mb-3"
+                , id "funding"
+                ]
+                [ text "Funding"
+                , a
+                    [ class "anchor-link"
+                    , href "/app/python-web-app?runOutput=shell&tab=metadata#funding"
+                    ]
+                    []
+                ]
+            , viewPageAppNgiSubgrants model pageApp
+            ]
+        ]
+
 
 
 hasAnyGrants : AppNgiSubgrants -> Bool
@@ -325,7 +411,7 @@ viewPageAppNgiSubgrants model pageApp =
     in
     if hasAnyGrants subgrants then
         div [ class "subgrants-container mt-4" ]
-            [ p [] [ text "This project is funded by NLnet through these subgrants:" ]
+            [ p [ style "font-size" "0.875rem" ] [ text "This project is funded by NLnet through these subgrants:" ]
             , viewGrantCategory "Commons" subgrants.commons
             , viewGrantCategory "Core" subgrants.core
             , viewGrantCategory "Entrust" subgrants.entrust
@@ -333,7 +419,41 @@ viewPageAppNgiSubgrants model pageApp =
             ]
 
     else
-        text ""
+        div [ class "alert alert-warning" ]
+            [ p [] [ text "Funding information is missing for this application." ]
+            , p []
+                [ text "Please file an issue in our "
+                , a
+                    [ -- href "https://github.com/ngi-nix/forge/issues/new/choose"
+                      href
+                        (let
+                            repo =
+                                "https://github.com/phanirithvij/phanirithvij.github.io"
+
+                            deploymentBase =
+                                "https://ngi-nix.github.io/forge"
+
+                            route =
+                                "/issues/new"
+
+                            template =
+                                "?template=bug-report-missing-funding.yml"
+
+                            title =
+                                "python-web-app: Funding information missing in homepage"
+
+                            -- NOTE: encodeURIComponent("#")
+                            pageUrl =
+                                "/app/python-web-app%23funding"
+                         in
+                         repo ++ route ++ template ++ "&title=" ++ title ++ "&page-url=" ++ deploymentBase ++ pageUrl
+                        )
+                    , target "_blank"
+                    ]
+                    [ text "repository" ]
+                , text ". (requires a microsoft github account)"
+                ]
+            ]
 
 
 
