@@ -20,6 +20,10 @@ import Main.Update exposing (..)
 import Main.View.Instructions exposing (..)
 
 
+commit =
+    ":master"
+
+
 view : Model -> Html Update
 view model =
     div
@@ -273,7 +277,6 @@ viewPageApp model pageApp =
             ]
         , viewPageAppTabs model pageApp
         , viewPageAppTabContent model pageApp
-        , viewRecipeLink model pageApp
         , viewPageAppRun model pageApp
         ]
 
@@ -350,6 +353,7 @@ viewTabMetadata model pageApp =
                     [ a [ href "#", target "_blank" ] [ text "Documentation" ] ]
                 , li [ class "list-group-item bg-transparent px-0" ]
                     [ a [ href "#", target "_blank" ] [ text "Source Repository" ] ]
+                , viewRecipeLink model pageApp
                 ]
             ]
         , div [ class "col-md-6" ]
@@ -462,13 +466,18 @@ viewPageAppNgiSubgrants model pageApp =
 
 viewRecipeLink : Model -> PageApp -> Html update
 viewRecipeLink model pageApp =
-    div []
-        [ text "Recipe: "
-        , a
+    li [ class "list-group-item bg-transparent px-0" ]
+        [ a
             [ href
                 (String.join "/"
                     [ model.model_config.config_repository |> showNixUrl
-                    , "blob/master"
+                    , "blob/"
+                        ++ (if not (String.contains "master" commit) then
+                                commit
+
+                            else
+                                "master"
+                           )
                     , model.model_config.config_recipe.configRecipe_apps
                     , pageApp.pageApp_app.app_name
                     , "recipe.nix"
@@ -476,7 +485,9 @@ viewRecipeLink model pageApp =
                 )
             , target "_blank"
             ]
-            [ text (model.model_config.config_recipe.configRecipe_apps ++ "/" ++ pageApp.pageApp_app.app_name ++ "/recipe.nix") ]
+            [ text "Recipe Definition" ]
+
+        -- [ text (model.model_config.config_recipe.configRecipe_apps ++ "/" ++ pageApp.pageApp_app.app_name ++ "/recipe.nix") ]
         ]
 
 
@@ -657,11 +668,7 @@ viewPoweredBy =
                 [ text "ngi-nix/forge" ]
             , text "."
             ]
-        , let
-            commit =
-                ":master"
-          in
-          if not (String.contains "master" commit) then
+        , if not (String.contains "master" commit) then
             span []
                 [ text " Version "
                 , a
