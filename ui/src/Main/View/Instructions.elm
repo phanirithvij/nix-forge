@@ -99,50 +99,21 @@ viewPageAppInstructions model pageApp =
                         [ case output of
                             AppOutput_Shell ->
                                 if pageApp.pageApp_app.app_programs.enable then
-                                    programsInstructions model pageApp model.model_preferences.pref_flakes
+                                    viewProgramsInstructions model pageApp
 
                                 else
                                     text ""
 
                             AppOutput_Container ->
                                 if pageApp.pageApp_app.app_container.enable then
-                                    div []
-                                        [ p [ style "margin-bottom" "0em" ] [ text "Run application services using OCI containers." ]
-                                        , br [] []
-                                        , codeBlock <|
-                                            String.join "\n"
-                                                [ String.concat
-                                                    [ "nix build "
-                                                    , model.model_config.config_repository
-                                                    , "#"
-                                                    , pageApp.pageApp_app.app_name
-                                                    , ".container"
-                                                    ]
-                                                , "./result/bin/build-oci"
-                                                , ""
-                                                , "podman load < *.tar"
-                                                , ""
-                                                , "podman-compose --profile services --file $(pwd)/result/compose.yaml up"
-                                                ]
-                                        ]
+                                    viewContainerInstructions model pageApp
 
                                 else
                                     text ""
 
                             AppOutput_VM ->
                                 if pageApp.pageApp_app.app_vm.enable then
-                                    div []
-                                        [ p [ style "margin-bottom" "0em" ] [ text "Run application services in a NixOS VM." ]
-                                        , br [] []
-                                        , codeBlock <|
-                                            String.concat
-                                                [ "nix run "
-                                                , model.model_config.config_repository
-                                                , "#"
-                                                , pageApp.pageApp_app.app_name
-                                                , ".vm"
-                                                ]
-                                        ]
+                                    viewVMInstructions model pageApp
 
                                 else
                                     text ""
@@ -227,47 +198,117 @@ viewFlakeNavItem model pageApp isFlakes =
         ]
 
 
-programsInstructions : Model -> PageApp -> Bool -> Html Update
-programsInstructions model pageApp flakes =
-    div []
-        ((if flakes then
-            [ p [ style "margin-bottom" "0em" ]
-                [ text "Create and enter a shell environment for (CLI, GUI) programs." ]
-            , br [] []
-            ]
+nixShellForgeInput : Model -> String
+nixShellForgeInput model =
+    "  -I forge=\"" ++ (model.model_config.config_repository |> showNixUrl) ++ "/archive/" ++ commit ++ ".tar.gz\" \\\n"
 
-          else
-            []
-         )
-            ++ (if not flakes then
-                    [ p [ style "margin-bottom" "0em" ]
-                        [ text "Build and run the (CLI, GUI) application." ]
-                    , br [] []
+
+viewProgramsInstructions : Model -> PageApp -> Html Update
+viewProgramsInstructions model pageApp =
+    let
+        flakes =
+            model.model_preferences.pref_flakes
+    in
+    div []
+        [ p [ style "margin-bottom" "0em" ]
+            [ text "Create and enter a shell environment for (CLI, GUI) programs." ]
+        , br [] []
+        , codeBlock <|
+            String.concat
+                (if flakes then
+                    [ "nix shell "
+                    , model.model_config.config_repository
+                    , "#"
+                    , pageApp.pageApp_app.app_name
                     ]
 
-                else
-                    []
-               )
-            ++ [ codeBlock <|
-                    String.join "\n" <|
-                        if flakes then
-                            [ String.concat
-                                [ "nix shell "
-                                , model.model_config.config_repository
-                                , "#"
-                                , pageApp.pageApp_app.app_name
-                                ]
-                            ]
+                 else
+                    [ "nix-shell \\\n"
+                    , nixShellForgeInput model
+                    , "  -p '(import <forge> {})"
+                    , "."
+                    , pageApp.pageApp_app.app_name
+                    , "' "
+                    ]
+                )
+        ]
 
-                        else
-                            [ String.concat
-                                [ "nix-shell \\\n"
-                                , "  -I forge=\"https://github.com/ngi-nix/forge/archive/" ++ commit ++ ".tar.gz\" \\\n"
-                                , "  -p '(import <forge> {})"
-                                , "."
-                                , pageApp.pageApp_app.app_name
-                                , "' "
-                                ]
-                            ]
-               ]
-        )
+
+viewContainerInstructions : Model -> PageApp -> Html Update
+viewContainerInstructions model pageApp =
+    let
+        flakes =
+            model.model_preferences.pref_flakes
+    in
+    div []
+        [ p [ style "margin-bottom" "0em" ] [ text "Run application services using OCI containers." ]
+        , br [] []
+        , codeBlock <|
+            String.join "\n"
+                [ if flakes then
+                    String.concat
+                        [ "nix build "
+                        , model.model_config.config_repository
+                        , "#"
+                        , pageApp.pageApp_app.app_name
+                        , ".container"
+                        ]
+
+                  else
+                    String.concat
+                        [ "nix-build \\\n"
+                        , nixShellForgeInput model
+                        , "  -E '(import <forge> {})"
+                        , "."
+                        , pageApp.pageApp_app.app_name
+                        , ".container"
+                        , "' "
+                        ]
+                , ""
+                , "./result/bin/build-oci"
+                , ""
+                , "podman load < *.tar"
+                , "podman-compose --profile services --file $(pwd)/result/compose.yaml up"
+                ]
+        ]
+
+
+viewVMInstructions : Model -> PageApp -> Html Update
+viewVMInstructions model pageApp =
+    let
+        flakes =
+            model.model_preferences.pref_flakes
+
+        -- In nixpkgs nixos/modules/virtualisation/qemu-vm.nix, look for mainProgram
+        -- And in nixos/modules/system/activation/top-level.nix, look for hostName
+        -- Assume we always set hostname to be without -app suffix
+        serviceName =
+            String.dropRight 4 pageApp.pageApp_app.app_name
+    in
+    div []
+        [ p [ style "margin-bottom" "0em" ] [ text "Run application services in a NixOS VM." ]
+        , br [] []
+        , codeBlock <|
+            if flakes then
+                String.concat
+                    [ "nix run "
+                    , model.model_config.config_repository
+                    , "#"
+                    , pageApp.pageApp_app.app_name
+                    , ".vm"
+                    ]
+
+            else
+                String.join "\n"
+                    [ String.concat
+                        [ "nix-build \\\n"
+                        , nixShellForgeInput model
+                        , "  -E '(import <forge> {})"
+                        , "."
+                        , pageApp.pageApp_app.app_name
+                        , ".vm"
+                        , "' "
+                        ]
+                    , "./result/bin/run-" ++ serviceName ++ "-vm"
+                    ]
+        ]
