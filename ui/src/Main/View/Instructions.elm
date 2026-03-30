@@ -2,6 +2,7 @@ module Main.View.Instructions exposing (..)
 
 import Html exposing (Html, a, br, button, details, div, h4, hr, li, p, small, summary, text, ul)
 import Html.Attributes exposing (class, href, id, style, target)
+import Main.Config exposing (commit)
 import Main.Config.App exposing (..)
 import Main.Helpers.Html exposing (..)
 import Main.Helpers.Markdown as Markdown
@@ -219,7 +220,7 @@ viewFlakeNavItem model pageApp isFlakes =
                         "Recommended"
 
                      else
-                        "Legacy"
+                        "Classic"
                     )
                 ]
             ]
@@ -261,7 +262,7 @@ programsInstructions model pageApp flakes =
                         else
                             [ String.concat
                                 [ "nix-shell \\\n"
-                                , "  -I forge=\"https://github.com/ngi-nix/forge/archive/master.tar.gz\" \\\n"
+                                , "  -I forge=\"https://github.com/ngi-nix/forge/archive/" ++ commit ++ ".tar.gz\" \\\n"
                                 , "  -p '(import <forge> {})"
                                 , "."
                                 , pageApp.pageApp_app.app_name

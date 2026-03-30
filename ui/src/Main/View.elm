@@ -1,7 +1,7 @@
 module Main.View exposing (..)
 
 import Dict
-import Html exposing (Html, a, button, code, div, footer, h3, h5, h6, header, hr, input, li, main_, nav, p, section, small, span, text, ul)
+import Html exposing (Html, a, button, code, div, footer, h3, h5, h6, header, input, li, main_, nav, p, section, small, span, text, ul)
 import Html.Attributes exposing (attribute, class, href, id, name, placeholder, rel, style, tabindex, target, title, type_, value)
 import Html.Events exposing (onInput, preventDefaultOn, stopPropagationOn)
 import Json.Decode as Decode
@@ -18,11 +18,6 @@ import Main.Subscriptions exposing (decodeEscapeKey)
 import Main.Theme exposing (Theme(..))
 import Main.Update exposing (..)
 import Main.View.Instructions exposing (..)
-
-
-commit : String
-commit =
-    ":master"
 
 
 view : Model -> Html Update
@@ -374,7 +369,6 @@ viewTabMetadata model pageApp =
         ]
 
 
-
 hasAnyGrants : AppNgiSubgrants -> Bool
 hasAnyGrants subgrants =
     not (List.isEmpty subgrants.commons)
@@ -472,13 +466,7 @@ viewRecipeLink model pageApp =
             [ href
                 (String.join "/"
                     [ model.model_config.config_repository |> showNixUrl
-                    , "blob/"
-                        ++ (if not (String.contains "master" commit) then
-                                commit
-
-                            else
-                                "master"
-                           )
+                    , "blob/" ++ commit
                     , model.model_config.config_recipe.configRecipe_apps
                     , pageApp.pageApp_app.app_name
                     , "recipe.nix"
@@ -487,8 +475,6 @@ viewRecipeLink model pageApp =
             , target "_blank"
             ]
             [ text "Recipe Definition" ]
-
-        -- [ text (model.model_config.config_recipe.configRecipe_apps ++ "/" ++ pageApp.pageApp_app.app_name ++ "/recipe.nix") ]
         ]
 
 
@@ -669,17 +655,13 @@ viewPoweredBy model =
                 [ text (model.model_config.config_repository |> showGithubRepoSlug) ]
             , text "."
             ]
-        , if not (String.contains "master" commit) then
-            span []
-                [ text " Version "
-                , a
-                    [ href ((model.model_config.config_repository |> showNixUrl) ++ "/commit/" ++ commit)
-                    , target "_blank"
-                    ]
-                    [ text commit ]
-                , text "."
+        , span []
+            [ text " Version "
+            , a
+                [ href ((model.model_config.config_repository |> showNixUrl) ++ "/tree/" ++ commit)
+                , target "_blank"
                 ]
-
-          else
-            text ""
+                [ text shortCommit ]
+            , text "."
+            ]
         ]

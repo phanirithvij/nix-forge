@@ -9,6 +9,18 @@ import Main.Helpers.Nix exposing (..)
 import Url exposing (Url)
 
 
+commit : String
+commit =
+    "master"
+
+
+{-| Note: master is < 8 chars
+-}
+shortCommit : String
+shortCommit =
+    String.left 8 commit
+
+
 {-| Warning(portability): `Url` only supports HTTP(s) protocol.
 -}
 type alias UrlHttp =
