@@ -31,6 +31,7 @@ type Update
       Update_RecipeOptions (Result Http.Error NixModuleOptions)
     | Update_Navigation Navigation.Event
     | Update_Route Route
+    | Update_RouteWithoutHistory Route
     | -- `Update_Updater up` simply applies `up` to the `Model`.
       -- Useful in a `Update_Chain` to defer `up` after some other updates.
       Update_Updater Updater
@@ -89,6 +90,9 @@ update upd model =
             ( model
             , Navigation.pushUrl Main.Ports.Navigation.navCmd (route |> Route.toAppUrl)
             )
+
+        Update_RouteWithoutHistory route ->
+            model |> updateRoute route
 
         Update_CopyToClipboard code ->
             ( model

@@ -316,7 +316,7 @@ viewPageApp model pageApp =
                     route =
                         pageApp.pageApp_route
                   in
-                  onClick (Update_Route (Route_App { route | routeApp_runShown = True }))
+                  onClick (Update_RouteOutOfHistory (Route_App { route | routeApp_runShown = True }))
                 ]
                 [ text "Run" ]
             ]
@@ -368,7 +368,7 @@ viewPageAppRun model pageApp =
                     route =
                         pageApp.pageApp_route
                   in
-                  onClick (Update_Route (Route_App { route | routeApp_runShown = False }))
+                  onClick (Update_RouteWithoutHistory (Route_App { route | routeApp_runShown = False }))
                 ]
                 [ div
                     [ class "modal-dialog modal-lg"
@@ -383,7 +383,7 @@ viewPageAppRun model pageApp =
                                     route =
                                         pageApp.pageApp_route
                                   in
-                                  onClick (Update_Route (Route_App { route | routeApp_runShown = False }))
+                                  onClick (Update_RouteWithoutHistory (Route_App { route | routeApp_runShown = False }))
                                 ]
                                 []
                             ]
@@ -443,7 +443,7 @@ viewPageAppRunOutput model pageApp appOutput =
                 route =
                     pageApp.pageApp_route
               in
-              onClick (Update_Route (Route_App { route | routeApp_runOutput = Just appOutput }))
+              onClick (Update_RouteWithoutHistory (Route_App { route | routeApp_runOutput = Just appOutput }))
             ]
             [ text <| showAppOutput appOutput
             ]
