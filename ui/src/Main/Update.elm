@@ -287,6 +287,7 @@ updateRoute route =
                     ( { model
                         | model_page = Page_Search
                         , model_search = routeSearch.routeSearch_pattern
+                        , model_route = route
                       }
                     , Cmd.none
                     )
@@ -325,6 +326,7 @@ updateRoute route =
                                                     }
                                                 , pageApp_app = app
                                                 }
+                                        , model_route = route
                                     }
 
                                 Just output ->
@@ -347,6 +349,7 @@ updateRoute route =
                                                     { pageApp_route = routeApp
                                                     , pageApp_app = app
                                                     }
+                                            , model_route = route
                                         }
 
                                     else
@@ -357,12 +360,14 @@ updateRoute route =
                                                     , pageApp_app = app
                                                     }
                                             , model_errors = model.model_errors ++ [ Error_App (ErrorApp_NoSuchOutput output) ]
+                                            , model_route = route
                                         }
 
                         Nothing ->
                             { model
                                 | model_page = Page_Search
                                 , model_errors = model.model_errors ++ [ Error_App (ErrorApp_NotFound routeApp.routeApp_name) ]
+                                , model_route = route
                             }
                     , Cmd.none
                     )
@@ -402,6 +407,7 @@ updateRoute route =
                                             |> List.at (routeRecipe.routeRecipeOptions_page - 1)
                                             |> Maybe.withDefault []
                                 }
+                            , model_route = route
                           }
                         , case routeRecipe.routeRecipeOptions_option of
                             Nothing ->

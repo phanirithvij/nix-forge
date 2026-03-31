@@ -1,5 +1,6 @@
 module Main.View exposing (..)
 
+import AppUrl
 import Dict
 import Html exposing (Html, a, button, code, div, footer, h2, h3, h5, header, img, input, li, main_, p, section, small, span, text, ul)
 import Html.Attributes exposing (attribute, class, href, id, name, placeholder, src, style, tabindex, target, title, type_, value, width)
@@ -380,7 +381,10 @@ viewAppResources model pageApp =
             [ text "Resources"
             , a
                 [ class "anchor-link"
-                , href "/app/python-web-app?runOutput=shell#resources"
+                , href
+                    ((model.model_route |> toAppUrl |> AppUrl.toString)
+                        ++ "#resources"
+                    )
                 ]
                 []
             ]
@@ -433,7 +437,10 @@ viewAppNgiGrants model pageApp =
                 [ text "NGI Grants"
                 , a
                     [ class "anchor-link"
-                    , href "/app/python-web-app?runOutput=shell#grants"
+                    , href
+                        ((model.model_route |> toAppUrl |> AppUrl.toString)
+                            ++ "#grants"
+                        )
                     ]
                     []
                 ]
