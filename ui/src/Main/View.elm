@@ -10,9 +10,9 @@ import Main.Config.App exposing (..)
 import Main.Error
 import Main.Helpers.Html exposing (..)
 import Main.Helpers.Markdown as Markdown
+import Main.Helpers.Nix exposing (..)
 import Main.Icons exposing (..)
 import Main.Model exposing (..)
-import Main.Nix exposing (..)
 import Main.Route as Route exposing (..)
 import Main.Subscriptions exposing (decodeEscapeKey)
 import Main.Theme exposing (Theme(..))
@@ -59,7 +59,7 @@ view model =
             [ section [] [ model |> viewPage ] ]
         , footer
             [ class "mt-auto py-3 border-top" ]
-            [ viewPoweredBy ]
+            [ viewPoweredBy model ]
         ]
 
 
@@ -287,13 +287,12 @@ viewPageApp model pageApp =
 
 viewRecipeLink : Model -> PageApp -> Html update
 viewRecipeLink model pageApp =
-    div []
-        [ text "Recipe: "
-        , a
+    li [ class "list-group-item bg-transparent px-0" ]
+        [ a
             [ href
                 (String.join "/"
                     [ model.model_config.config_repository |> showNixUrl
-                    , "blob/master"
+                    , "blob/" ++ commit
                     , model.model_config.config_recipe.configRecipe_apps
                     , pageApp.pageApp_app.app_name
                     , "recipe.nix"
@@ -301,7 +300,7 @@ viewRecipeLink model pageApp =
                 )
             , target "_blank"
             ]
-            [ text (model.model_config.config_recipe.configRecipe_apps ++ "/" ++ pageApp.pageApp_app.app_name ++ "/recipe.nix") ]
+            [ text "Forge Recipe" ]
         ]
 
 
@@ -440,8 +439,8 @@ viewPageRecipeOption model pageRecipeOptions ( optionName, option ) =
         ]
 
 
-viewPoweredBy : Html update
-viewPoweredBy =
+viewPoweredBy : Model -> Html update
+viewPoweredBy model =
     div
         [ class "text-secondary"
         , style "display" "flex"
@@ -476,27 +475,19 @@ viewPoweredBy =
         , span []
             [ text " Contribute or report issues at "
             , a
-                [ href "https://github.com/ngi-nix/forge"
+                [ href (model.model_config.config_repository |> showNixUrl)
                 , target "_blank"
                 ]
-                [ text "ngi-nix/forge" ]
+                [ text (model.model_config.config_repository |> showGithubRepoSlug) ]
             , text "."
             ]
-        , let
-            commit =
-                ":master"
-          in
-          if not (String.contains "master" commit) then
-            span []
-                [ text " Version "
-                , a
-                    [ href ("https://github.com/ngi-nix/forge/commit/" ++ commit)
-                    , target "_blank"
-                    ]
-                    [ text commit ]
-                , text "."
+        , span []
+            [ text " Version "
+            , a
+                [ href ((model.model_config.config_repository |> showNixUrl) ++ "/tree/" ++ commit)
+                , target "_blank"
                 ]
-
-          else
-            text ""
+                [ text shortCommit ]
+            , text "."
+            ]
         ]
