@@ -7,8 +7,8 @@ import Main.Config exposing (..)
 import Main.Config.App exposing (..)
 import Main.Error exposing (..)
 import Main.Helpers.Cmd as Cmd
+import Main.Helpers.Nix exposing (..)
 import Main.Model exposing (..)
-import Main.Nix exposing (..)
 import Main.Ports.Clipboard as Clipboard
 import Main.Ports.Navigation
 import Main.Ports.ThemeSwitch as ThemeSwitch
