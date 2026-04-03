@@ -39,6 +39,7 @@ symlinkJoin {
     # Copy static files
     cp ${./src/index.html} index.html
     cp ${./src/favicon.svg} favicon.svg
+    cp ${./src/favicon-dark.svg} favicon-dark.svg
     cp -aR ${./src/css}/. css
     cp -aR ${./src/js}/. js
     chmod -R u+w css js

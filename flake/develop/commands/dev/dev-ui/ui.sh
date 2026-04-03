@@ -31,6 +31,7 @@ mkdir -p "$rootDir/ui/build/js"
 
 # symlink the favicon to build
 ln -sf "$rootDir/ui/src/favicon.svg" "$rootDir/ui/build/favicon.svg"
+ln -sf "$rootDir/ui/src/favicon-dark.svg" "$rootDir/ui/build/favicon-dark.svg"
 
 # Warning(correctness): when using `nix build`,
 # be careful to either register the resulting output(s)

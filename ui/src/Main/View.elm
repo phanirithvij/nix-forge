@@ -29,7 +29,7 @@ view model =
             [ class "py-3" ]
             [ div
                 [ class "d-flex align-items-center gap-2 gap-md-3" ]
-                [ viewTitle
+                [ viewTitle model
                 , div [ class "flex-grow-1" ]
                     [ model |> viewSearchInput ]
                 , div
@@ -90,8 +90,8 @@ view model =
         ]
 
 
-viewTitle : Html Update
-viewTitle =
+viewTitle : Model -> Html Update
+viewTitle model =
     a
         [ href (Route_Search { routeSearch_pattern = "" } |> Route.toString)
         , class "d-flex align-items-center m-0"
@@ -103,7 +103,14 @@ viewTitle =
         , onClick (Update_Route (Route_Search { routeSearch_pattern = "" }))
         ]
         [ img
-            [ src "favicon.svg"
+            [ src
+                (case model.model_preferences.pref_theme of
+                    Theme_Dark ->
+                        "favicon.svg"
+
+                    Theme_Light ->
+                        "favicon-dark.svg"
+                )
             , width 25
             ]
             []
