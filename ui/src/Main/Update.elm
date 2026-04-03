@@ -428,12 +428,25 @@ updateRoute route =
                                 }
                             , model_route = route
                           }
-                        , case routeRecipe.routeRecipeOptions_option of
-                            Nothing ->
-                                Cmd.none
+                        , let
+                            isSameFocus =
+                                case model.model_page of
+                                    Page_RecipeOptions oldRecipePage ->
+                                        oldRecipePage.pageRecipeOptions_route.routeRecipeOptions_option == routeRecipe.routeRecipeOptions_option
 
-                            Just id ->
-                                Task.attempt Update_FocusResult (Dom.focus id)
+                                    _ ->
+                                        False
+                          in
+                          if isSameFocus then
+                            Cmd.none
+
+                          else
+                            case routeRecipe.routeRecipeOptions_option of
+                                Just focusId ->
+                                    scrollToAndHighlight focusId
+
+                                Nothing ->
+                                    Cmd.none
                         )
 
 

@@ -7,10 +7,12 @@ body {
   height: 100vh;
 }
 
-.recipe-option:focus {
-  border:2px solid red;
-  scroll-behavior:smooth;
-  scroll-snap-type:y mandatory;
+.recipe-option.trigger-pulse {
+  animation: highlight-pulse 2s ease-out;
+}
+
+.recipe-option {
+  outline: none;
 }
 
 /* Markdown content styling */
