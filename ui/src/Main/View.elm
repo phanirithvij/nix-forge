@@ -178,15 +178,24 @@ viewRecipeOptionsLink =
 
 viewPackagesLink : Html Update
 viewPackagesLink =
+    let
+        onClickRoute =
+            Route_RecipeOptions
+                { routeRecipeOptions_pattern = Just ""
+                , routeRecipeOptions_page = 1
+                , routeRecipeOptions_MaxResultsPerPage = 10
+                , routeRecipeOptions_option = Nothing
+                }
+    in
     a
-        [ href (Route_RecipeOptions { routeRecipeOptions_pattern = Just "" } |> Route.toString)
+        [ href (onClickRoute |> Route.toString)
         , style "color" "inherit"
         , style "text-decoration" "none"
         , style "cursor" "pointer"
         , class "nav-link px-0"
         , title "View available packages"
         , attribute "aria-label" "View available packages"
-        , onClick (Update_Route (Route_RecipeOptions { routeRecipeOptions_pattern = Just "" }))
+        , onClick (Update_Route onClickRoute)
         ]
         [ text "Packages" ]
 
