@@ -39,6 +39,9 @@
       default = ''
         machine.start()
         machine.wait_for_unit("multi-user.target")
+        ${lib.concatMapAttrsStringSep "\n" (
+          name: _: "machine.wait_for_unit(\"${name}.service\")"
+        ) app.services}
         machine.succeed("${pkgs.writeShellScript "${app.name}-test-script" config.script}")
       '';
       description = "Python test script passed to the NixOS test driver.";
