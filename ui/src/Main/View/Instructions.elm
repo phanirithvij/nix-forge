@@ -197,6 +197,18 @@ nixShellForgeInput model =
     "  -I forge=\"" ++ (model.model_config.config_repository |> showNixUrl) ++ "/archive/" ++ commit ++ ".tar.gz\" \\\n"
 
 
+nixFlakeForgeInput : Model -> String
+nixFlakeForgeInput model =
+    String.concat
+        [ model.model_config.config_repository
+        , if commit /= "master" then
+            "/" ++ commit
+
+          else
+            ""
+        ]
+
+
 viewProgramsInstructions : Model -> PageApp -> Html Update
 viewProgramsInstructions model pageApp =
     let
@@ -211,7 +223,7 @@ viewProgramsInstructions model pageApp =
             String.concat
                 (if flakes then
                     [ "nix shell "
-                    , model.model_config.config_repository
+                    , nixFlakeForgeInput model
                     , "#"
                     , pageApp.pageApp_app.app_name
                     ]
@@ -242,7 +254,7 @@ viewContainerInstructions model pageApp =
                 [ if flakes then
                     String.concat
                         [ "nix build "
-                        , model.model_config.config_repository
+                        , nixFlakeForgeInput model
                         , "#"
                         , pageApp.pageApp_app.app_name
                         , ".container"
@@ -283,7 +295,7 @@ viewVMInstructions model pageApp =
             if flakes then
                 String.concat
                     [ "nix run "
-                    , model.model_config.config_repository
+                    , nixFlakeForgeInput model
                     , "#"
                     , app_name
                     , ".vm"
