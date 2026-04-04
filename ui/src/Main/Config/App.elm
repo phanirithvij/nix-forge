@@ -20,6 +20,11 @@ type alias AppNgi =
     }
 
 
+app_output : App -> String
+app_output app =
+    app.app_name ++ "-app"
+
+
 type alias AppPrograms =
     { enable : Bool
     }
