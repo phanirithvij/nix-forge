@@ -1,5 +1,6 @@
 module Main.Config.App exposing (..)
 
+import Dict exposing (Dict)
 import Json.Decode as Decode exposing (Decoder)
 import Main.Helpers.String exposing (..)
 
@@ -11,12 +12,7 @@ type alias App =
     , app_programs : AppPrograms
     , app_container : AppContainer
     , app_vm : AppNixosVm
-    , app_ngi : AppNgi
-    }
-
-
-type alias AppNgi =
-    { grants : AppNgiSubgrants
+    , app_ngi : Ngi
     }
 
 
@@ -40,14 +36,6 @@ type alias AppNixosVm =
     }
 
 
-type alias AppNgiSubgrants =
-    { commons : List String
-    , core : List String
-    , entrust : List String
-    , review : List String
-    }
-
-
 type alias AppName =
     String
 
@@ -61,7 +49,7 @@ decodeApp =
         (Decode.field "programs" decodeAppPrograms)
         (Decode.field "container" decodeAppContainer)
         (Decode.field "nixos" decodeAppNixosVm)
-        (Decode.field "ngi" decodeAppNgi)
+        (Decode.field "ngi" decodeNgi)
 
 
 decodeAppName : Decoder AppName
@@ -95,19 +83,28 @@ decodeAppNixosVm =
         (Decode.field "enable" Decode.bool)
 
 
-decodeAppNgi : Decoder AppNgi
-decodeAppNgi =
-    Decode.map AppNgi
-        (Decode.field "grants" decodeAppNgiSubgrants)
+type alias Ngi =
+    { grants : NgiGrants
+    }
 
 
-decodeAppNgiSubgrants : Decoder AppNgiSubgrants
-decodeAppNgiSubgrants =
-    Decode.map4 AppNgiSubgrants
-        (Decode.field "Commons" (Decode.list Decode.string))
-        (Decode.field "Core" (Decode.list Decode.string))
-        (Decode.field "Entrust" (Decode.list Decode.string))
-        (Decode.field "Review" (Decode.list Decode.string))
+decodeNgi : Decoder Ngi
+decodeNgi =
+    Decode.map Ngi
+        (Decode.field "grants" decodeNgiGrants)
+
+
+type alias NgiGrants =
+    Dict String NgiGrantsSub
+
+
+decodeNgiGrants : Decoder NgiGrants
+decodeNgiGrants =
+    Decode.dict (Decode.list Decode.string)
+
+
+type alias NgiGrantsSub =
+    List String
 
 
 type AppOutput
