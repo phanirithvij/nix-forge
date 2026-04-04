@@ -9,6 +9,7 @@ import Json.Decode as Decode
 import Main.Config exposing (..)
 import Main.Config.App exposing (..)
 import Main.Error
+import Main.Helpers.AppUrl as AppUrl exposing (..)
 import Main.Helpers.Html exposing (..)
 import Main.Helpers.Markdown as Markdown
 import Main.Helpers.Nix exposing (..)
@@ -384,8 +385,10 @@ viewAppResources model pageApp =
             , a
                 [ class "anchor-link"
                 , href
-                    ((model.model_route |> Route.toString)
-                        ++ "#resources"
+                    (model.model_route
+                        |> Route.toAppUrl
+                        |> AppUrl.setFragment (Just "resources")
+                        |> AppUrl.toString
                     )
                 ]
                 []
@@ -443,8 +446,10 @@ viewAppNgiGrants model pageApp =
                 , a
                     [ class "anchor-link"
                     , href
-                        ((model.model_route |> Route.toString)
-                            ++ "#grants"
+                        (model.model_route
+                            |> Route.toAppUrl
+                            |> AppUrl.setFragment (Just "grants")
+                            |> AppUrl.toString
                         )
                     ]
                     []
