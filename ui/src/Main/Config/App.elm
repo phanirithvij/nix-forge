@@ -107,20 +107,20 @@ type alias NgiGrantsSub =
     List String
 
 
-type AppOutput
-    = AppOutput_Shell
-    | AppOutput_Container
-    | AppOutput_VM
+type AppRuntime
+    = AppRuntime_Shell
+    | AppRuntime_Container
+    | AppRuntime_VM
 
 
-showAppOutput : AppOutput -> String
-showAppOutput r =
+showAppRuntime : AppRuntime -> String
+showAppRuntime r =
     case r of
-        AppOutput_Shell ->
+        AppRuntime_Shell ->
             "Shell"
 
-        AppOutput_Container ->
+        AppRuntime_Container ->
             "Container"
 
-        AppOutput_VM ->
+        AppRuntime_VM ->
             "VM"
