@@ -10,6 +10,7 @@ import Main.Helpers.Cmd as Cmd
 import Main.Helpers.List as List
 import Main.Helpers.Nix exposing (..)
 import Main.Model exposing (..)
+import Main.Model.Page exposing (..)
 import Main.Model.Preferences exposing (..)
 import Main.Ports.Clipboard as Clipboard
 import Main.Ports.Navigation
@@ -147,65 +148,18 @@ update upd modelInit =
             case usi of
                 UpdateSearchInput_PreClear ->
                     model
-                        |> updateRoute
-                            (case model.model_page of
-                                Page_RecipeOptions pageRecipeOptions ->
-                                    let
-                                        routeRecipeOptions =
-                                            pageRecipeOptions.pageRecipeOptions_route
-                                    in
-                                    Route_RecipeOptions
-                                        { routeRecipeOptions
-                                            | routeRecipeOptions_pattern = Nothing
-                                            , routeRecipeOptions_page = Nothing
-                                        }
-
-                                _ ->
-                                    Route_Search { routeSearch_pattern = "" }
-                            )
-                        |> (\( m, c ) -> ( { m | model_page = model.model_page }, c ))
+                        |> updateSearch (update << Update_Route) ""
+                        |> updateModel (\m -> { m | model_page = model.model_page })
                         |> Cmd.append (Task.attempt Update_FocusResult (Dom.blur "main-search-bar"))
 
                 UpdateSearchInput_PreSet search ->
                     model
-                        |> updateRoute
-                            (case model.model_page of
-                                Page_RecipeOptions pageRecipeOptions ->
-                                    let
-                                        routeRecipeOptions =
-                                            pageRecipeOptions.pageRecipeOptions_route
-                                    in
-                                    Route_RecipeOptions
-                                        { routeRecipeOptions
-                                            | routeRecipeOptions_pattern = Just search
-                                            , routeRecipeOptions_page = Nothing
-                                        }
-
-                                _ ->
-                                    Route_Search { routeSearch_pattern = search }
-                            )
-                        |> (\( m, c ) -> ( { m | model_page = model.model_page }, c ))
+                        |> updateSearch updateRoute search
+                        |> updateModel (\m -> { m | model_page = model.model_page })
 
                 UpdateSearchInput_Set search ->
                     model
-                        |> update
-                            (Update_Route
-                                (case model.model_page of
-                                    Page_RecipeOptions pageRecipeOptions ->
-                                        let
-                                            routeRecipeOptions =
-                                                pageRecipeOptions.pageRecipeOptions_route
-                                        in
-                                        Route_RecipeOptions
-                                            { routeRecipeOptions
-                                                | routeRecipeOptions_pattern = Just search
-                                                , routeRecipeOptions_page = Nothing
-                                            }
-
-                                    _ ->
-                                        Route_Search { routeSearch_pattern = search }
-                                )
-                            )
+                        |> updateSearch (update << Update_Route) search
 
         Update_AmbientKeyPress input ->
             if input.key == "Escape" then
@@ -256,8 +210,7 @@ update upd modelInit =
                 Ok options ->
                     ( { model
                         | model_RecipeOptions =
-                            { modelRecipeOptions_available = options
-                            , modelRecipeOptions_filtered = options |> Dict.toList
+                            { recipeOptions_available = options
                             }
                       }
                     , Cmd.none
@@ -278,16 +231,6 @@ update upd modelInit =
 updateRoute : Route -> Updater
 updateRoute route =
     case route of
-        Route_Search routeSearch ->
-            updateConfig <|
-                \model ->
-                    ( { model
-                        | model_page = Page_Search
-                        , model_search = routeSearch.routeSearch_pattern
-                      }
-                    , Cmd.none
-                    )
-
         Route_App routeApp ->
             updateConfig <|
                 \model ->
@@ -343,7 +286,7 @@ updateRoute route =
 
                         Nothing ->
                             { model
-                                | model_page = Page_Search
+                                | model_page = defaultPage
                                 , model_errors = [ Error_App (ErrorApp_NotFound routeApp.routeApp_name) ]
                             }
                     , let
@@ -360,8 +303,64 @@ updateRoute route =
 
                       else
                         case routeApp.routeApp_focus of
+                            Just focus ->
+                                scrollToAndHighlight (focus |> showRouteAppFocus)
+
+                            Nothing ->
+                                Cmd.none
+                    )
+
+        Route_Apps routeApps ->
+            updateConfig <|
+                \model ->
+                    ( { model
+                        | model_page = Page_Apps { pageApps_route = routeApps }
+                        , model_search = routeApps.routeApps_search
+                      }
+                    , Cmd.none
+                    )
+
+        Route_Packages routePackages ->
+            updateConfig <|
+                \model ->
+                    let
+                        search =
+                            routePackages.routePackages_search |> String.toLower
+
+                        availableItems =
+                            model.model_config.config_packages
+
+                        filteredItems =
+                            availableItems
+                                |> Dict.filter (\name _ -> String.contains search (name |> String.toLower))
+                    in
+                    ( { model
+                        | model_page =
+                            Page_Packages
+                                { pagePackages_route = routePackages
+                                , pagePackages_pagination =
+                                    defaultPagePagination
+                                        routePackages.routePackages_pagination
+                                        (filteredItems |> Dict.values)
+                                }
+                        , model_search = routePackages.routePackages_search
+                      }
+                    , let
+                        isSameFocus =
+                            case model.model_page of
+                                Page_Packages oldPackagesPage ->
+                                    oldPackagesPage.pagePackages_route.routePackages_focus == routePackages.routePackages_focus
+
+                                _ ->
+                                    False
+                      in
+                      if isSameFocus then
+                        Cmd.none
+
+                      else
+                        case routePackages.routePackages_focus of
                             Just targetId ->
-                                scrollToAndHighlight (targetId |> showRouteAppFocus)
+                                scrollToAndHighlight (targetId |> showRoutePackagesFocus)
 
                             Nothing ->
                                 Cmd.none
@@ -372,45 +371,26 @@ updateRoute route =
                 updateRecipeOptions <|
                     \model ->
                         let
-                            recipeOptions =
-                                model.model_RecipeOptions
-
                             search =
-                                routeRecipe.routeRecipeOptions_pattern |> Maybe.withDefault ""
+                                routeRecipe.routeRecipeOptions_search |> String.toLower
 
-                            filtered =
-                                recipeOptions.modelRecipeOptions_available
-                                    |> Dict.filter (\name _ -> String.contains (search |> String.toLower) (name |> String.toLower))
-                                    |> Dict.toList
+                            availableItems =
+                                model.model_RecipeOptions.recipeOptions_available
 
-                            maxResultsPerPage =
-                                routeRecipe.routeRecipeOptions_MaxResultsPerPage
-                                    |> Maybe.withDefault 10
-
-                            pageRecipe =
-                                { pageRecipeOptions_route = routeRecipe
-                                , pageRecipeOptions_page =
-                                    routeRecipe.routeRecipeOptions_page
-                                        |> Maybe.withDefault 1
-                                , pageRecipeOptions_MaxResultsPerPage = maxResultsPerPage
-                                , pageRecipeOptions_LastPage =
-                                    filtered
-                                        |> List.length
-                                        |> (\x -> (toFloat x / toFloat maxResultsPerPage) |> ceiling)
-                                        |> max 1
-                                }
+                            filteredItems =
+                                availableItems
+                                    |> Dict.filter (\name _ -> String.contains search (name |> String.toLower))
                         in
                         ( { model
-                            | model_page = Page_RecipeOptions pageRecipe
-                            , model_search = search
-                            , model_RecipeOptions =
-                                { recipeOptions
-                                    | modelRecipeOptions_filtered =
-                                        filtered
-                                            |> List.chunksOf pageRecipe.pageRecipeOptions_MaxResultsPerPage
-                                            |> List.at (pageRecipe.pageRecipeOptions_page - 1)
-                                            |> Maybe.withDefault []
-                                }
+                            | model_page =
+                                Page_RecipeOptions
+                                    { pageRecipeOptions_route = routeRecipe
+                                    , pageRecipeOptions_pagination =
+                                        defaultPagePagination
+                                            routeRecipe.routeRecipeOptions_pagination
+                                            (filteredItems |> Dict.toList)
+                                    }
+                            , model_search = routeRecipe.routeRecipeOptions_search
                           }
                         , let
                             isSameFocus =
@@ -459,12 +439,64 @@ updateConfig up model =
         model |> up
 
 
+updateSearch : (Route -> Updater) -> String -> Updater
+updateSearch up search model =
+    { model | model_search = search }
+        |> up
+            (case model.model_page of
+                Page_App pageApp ->
+                    Route_Apps { routeApps_search = search }
+
+                Page_Apps pageApps ->
+                    let
+                        routeApps =
+                            pageApps.pageApps_route
+                    in
+                    Route_Apps { routeApps | routeApps_search = search }
+
+                Page_Packages pagePackages ->
+                    let
+                        routePackages =
+                            pagePackages.pagePackages_route
+
+                        routePagination =
+                            routePackages.routePackages_pagination
+                    in
+                    Route_Packages
+                        { routePackages
+                            | routePackages_search = search
+                            , routePackages_pagination = { routePagination | routePagination_current = Nothing }
+                        }
+
+                Page_RecipeOptions pageRecipeOptions ->
+                    let
+                        routeRecipeOptions =
+                            pageRecipeOptions.pageRecipeOptions_route
+
+                        routePagination =
+                            routeRecipeOptions.routeRecipeOptions_pagination
+                    in
+                    Route_RecipeOptions
+                        { routeRecipeOptions
+                            | routeRecipeOptions_search = search
+                            , routeRecipeOptions_pagination = { routePagination | routePagination_current = Nothing }
+                        }
+            )
+
+
+updateModel : (Model -> Model) -> ( Model, Cmd Update ) -> ( Model, Cmd Update )
+updateModel up ( model, cmd ) =
+    ( model |> up
+    , cmd
+    )
+
+
 {-| `updateRecipeOptions up` populates `model.model_recipe.modelRecipeOptions_available` if empty, then runs `up`.
 `up` is thus always run, and only after `model.model_recipe.modelRecipeOptions_available` has been loaded.
 -}
 updateRecipeOptions : Updater -> Updater
 updateRecipeOptions up model =
-    if Dict.isEmpty model.model_RecipeOptions.modelRecipeOptions_available then
+    if Dict.isEmpty model.model_RecipeOptions.recipeOptions_available then
         ( model
         , Http.get
             { url = "forge-options.json"
