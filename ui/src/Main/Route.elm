@@ -38,6 +38,15 @@ type alias RouteApp =
     }
 
 
+defaultRouteApp : RouteApp
+defaultRouteApp =
+    { routeApp_name = ""
+    , routeApp_runShown = False
+    , routeApp_runRuntime = Nothing
+    , routeApp_focusWidget = Nothing
+    }
+
+
 type alias RouteRecipeOptions =
     { routeRecipeOptions_pattern : Maybe NixName
     , routeRecipeOptions_page : Int
@@ -85,35 +94,48 @@ fromAppUrl url =
                     Ok (Route_Search { routeSearch_pattern = q })
 
         [ "app", appName ] ->
-            let
-                ( runShown, runOutput, focusId ) =
+            Ok <|
+                Route_App <|
                     case url.fragment of
                         Just "run-shell" ->
-                            ( True, Just AppRuntime_Shell, Nothing )
+                            { defaultRouteApp
+                                | routeApp_name = appName
+                                , routeApp_runShown = True
+                                , routeApp_runRuntime = Just AppRuntime_Shell
+                            }
 
                         Just "run-container" ->
-                            ( True, Just AppRuntime_Container, Nothing )
+                            { defaultRouteApp
+                                | routeApp_name = appName
+                                , routeApp_runShown = True
+                                , routeApp_runRuntime = Just AppRuntime_Container
+                            }
 
                         Just "run-vm" ->
-                            ( True, Just AppRuntime_VM, Nothing )
+                            { defaultRouteApp
+                                | routeApp_name = appName
+                                , routeApp_runShown = True
+                                , routeApp_runRuntime = Just AppRuntime_VM
+                            }
 
                         Just "run" ->
-                            ( True, Nothing, Nothing )
+                            { defaultRouteApp
+                                | routeApp_name = appName
+                                , routeApp_runShown = True
+                            }
 
                         Just targetId ->
-                            ( False, Nothing, Just targetId )
+                            { defaultRouteApp
+                                | routeApp_name = appName
+                                , routeApp_runShown = False
+                                , routeApp_focusWidget = Just targetId
+                            }
 
                         Nothing ->
-                            ( False, Nothing, Nothing )
-            in
-            Ok
-                (Route_App
-                    { routeApp_name = appName
-                    , routeApp_runShown = runShown
-                    , routeApp_runRuntime = runOutput
-                    , routeApp_focusWidget = focusId
-                    }
-                )
+                            { defaultRouteApp
+                                | routeApp_name = appName
+                                , routeApp_runShown = False
+                            }
 
         [ "recipe", "options" ] ->
             Ok
