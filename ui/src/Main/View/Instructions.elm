@@ -198,11 +198,6 @@ viewPreferencesInstall model pageApp preferencesInstall =
         ]
 
 
-nixShellForgeInput : Model -> String
-nixShellForgeInput model =
-    "  -I forge=\"" ++ (model.model_config.config_repository |> showNixUrl) ++ "/archive/" ++ commit ++ ".tar.gz\" \\\n"
-
-
 viewProgramsInstructions : Model -> PageApp -> Html Update
 viewProgramsInstructions model pageApp =
     div []
@@ -221,7 +216,7 @@ viewProgramsInstructions model pageApp =
 
                     PreferencesInstall_NixTraditional ->
                         [ "nix-shell \\\n"
-                        , nixShellForgeInput model
+                        , "  -I forge=\"" ++ showForgeInput model ++ " \\\n"
                         , "  -p '(import <forge> {})"
                         , "."
                         , pageApp.pageApp_app |> app_output
@@ -251,7 +246,7 @@ viewContainerInstructions model pageApp =
                     PreferencesInstall_NixTraditional ->
                         String.concat
                             [ "nix-build \\\n"
-                            , nixShellForgeInput model
+                            , "  -I forge=\"" ++ showForgeInput model ++ " \\\n"
                             , "  -E '(import <forge> {})"
                             , "."
                             , pageApp.pageApp_app |> app_output
@@ -287,7 +282,7 @@ viewVMInstructions model pageApp =
                     String.join "\n"
                         [ String.concat
                             [ "nix-build \\\n"
-                            , nixShellForgeInput model
+                            , "  -I forge=\"" ++ showForgeInput model ++ " \\\n"
                             , "  -E '(import <forge> {})"
                             , "."
                             , pageApp.pageApp_app |> app_output
@@ -297,4 +292,14 @@ viewVMInstructions model pageApp =
                         , ""
                         , "./result/bin/run-" ++ pageApp.pageApp_app.app_name ++ "-vm"
                         ]
+        ]
+
+
+showForgeInput : Model -> String
+showForgeInput model =
+    String.concat
+        [ model.model_config.config_repository |> showNixUrl
+        , "/archive/"
+        , commit
+        , ".tar.gz\""
         ]
