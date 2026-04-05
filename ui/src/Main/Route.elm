@@ -84,41 +84,36 @@ fromAppUrl url =
                 Just ( q, _ ) ->
                     Ok (Route_Search { routeSearch_pattern = q })
 
-        [ "app", app ] ->
-            case app |> Json.Encode.string |> Json.Decode.decodeValue Main.Config.App.decodeAppName of
-                Err e ->
-                    Err (ErrorRoute_Parsing (Json.Decode.errorToString e))
+        [ "app", appName ] ->
+            let
+                ( runShown, runOutput, focusId ) =
+                    case url.fragment of
+                        Just "run-shell" ->
+                            ( True, Just AppRuntime_Shell, Nothing )
 
-                Ok name ->
-                    let
-                        ( runShown, runOutput, focusId ) =
-                            case url.fragment of
-                                Just "run-shell" ->
-                                    ( True, Just AppRuntime_Shell, Nothing )
+                        Just "run-container" ->
+                            ( True, Just AppRuntime_Container, Nothing )
 
-                                Just "run-container" ->
-                                    ( True, Just AppRuntime_Container, Nothing )
+                        Just "run-vm" ->
+                            ( True, Just AppRuntime_VM, Nothing )
 
-                                Just "run-vm" ->
-                                    ( True, Just AppRuntime_VM, Nothing )
+                        Just "run" ->
+                            ( True, Nothing, Nothing )
 
-                                Just "run" ->
-                                    ( True, Nothing, Nothing )
+                        Just targetId ->
+                            ( False, Nothing, Just targetId )
 
-                                Just targetId ->
-                                    ( False, Nothing, Just targetId )
-
-                                Nothing ->
-                                    ( False, Nothing, Nothing )
-                    in
-                    Ok
-                        (Route_App
-                            { routeApp_name = name
-                            , routeApp_runShown = runShown
-                            , routeApp_runRuntime = runOutput
-                            , routeApp_focusWidget = focusId
-                            }
-                        )
+                        Nothing ->
+                            ( False, Nothing, Nothing )
+            in
+            Ok
+                (Route_App
+                    { routeApp_name = appName
+                    , routeApp_runShown = runShown
+                    , routeApp_runRuntime = runOutput
+                    , routeApp_focusWidget = focusId
+                    }
+                )
 
         [ "recipe", "options" ] ->
             Ok
