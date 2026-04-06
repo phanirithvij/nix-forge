@@ -71,7 +71,7 @@ decodeAppNixosVm =
 
 
 type alias Ngi =
-    { grants : NgiGrants
+    { ngi_grants : NgiGrants
     }
 
 
@@ -82,16 +82,20 @@ decodeNgi =
 
 
 type alias NgiGrants =
-    Dict String NgiGrantsSub
+    Dict NgiGrantName NgiSubgrants
+
+
+type alias NgiGrantName =
+    String
+
+
+type alias NgiSubgrants =
+    List String
 
 
 decodeNgiGrants : Decoder NgiGrants
 decodeNgiGrants =
     Decode.dict (Decode.list Decode.string)
-
-
-type alias NgiGrantsSub =
-    List String
 
 
 type AppRuntime
