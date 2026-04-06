@@ -22,12 +22,7 @@ viewPagePackageLink =
     let
         onClickRoute =
             -- FixMe(correctness)
-            Route_RecipeOptions
-                { routeRecipeOptions_pattern = Just ""
-                , routeRecipeOptions_page = 1
-                , routeRecipeOptions_MaxResultsPerPage = 10
-                , routeRecipeOptions_option = Nothing
-                }
+            Route_RecipeOptions defaultRouteRecipeOptions
     in
     a
         [ href (onClickRoute |> Route.toString)

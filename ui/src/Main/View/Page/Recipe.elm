@@ -25,13 +25,13 @@ viewPageRecipeOptions model pageRecipeOptions =
         routePagePrev =
             Route_RecipeOptions
                 { routeRecipeOptions
-                    | routeRecipeOptions_page = routeRecipeOptions.routeRecipeOptions_page - 1
+                    | routeRecipeOptions_page = Just (pageRecipeOptions.pageRecipeOptions_page - 1)
                 }
 
         routePageNext =
             Route_RecipeOptions
                 { routeRecipeOptions
-                    | routeRecipeOptions_page = routeRecipeOptions.routeRecipeOptions_page + 1
+                    | routeRecipeOptions_page = Just (pageRecipeOptions.pageRecipeOptions_page + 1)
                 }
     in
     div []
@@ -40,7 +40,7 @@ viewPageRecipeOptions model pageRecipeOptions =
                 |> List.map (viewPageRecipeOption model pageRecipeOptions)
             )
         , div [ class "d-flex justify-content-center align-items-center" ]
-            [ if 1 < routeRecipeOptions.routeRecipeOptions_page then
+            [ if 1 < pageRecipeOptions.pageRecipeOptions_page then
                 Html.button
                     [ class "btn"
                     , onClick (Update_Route routePagePrev)
@@ -49,10 +49,10 @@ viewPageRecipeOptions model pageRecipeOptions =
 
               else
                 text ""
-            , text (pageRecipeOptions.pageRecipeOptions_route.routeRecipeOptions_page |> String.fromInt)
+            , text (pageRecipeOptions.pageRecipeOptions_page |> String.fromInt)
             , text " / "
             , text (pageRecipeOptions.pageRecipeOptions_LastPage |> String.fromInt)
-            , if routeRecipeOptions.routeRecipeOptions_page < pageRecipeOptions.pageRecipeOptions_LastPage then
+            , if pageRecipeOptions.pageRecipeOptions_page < pageRecipeOptions.pageRecipeOptions_LastPage then
                 Html.button
                     [ class "btn"
                     , onClick (Update_Route routePageNext)
@@ -109,11 +109,7 @@ viewRecipeOptionsLink =
     let
         onClickRoute =
             Route_RecipeOptions
-                { routeRecipeOptions_pattern = Just ""
-                , routeRecipeOptions_page = 1
-                , routeRecipeOptions_MaxResultsPerPage = 10
-                , routeRecipeOptions_option = Nothing
-                }
+                defaultRouteRecipeOptions
     in
     a
         [ href (onClickRoute |> Route.toString)

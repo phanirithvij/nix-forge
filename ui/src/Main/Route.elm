@@ -49,9 +49,18 @@ defaultRouteApp =
 
 type alias RouteRecipeOptions =
     { routeRecipeOptions_pattern : Maybe NixName
-    , routeRecipeOptions_page : Int
-    , routeRecipeOptions_MaxResultsPerPage : Int
+    , routeRecipeOptions_page : Maybe Int
+    , routeRecipeOptions_MaxResultsPerPage : Maybe Int
     , routeRecipeOptions_option : Maybe String
+    }
+
+
+defaultRouteRecipeOptions : RouteRecipeOptions
+defaultRouteRecipeOptions =
+    { routeRecipeOptions_pattern = Nothing
+    , routeRecipeOptions_page = Nothing
+    , routeRecipeOptions_MaxResultsPerPage = Nothing
+    , routeRecipeOptions_option = Nothing
     }
 
 
@@ -149,27 +158,27 @@ fromAppUrl url =
                             |> Dict.get "page"
                             |> Maybe.andThen List.head
                             |> Maybe.andThen String.toInt
-                            |> Maybe.withDefault 0
-                            |> (\p ->
+                            |> Maybe.andThen
+                                (\p ->
                                     if p < 1 then
-                                        1
+                                        Nothing
 
                                     else
-                                        p
-                               )
+                                        Just p
+                                )
                     , routeRecipeOptions_MaxResultsPerPage =
                         url.queryParameters
                             |> Dict.get "MaxResultsPerPage"
                             |> Maybe.andThen List.head
                             |> Maybe.andThen String.toInt
-                            |> Maybe.withDefault 10
-                            |> (\p ->
+                            |> Maybe.andThen
+                                (\p ->
                                     if p < 1 then
-                                        1
+                                        Nothing
 
                                     else
-                                        p
-                               )
+                                        Just p
+                                )
                     , routeRecipeOptions_option =
                         url.fragment
                     }
@@ -240,18 +249,18 @@ toAppUrl route =
                   )
                 , ( "page"
                   , case routeRecipe.routeRecipeOptions_page of
-                        1 ->
+                        Nothing ->
                             []
 
-                        p ->
+                        Just p ->
                             [ p |> String.fromInt ]
                   )
                 , ( "MaxResultsPerPage"
                   , case routeRecipe.routeRecipeOptions_MaxResultsPerPage of
-                        1 ->
+                        Nothing ->
                             []
 
-                        p ->
+                        Just p ->
                             [ p |> String.fromInt ]
                   )
                 ]

@@ -162,7 +162,7 @@ update upd modelInit =
                                     Route_RecipeOptions
                                         { routeRecipeOptions
                                             | routeRecipeOptions_pattern = Nothing
-                                            , routeRecipeOptions_page = 1
+                                            , routeRecipeOptions_page = Nothing
                                         }
 
                                 _ ->
@@ -183,7 +183,7 @@ update upd modelInit =
                                     Route_RecipeOptions
                                         { routeRecipeOptions
                                             | routeRecipeOptions_pattern = Just search
-                                            , routeRecipeOptions_page = 1
+                                            , routeRecipeOptions_page = Nothing
                                         }
 
                                 _ ->
@@ -204,7 +204,7 @@ update upd modelInit =
                                         Route_RecipeOptions
                                             { routeRecipeOptions
                                                 | routeRecipeOptions_pattern = Just search
-                                                , routeRecipeOptions_page = 1
+                                                , routeRecipeOptions_page = Nothing
                                             }
 
                                     _ ->
@@ -367,26 +367,35 @@ updateRoute route =
 
                             filtered =
                                 recipeOptions.modelRecipeOptions_available
-                                    |> Dict.filter (\name opt -> String.contains (search |> String.toLower) (name |> String.toLower))
+                                    |> Dict.filter (\name _ -> String.contains (search |> String.toLower) (name |> String.toLower))
                                     |> Dict.toList
+
+                            maxResultsPerPage =
+                                routeRecipe.routeRecipeOptions_MaxResultsPerPage
+                                    |> Maybe.withDefault 10
+
+                            pageRecipe =
+                                { pageRecipeOptions_route = routeRecipe
+                                , pageRecipeOptions_page =
+                                    routeRecipe.routeRecipeOptions_page
+                                        |> Maybe.withDefault 1
+                                , pageRecipeOptions_MaxResultsPerPage = maxResultsPerPage
+                                , pageRecipeOptions_LastPage =
+                                    filtered
+                                        |> List.length
+                                        |> (\x -> (toFloat x / toFloat maxResultsPerPage) |> ceiling)
+                                        |> max 1
+                                }
                         in
                         ( { model
-                            | model_page =
-                                Page_RecipeOptions
-                                    { pageRecipeOptions_route = routeRecipe
-                                    , pageRecipeOptions_LastPage =
-                                        filtered
-                                            |> List.length
-                                            |> (\x -> (toFloat x / toFloat routeRecipe.routeRecipeOptions_MaxResultsPerPage) |> ceiling)
-                                            |> max 1
-                                    }
+                            | model_page = Page_RecipeOptions pageRecipe
                             , model_search = search
                             , model_RecipeOptions =
                                 { recipeOptions
                                     | modelRecipeOptions_filtered =
                                         filtered
-                                            |> List.chunksOf routeRecipe.routeRecipeOptions_MaxResultsPerPage
-                                            |> List.at (routeRecipe.routeRecipeOptions_page - 1)
+                                            |> List.chunksOf pageRecipe.pageRecipeOptions_MaxResultsPerPage
+                                            |> List.at (pageRecipe.pageRecipeOptions_page - 1)
                                             |> Maybe.withDefault []
                                 }
                           }

@@ -44,6 +44,8 @@ type alias PageApp =
 
 type alias PageRecipeOptions =
     { pageRecipeOptions_route : RouteRecipeOptions
+    , pageRecipeOptions_page : Int
+    , pageRecipeOptions_MaxResultsPerPage : Int
     , pageRecipeOptions_LastPage : Int
     }
 
