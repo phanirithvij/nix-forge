@@ -323,7 +323,7 @@ viewPageApp model pageApp =
             [ div
                 [ class "col-12 col-lg-9" ]
                 [ viewPageAppHeader model pageApp
-                , viewDescription model pageApp
+                , viewPageAppDescription model pageApp
                 , viewPageAppRun model pageApp
                 ]
             , div
@@ -363,8 +363,8 @@ viewPageAppHeader model pageApp =
         ]
 
 
-viewDescription : Model -> PageApp -> Html Update
-viewDescription model pageApp =
+viewPageAppDescription : Model -> PageApp -> Html Update
+viewPageAppDescription model pageApp =
     div []
         [ p [ class "lead" ] [ text pageApp.pageApp_app.app_description ]
         , viewInstructionsUsage model pageApp
