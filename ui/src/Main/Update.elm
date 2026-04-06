@@ -40,7 +40,7 @@ type Update
     | Update_ToggleNavBar
     | Update_CycleTheme
     | Update_Focus String
-    | Update_SavePreferences PreferencesInstall
+    | Update_SetPreferences Preferences
     | Update_FocusResult (Result Dom.Error ())
     | Update_AmbientKeyPress AmbientKeyState
     | Update_SearchInput UpdateSearchInput
@@ -121,29 +121,24 @@ update upd modelInit =
             , Clipboard.copyToClipboard code
             )
 
-        Update_SavePreferences prefs_install ->
-            let
-                model_preferences =
-                    model.model_preferences
-            in
-            ( { model | model_preferences = { model_preferences | preferences_install = prefs_install } }
-            , savePreferencesInstall prefs_install
+        Update_SetPreferences prefs ->
+            ( { model | model_preferences = prefs }
+            , setPreferences prefs
             )
 
         Update_CycleTheme ->
             let
-                nextTheme =
-                    cyclePreferencesTheme model.model_preferences.preferences_theme
-
-                oldPrefs =
+                preferences =
                     model.model_preferences
-
-                newPrefs =
-                    { oldPrefs | preferences_theme = nextTheme }
             in
-            ( { model | model_preferences = newPrefs }
-            , savePreferencesTheme nextTheme
-            )
+            model
+                |> update
+                    (Update_SetPreferences
+                        { preferences
+                            | preferences_theme =
+                                cyclePreferencesTheme model.model_preferences.preferences_theme
+                        }
+                    )
 
         Update_ToggleNavBar ->
             ( { model | model_navbarExpanded = not model.model_navbarExpanded }, Cmd.none )

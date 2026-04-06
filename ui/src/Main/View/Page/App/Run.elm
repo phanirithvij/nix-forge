@@ -192,6 +192,9 @@ viewPageAppRunNixInstall model pageApp =
 viewPageAppRunNixInstallPreferences : Model -> PageApp -> PreferencesInstall -> Html Update
 viewPageAppRunNixInstallPreferences model _ preferencesInstall =
     let
+        preferences =
+            model.model_preferences
+
         isActive =
             model.model_preferences.preferences_install == preferencesInstall
 
@@ -229,7 +232,7 @@ viewPageAppRunNixInstallPreferences model _ preferencesInstall =
         [ button
             [ class btnClasses
             , style "cursor" "pointer"
-            , onClick (Update_SavePreferences preferencesInstall)
+            , onClick (Update_SetPreferences { preferences | preferences_install = preferencesInstall })
             ]
             (case preferencesInstall of
                 PreferencesInstall_NixFlakes ->

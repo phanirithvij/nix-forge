@@ -37,23 +37,25 @@ decodePreferences =
         )
 
 
+encodePreferences : Preferences -> Value
+encodePreferences preferences =
+    Encode.object
+        [ ( "install", preferences.preferences_install |> encodePreferencesInstall )
+        , ( "theme", preferences.preferences_theme |> encodePreferencesTheme )
+        ]
+
+
+setPreferences : Preferences -> Cmd update
+setPreferences prefs =
+    prefs |> encodePreferences |> setPreferencesJson
+
+
+port setPreferencesJson : Value -> Cmd update
+
+
 type PreferencesInstall
     = PreferencesInstall_NixFlakes
     | PreferencesInstall_NixTraditional
-
-
-port savePreferencesInstallString : String -> Cmd update
-
-
-savePreferencesInstall : PreferencesInstall -> Cmd update
-savePreferencesInstall pref =
-    savePreferencesInstallString <|
-        case pref of
-            PreferencesInstall_NixFlakes ->
-                "nix_flake"
-
-            PreferencesInstall_NixTraditional ->
-                "nix_traditional"
 
 
 decodePreferencesInstall : Decoder PreferencesInstall
@@ -73,6 +75,17 @@ decodePreferencesInstall =
             )
 
 
+encodePreferencesInstall : PreferencesInstall -> Value
+encodePreferencesInstall pref =
+    Encode.string <|
+        case pref of
+            PreferencesInstall_NixFlakes ->
+                "nix_flake"
+
+            PreferencesInstall_NixTraditional ->
+                "nix_traditional"
+
+
 listPreferencesInstall : List PreferencesInstall
 listPreferencesInstall =
     [ PreferencesInstall_NixFlakes
@@ -83,16 +96,6 @@ listPreferencesInstall =
 type PreferencesTheme
     = PreferencesTheme_Dark
     | PreferencesTheme_Light
-
-
-port savePreferencesThemeString : Value -> Cmd update
-
-
-savePreferencesTheme : PreferencesTheme -> Cmd update
-savePreferencesTheme t =
-    t
-        |> encodePreferencesTheme
-        |> savePreferencesThemeString
 
 
 cyclePreferencesTheme : PreferencesTheme -> PreferencesTheme
