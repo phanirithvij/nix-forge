@@ -2,12 +2,13 @@ module Main.View.Page.App exposing (..)
 
 import AppUrl
 import Dict
-import Html exposing (Html, a, button, div, h2, h5, h6, img, li, p, small, span, text, ul)
+import Html exposing (Html, a, button, div, h2, h4, h5, h6, hr, img, li, p, small, span, text, ul)
 import Html.Attributes exposing (attribute, class, href, id, rel, src, style, tabindex, target)
 import Main.Config exposing (..)
 import Main.Config.App exposing (..)
 import Main.Helpers.AppUrl as AppUrl exposing (..)
 import Main.Helpers.Html exposing (..)
+import Main.Helpers.Markdown as Markdown
 import Main.Helpers.Nix exposing (..)
 import Main.Icons exposing (..)
 import Main.Model exposing (..)
@@ -78,8 +79,24 @@ viewPageAppDescription : Model -> PageApp -> Html Update
 viewPageAppDescription model pageApp =
     div []
         [ p [ class "lead" ] [ text pageApp.pageApp_app.app_description ]
-        , viewInstructionsUsage model pageApp
+        , viewPageAppUsage model pageApp
         ]
+
+
+viewPageAppUsage : Model -> PageApp -> Html Update
+viewPageAppUsage _ pageApp =
+    if not (String.isEmpty pageApp.pageApp_app.app_usage) then
+        div [ id "usage", class "mt-4" ]
+            [ hr [] []
+            , h4 [ class "mb-3" ] [ text "Usage Instructions" ]
+            , div [ class "markdown-content" ]
+                (pageApp.pageApp_app.app_usage
+                    |> Markdown.render
+                )
+            ]
+
+    else
+        text ""
 
 
 viewPageAppResources : Model -> PageApp -> Html Update
