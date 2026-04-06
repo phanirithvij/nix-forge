@@ -75,9 +75,15 @@ def generate_app(index: int):
             "grants": generate_grants(),
         },
         "links": {
-            "website": fake.word(),
-            "docs": fake.word(),
-            "source": fake.word(),
+            "website": {
+                "url": fake.url(),
+            },
+            "docs": {
+                "url": fake.url(),
+            },
+            "source": {
+                "url": fake.url(),
+            },
         },
         "nixos": {
             "enable": fake.boolean(),
