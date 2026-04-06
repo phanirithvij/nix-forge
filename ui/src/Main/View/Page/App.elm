@@ -102,8 +102,8 @@ viewPageAppResources model pageApp =
             , a
                 [ class "anchor-link"
                 , href
-                    (model.model_page
-                        |> pageToRoute
+                    (model
+                        |> modelToRoute
                         |> Route.toAppUrl
                         |> AppUrl.setFragment (Just "resources")
                         |> AppUrl.toString
@@ -168,8 +168,8 @@ viewPageAppNgiGrants model pageApp =
                 , a
                     [ class "anchor-link"
                     , href
-                        (model.model_page
-                            |> pageToRoute
+                        (model
+                            |> modelToRoute
                             |> Route.toAppUrl
                             |> AppUrl.setFragment (Just "grants")
                             |> AppUrl.toString

@@ -462,7 +462,7 @@ focus : Model -> (Route -> Maybe String) -> Route -> Cmd Update
 focus model get new =
     let
         oldRoute =
-            model.model_page |> pageToRoute
+            model |> modelToRoute
 
         isSameFocus =
             get oldRoute == get new
