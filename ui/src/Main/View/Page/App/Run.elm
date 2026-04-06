@@ -1,6 +1,6 @@
 module Main.View.Page.App.Run exposing (..)
 
-import Html exposing (Html, a, br, button, details, div, h4, h5, hr, li, p, small, span, summary, text, ul)
+import Html exposing (Html, a, br, button, details, div, h5, hr, li, p, small, span, summary, text, ul)
 import Html.Attributes exposing (class, href, id, style, tabindex, target)
 import Html.Events exposing (stopPropagationOn)
 import Json.Decode as Decode
@@ -8,7 +8,6 @@ import Main.Config exposing (..)
 import Main.Config.App exposing (..)
 import Main.Helpers.AppUrl exposing (..)
 import Main.Helpers.Html exposing (..)
-import Main.Helpers.Markdown as Markdown
 import Main.Helpers.Nix exposing (..)
 import Main.Icons exposing (..)
 import Main.Model exposing (..)
@@ -54,7 +53,7 @@ viewPageAppRun model pageApp =
                         , div [ class "modal-body" ]
                             [ viewPageAppRunRuntimes model pageApp
                             , div [ class "tab-content mb-5 p-3 border rounded" ]
-                                [ viewPageAppInstructions model pageApp ]
+                                [ viewPageAppRunInstructions model pageApp ]
                             ]
                         ]
                     ]
@@ -99,29 +98,29 @@ viewPageAppRunRuntime _ pageApp appRuntime =
         ]
 
 
-viewPageAppInstructions : Model -> PageApp -> Html Update
-viewPageAppInstructions model pageApp =
+viewPageAppRunInstructions : Model -> PageApp -> Html Update
+viewPageAppRunInstructions model pageApp =
     let
         instructions =
             div []
                 [ case pageApp.pageApp_runtime of
                     AppRuntime_Shell ->
                         if pageApp.pageApp_app.app_programs.enable then
-                            viewProgramsInstructions model pageApp
+                            viewPageAppRunShell model pageApp
 
                         else
                             text ""
 
                     AppRuntime_Container ->
                         if pageApp.pageApp_app.app_container.enable then
-                            viewContainerInstructions model pageApp
+                            viewPageAppRunContainer model pageApp
 
                         else
                             text ""
 
                     AppRuntime_VM ->
                         if pageApp.pageApp_app.app_vm.enable then
-                            viewVMInstructions model pageApp
+                            viewPageAppRunVM model pageApp
 
                         else
                             text ""
@@ -136,13 +135,13 @@ viewPageAppInstructions model pageApp =
 
           else
             div []
-                [ viewInstructionsNixInstall model pageApp
+                [ viewPageAppRunNixInstall model pageApp
                 , hr [] []
                 , ul
                     [ class "nav nav-underline mb-1"
                     ]
                     (listPreferencesInstall
-                        |> List.map (viewPreferencesInstall model pageApp)
+                        |> List.map (viewPageAppRunNixInstallPreferences model pageApp)
                     )
                 , br [] []
                 , instructions
@@ -150,23 +149,8 @@ viewPageAppInstructions model pageApp =
         ]
 
 
-viewInstructionsUsage : Model -> PageApp -> Html Update
-viewInstructionsUsage _ pageApp =
-    if not (String.isEmpty pageApp.pageApp_app.app_usage) then
-        div [ id "usage", class "mt-4" ]
-            [ h4 [ class "mb-3" ] [ text "Usage Instructions" ]
-            , div [ class "markdown-content" ]
-                (pageApp.pageApp_app.app_usage
-                    |> Markdown.render
-                )
-            ]
-
-    else
-        text ""
-
-
-viewInstructionsNixInstall : Model -> PageApp -> Html Update
-viewInstructionsNixInstall model pageApp =
+viewPageAppRunNixInstall : Model -> PageApp -> Html Update
+viewPageAppRunNixInstall model pageApp =
     div [ class "accordion" ]
         [ details [ class "accordion-item" ]
             [ summary [ class "accordion-button accordion-header fw-bold" ]
@@ -176,7 +160,7 @@ viewInstructionsNixInstall model pageApp =
                     [ class "nav nav-underline mb-1"
                     ]
                     (listPreferencesInstall
-                        |> List.map (viewPreferencesInstall model pageApp)
+                        |> List.map (viewPageAppRunNixInstallPreferences model pageApp)
                     )
                  , br [] []
                  , p [ class "mb-1" ]
@@ -215,8 +199,8 @@ viewInstructionsNixInstall model pageApp =
         ]
 
 
-viewPreferencesInstall : Model -> PageApp -> PreferencesInstall -> Html Update
-viewPreferencesInstall model _ preferencesInstall =
+viewPageAppRunNixInstallPreferences : Model -> PageApp -> PreferencesInstall -> Html Update
+viewPageAppRunNixInstallPreferences model _ preferencesInstall =
     let
         isActive =
             model.model_preferences.preferences_install == preferencesInstall
@@ -279,8 +263,8 @@ viewPreferencesInstall model _ preferencesInstall =
         ]
 
 
-viewProgramsInstructions : Model -> PageApp -> Html Update
-viewProgramsInstructions model pageApp =
+viewPageAppRunShell : Model -> PageApp -> Html Update
+viewPageAppRunShell model pageApp =
     div []
         [ p [ style "margin-bottom" "0em" ]
             [ text "Create and enter a shell environment for (CLI, GUI) programs." ]
@@ -307,8 +291,8 @@ viewProgramsInstructions model pageApp =
         ]
 
 
-viewContainerInstructions : Model -> PageApp -> Html Update
-viewContainerInstructions model pageApp =
+viewPageAppRunContainer : Model -> PageApp -> Html Update
+viewPageAppRunContainer model pageApp =
     div []
         [ p [ style "margin-bottom" "0em" ] [ text "Run application services using OCI containers." ]
         , br [] []
@@ -343,8 +327,8 @@ viewContainerInstructions model pageApp =
         ]
 
 
-viewVMInstructions : Model -> PageApp -> Html Update
-viewVMInstructions model pageApp =
+viewPageAppRunVM : Model -> PageApp -> Html Update
+viewPageAppRunVM model pageApp =
     div []
         [ p [ style "margin-bottom" "0em" ] [ text "Run application services in a NixOS VM." ]
         , br [] []
