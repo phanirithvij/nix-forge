@@ -114,21 +114,6 @@ type alias NgiSubgrantName =
     String
 
 
-type alias AppLinks =
-    { website : Maybe String
-    , docs : Maybe String
-    , source : Maybe String
-    }
-
-
-decodeAppLinks : Decoder AppLinks
-decodeAppLinks =
-    Decode.map3 AppLinks
-        (Decode.maybe (Decode.at [ "website", "url" ] Decode.string))
-        (Decode.maybe (Decode.at [ "docs", "url" ] Decode.string))
-        (Decode.maybe (Decode.at [ "source", "url" ] Decode.string))
-
-
 type AppRuntime
     = AppRuntime_Shell
     | AppRuntime_Container
@@ -190,20 +175,16 @@ showAppRuntime r =
             "VM"
 
 
-type LinkType
-    = Link_Source
-    | Link_Docs
-    | Link_Website
+type alias AppLinks =
+    { appLinks_docs : Maybe String
+    , appLinks_source : Maybe String
+    , appLinks_website : Maybe String
+    }
 
 
-showAppLink : LinkType -> String
-showAppLink r =
-    case r of
-        Link_Website ->
-            "Homepage"
-
-        Link_Docs ->
-            "Documentation"
-
-        Link_Source ->
-            "Source Repository"
+decodeAppLinks : Decoder AppLinks
+decodeAppLinks =
+    Decode.map3 AppLinks
+        (Decode.maybe (Decode.at [ "docs", "url" ] Decode.string))
+        (Decode.maybe (Decode.at [ "source", "url" ] Decode.string))
+        (Decode.maybe (Decode.at [ "website", "url" ] Decode.string))

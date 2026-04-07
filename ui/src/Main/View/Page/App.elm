@@ -107,28 +107,6 @@ viewPageAppUsage _ pageApp =
 
 viewPageAppResources : Model -> PageApp -> Html Update
 viewPageAppResources model pageApp =
-    let
-        links =
-            List.filterMap
-                (\( linkType, maybeLink ) ->
-                    Maybe.map
-                        (\url ->
-                            li [ class "list-group-item bg-transparent px-0 mb-3" ]
-                                [ a
-                                    [ href url
-                                    , target "_blank"
-                                    , rel "noopener"
-                                    ]
-                                    [ text (linkType |> showAppLink) ]
-                                ]
-                        )
-                        maybeLink
-                )
-                [ ( Link_Website, pageApp.pageApp_app.app_links.website )
-                , ( Link_Docs, pageApp.pageApp_app.app_links.docs )
-                , ( Link_Source, pageApp.pageApp_app.app_links.source )
-                ]
-    in
     div
         [ class "box-container target-highlight mb-3"
         , id "resources"
@@ -151,7 +129,42 @@ viewPageAppResources model pageApp =
                 []
             ]
         , ul [ class "", style "padding-left" "10px" ]
-            (links ++ [ viewPageAppRecipeLink model pageApp ])
+            (List.concat
+                [ viewPageAppResourcesItem "Homepage" pageApp.pageApp_app.app_links.appLinks_website
+                , viewPageAppResourcesItem "Documentation" pageApp.pageApp_app.app_links.appLinks_docs
+                , viewPageAppResourcesItem "Source Repository" pageApp.pageApp_app.app_links.appLinks_source
+                , viewPageAppResourcesItem "Forge Recipe" (Just (showAppRecipeLink model pageApp.pageApp_app))
+                ]
+            )
+        ]
+
+
+viewPageAppResourcesItem : String -> Maybe String -> List (Html msg)
+viewPageAppResourcesItem name value =
+    case value of
+        Nothing ->
+            []
+
+        Just url ->
+            [ li [ class "list-group-item bg-transparent px-0 mb-3" ]
+                [ a
+                    [ href url
+                    , target "_blank"
+                    , rel "noopener"
+                    ]
+                    [ text name ]
+                ]
+            ]
+
+
+showAppRecipeLink : Model -> App -> String
+showAppRecipeLink model app =
+    String.join "/"
+        [ model.model_config.config_repository |> showNixUrl
+        , "blob/" ++ commit
+        , model.model_config.config_recipe.configRecipe_apps
+        , app |> app_output
+        , "recipe.nix"
         ]
 
 
@@ -193,25 +206,6 @@ viewPageAppNgiGrants model pageApp =
                     |> List.map viewPageGrantCategory
                 )
             ]
-
-
-viewPageAppRecipeLink : Model -> PageApp -> Html update
-viewPageAppRecipeLink model pageApp =
-    li [ class "list-group-item bg-transparent px-0" ]
-        [ a
-            [ href
-                (String.join "/"
-                    [ model.model_config.config_repository |> showNixUrl
-                    , "blob/" ++ commit
-                    , model.model_config.config_recipe.configRecipe_apps
-                    , pageApp.pageApp_app |> app_output
-                    , "recipe.nix"
-                    ]
-                )
-            , target "_blank"
-            ]
-            [ text "Forge Recipe" ]
-        ]
 
 
 viewPageGrantCategory : ( String, NgiSubgrants ) -> Html msg
