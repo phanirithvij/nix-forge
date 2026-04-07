@@ -20,7 +20,7 @@
 
   build.pythonPackageBuilder = {
     enable = true;
-    requirements = {
+    inputs = {
       build-system = [
         pkgs.python3Packages.setuptools
       ];

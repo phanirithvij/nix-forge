@@ -20,7 +20,7 @@ rec {
 
   build.standardBuilder = {
     enable = true;
-    requirements.native = [
+    inputs.build = [
       pkgs.cmake
     ];
   };

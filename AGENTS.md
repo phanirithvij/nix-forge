@@ -10,9 +10,11 @@ This specification guides LLMs in generating Nix Forge recipes - declarative con
 
 1. **Python applications** - Projects with `pyproject.toml` or `setup.py` that provide CLI tools (use `pythonAppBuilder`)
 2. **Python libraries** - Projects with `pyproject.toml` or `setup.py` meant to be imported by other packages (use `pythonPackageBuilder`)
-3. **CMake-based projects** - Projects with `CMakeLists.txt` (use `standardBuilder`)
-4. **Autotools-based projects** - Projects with `configure` or `configure.ac` (use `standardBuilder`)
-5. **Makefile-based projects** - Projects with standard `Makefile` targets (use `standardBuilder`)
+3. **Go modules** - Projects with `go.mod` (use `goPackageBuilder`)
+4. **Rust crates** - Projects with `Cargo.toml` (use `rustPackageBuilder`)
+5. **CMake-based projects** - Projects with `CMakeLists.txt` (use `standardBuilder`)
+6. **Autotools-based projects** - Projects with `configure` or `configure.ac` (use `standardBuilder`)
+7. **Makefile-based projects** - Projects with standard `Makefile` targets (use `standardBuilder`)
 
 
 ## Recipe File Structure
@@ -44,7 +46,7 @@ Other packages built by Nix Forge can be referenced in recipes using `pkgs.mypkg
 ```nix
 {
   # Reference another Nix Forge package
-  requirements.build = [
+  inputs.run = [
     pkgs.mypkgs.gdal  # Access gdal from Nix Forge
   ];
 }
@@ -106,13 +108,16 @@ error: flake does not provide attribute 'packages.x86_64-linux.<package-name>'
 {
   build.standardBuilder = {
     enable = true;
-    requirements.native = [
+    inputs.build = [
       pkgs.cmake
       pkgs.pkg-config
     ];
-    requirements.build = [
+    inputs.run = [
       pkgs.openssl
       pkgs.zlib
+    ];
+    inputs.check = [
+      pkgs.cunit
     ];
   };
 }
@@ -130,7 +135,7 @@ error: flake does not provide attribute 'packages.x86_64-linux.<package-name>'
 {
   build.pythonAppBuilder = {
     enable = true;
-    requirements = {
+    inputs = {
       build-system = [
         pkgs.python3Packages.setuptools
       ];
@@ -174,7 +179,7 @@ error: flake does not provide attribute 'packages.x86_64-linux.<package-name>'
 {
   build.pythonPackageBuilder = {
     enable = true;
-    requirements = {
+    inputs = {
       build-system = [
         pkgs.python3Packages.setuptools
       ];
@@ -216,6 +221,68 @@ error: flake does not provide attribute 'packages.x86_64-linux.<package-name>'
 **Choosing between pythonAppBuilder and pythonPackageBuilder**:
 - **pythonAppBuilder**: For programs meant to be run (`mypy`, `black`, `fio`)
 - **pythonPackageBuilder**: For libraries meant to be imported (`requests`, `numpy`, `attrs`)
+
+### 4. goPackageBuilder (Go Modules)
+**When to use**: Go projects using Go modules
+
+```nix
+{
+  build.goPackageBuilder = {
+    enable = true;
+    inputs.build = [
+      pkgs.pkg-config
+    ];
+    inputs.run = [
+      pkgs.openssl
+    ];
+    inputs.check = [
+      pkgs.gotestsum
+    ];
+    vendorHash = "sha256-...";
+    ldflags = [ "-X main.version=1.0.0" ];
+  };
+}
+```
+
+**Characteristics**:
+- Uses `buildGoModule` from nixpkgs
+- Supports vendoring and proxy vendoring
+- Can build multiple packages via `subPackages`
+
+**Inputs options**:
+- `inputs.build`: Build-time tools (pkg-config, installShellFiles)
+- `inputs.run`: CGO dependencies (openssl, sqlite)
+- `inputs.check`: Test tools (gotestsum)
+
+### 5. rustPackageBuilder (Rust Crates)
+**When to use**: Rust projects with Cargo
+
+```nix
+{
+  build.rustPackageBuilder = {
+    enable = true;
+    inputs.build = [
+      pkgs.pkg-config
+      pkgs.rustPlatform.bindgenHook
+    ];
+    inputs.run = [
+      pkgs.openssl
+      pkgs.sqlite
+    ];
+    cargoHash = "sha256-...";
+    cargoBuildFlags = [ "--release" ];
+  };
+}
+```
+
+**Characteristics**:
+- Uses `rustPlatform.buildRustPackage` from nixpkgs
+- Supports cargo hash verification
+- Handles native build inputs via bindgenHook for crates with C bindings
+
+**Inputs options**:
+- `inputs.build`: Build-time tools (pkg-config, bindgenHook)
+- `inputs.run`: Runtime dependencies (openssl, sqlite, etc.)
 
 ## Source Configuration
 
@@ -292,12 +359,12 @@ development = {
 };
 ```
 
-## Advanced: extraDrvAttrs
+## Advanced: extraAttrs
 
 For expert-level customization:
 
 ```nix
-build.extraDrvAttrs = {
+build.extraAttrs = {
   preConfigure = ''
     export HOME=$(mktemp -d)
   '';
@@ -587,12 +654,12 @@ IF Python project with pyproject.toml:
 
 ELSE IF has configure script OR uses CMake OR standard Makefile:
   → standardBuilder
-  (Use build.extraDrvAttrs for custom build configuration)
+  (Use build.extraAttrs for custom build configuration)
 ```
 
 ### 3. Dependency Resolution
-- **Build tools**: cmake, pkg-config, autoconf → `requirements.native`
-- **Libraries**: openssl, zlib, curl → `requirements.build`
+- **Build tools**: cmake, pkg-config, autoconf → `inputs.build`
+- **Libraries**: openssl, zlib, curl → `inputs.run`
 - **Python packages**: Use `pkgs.python3Packages.*`
 - **Unknown packages**: Use `pkgs.<package-name>`
 
@@ -639,11 +706,11 @@ source.hash = "";  # Leave empty initially
 
   build.standardBuilder = {
     enable = true;
-    requirements.native = [
+    inputs.build = [
       pkgs.rustc
       pkgs.cargo
     ];
-    requirements.build = [ ];
+    inputs.run = [ ];
   };
 
   test.script = ''
@@ -676,10 +743,10 @@ source.hash = "";  # Leave empty initially
 
   build.standardBuilder = {
     enable = true;
-    requirements.native = [
+    inputs.build = [
       pkgs.which
     ];
-    requirements.build = [
+    inputs.run = [
       pkgs.openssl
       pkgs.pcre
       pkgs.zlib
@@ -716,10 +783,10 @@ source.hash = "";  # Leave empty initially
 
   build.pythonAppBuilder = {
     enable = true;
-    requirements.build-system = [
+    inputs.build-system = [
       pkgs.python3Packages.setuptools
     ];
-    requirements.dependencies = [
+    inputs.dependencies = [
       pkgs.python3Packages.typing-extensions
       pkgs.python3Packages.mypy-extensions
     ];
@@ -755,10 +822,10 @@ source.hash = "";  # Leave empty initially
 
   build.pythonPackageBuilder = {
     enable = true;
-    requirements.build-system = [
+    inputs.build-system = [
       pkgs.python3Packages.setuptools
     ];
-    requirements.dependencies = [
+    inputs.dependencies = [
       pkgs.python3Packages.charset-normalizer
       pkgs.python3Packages.idna
       pkgs.python3Packages.urllib3
@@ -786,7 +853,7 @@ source.hash = "";  # Leave empty initially
 - **Solution**: Update hash with value from error message
 
 **Issue**: Missing dependency
-- **Solution**: Add to requirements.native or requirements.build
+- **Solution**: Add to inputs.build or inputs.run
 
 ## Naming Conventions
 
@@ -847,7 +914,7 @@ Check for these files in the repository (in order of priority):
 
 - [ ] **Is the code in a subdirectory?**
   - Example: `geodiff/geodiff/CMakeLists.txt` (build file is in `geodiff/` subdirectory)
-  - Solution: Set `build.extraDrvAttrs.sourceRoot = "source/<subdir>";`
+  - Solution: Set `build.extraAttrs.sourceRoot = "source/<subdir>";`
 
 - [ ] **Is this a monorepo with multiple projects?**
   - Identify the correct subdirectory for the package you want to build
@@ -894,8 +961,9 @@ Check for submodules:
 
 **Dependency categories:**
 
-- **Build tools** (cmake, pkg-config, autoconf, meson, ninja) → `requirements.native`
-- **Libraries** (sqlite, gdal, openssl, zlib, postgresql) → `requirements.build`
+- **Build tools** (cmake, pkg-config, autoconf, meson, ninja) → `inputs.build`
+- **Libraries** (sqlite, gdal, openssl, zlib, postgresql) → `inputs.run`
+- **Test Tools** (cunit, pytest) → `inputs.check`
 - **Python packages** → `pkgs.python3Packages.<name>` in dependencies
 
 ### Step 5: Check for External/Vendored Dependencies
@@ -913,19 +981,19 @@ Nix builds in a sandbox without network access. You must:
 
 1. **Option 1:** Disable with CMake/build flags
    ```nix
-   build.extraDrvAttrs = {
+   build.extraAttrs = {
      cmakeFlags = [ "-DUSE_EXTERNAL_LIBS=OFF" ];
    };
    ```
 
 2. **Option 2:** Provide dependencies via nativeBuildInputs
    ```nix
-   requirements.native = [ pkgs.somelib ];
+   inputs.build = [ pkgs.somelib ];
    ```
 
 3. **Option 3:** Patch build files to remove download steps
    ```nix
-   build.extraDrvAttrs = {
+   build.extraAttrs = {
      postPatch = ''
        substituteInPlace CMakeLists.txt \
          --replace-fail "ExternalProject_Add" "# ExternalProject_Add"
@@ -981,14 +1049,14 @@ CMake Error: The source directory does not appear to contain CMakeLists.txt
 
 **Solution:**
 ```nix
-build.extraDrvAttrs = {
+build.extraAttrs = {
   sourceRoot = "source/<subdirectory>";
 };
 ```
 
 **Example:**
 ```nix
-build.extraDrvAttrs = {
+build.extraAttrs = {
   sourceRoot = "source/geodiff";  # For geodiff/geodiff/CMakeLists.txt
 };
 ```
@@ -1011,19 +1079,19 @@ CMake Error at CMakeLists.txt:104 (INCLUDE):
 
 1. **Disable downloads via CMake flags:**
    ```nix
-   build.extraDrvAttrs = {
+   build.extraAttrs = {
      cmakeFlags = [ "-DUSE_SYSTEM_LIBS=ON" "-DENABLE_EXTERNAL_DOWNLOAD=OFF" ];
    };
    ```
 
 2. **Provide missing dependencies:**
    ```nix
-   requirements.build = [ pkgs.libgpkg ];  # If available in nixpkgs
+   inputs.run = [ pkgs.libgpkg ];  # If available in nixpkgs
    ```
 
 3. **Patch CMakeLists.txt:**
    ```nix
-   build.extraDrvAttrs = {
+   build.extraAttrs = {
      postPatch = ''
        substituteInPlace CMakeLists.txt \
          --replace-fail "include(ExternalProject)" ""
@@ -1043,7 +1111,7 @@ ERROR Missing dependencies:
 
 **Solution:** Relax version constraint by patching pyproject.toml:
 ```nix
-build.extraDrvAttrs = {
+build.extraAttrs = {
   postPatch = ''
     substituteInPlace pyproject.toml \
       --replace-fail "cython~=3.0.2" "cython"
@@ -1065,7 +1133,7 @@ Checking runtime dependencies for package.whl
 **Solution:** Add missing packages to dependencies:
 ```nix
 build.pythonAppBuilder = {
-  requirements = {
+  inputs = {
     dependencies = [
       pkgs.python3Packages.attrs
       pkgs.python3Packages.click
@@ -1083,21 +1151,21 @@ build.pythonAppBuilder = {
 
 For CMake:
 ```nix
-build.extraDrvAttrs = {
+build.extraAttrs = {
   cmakeFlags = [ "-DENABLE_TESTS=OFF" "-DBUILD_TESTING=OFF" ];
 };
 ```
 
 For Meson:
 ```nix
-build.extraDrvAttrs = {
+build.extraAttrs = {
   mesonFlags = [ "-Dtests=false" ];
 };
 ```
 
 For Autotools:
 ```nix
-build.extraDrvAttrs = {
+build.extraAttrs = {
   configureFlags = [ "--disable-tests" ];
 };
 ```
@@ -1133,7 +1201,7 @@ START: What type of project is this?
       ├─ Check for: all, install, clean targets
       ├─ native: make, pkg-config
       └─ build: libraries
-      └─ For custom configuration: use build.extraDrvAttrs
+      └─ For custom configuration: use build.extraAttrs
 ```
 
 ## Common Dependencies Mapping
@@ -1168,7 +1236,7 @@ START: What type of project is this?
 | wheel | `pkgs.python3Packages.wheel` |
 | pytest | `pkgs.python3Packages.pytest` (test only) |
 
-### Build Tools (always in requirements.native)
+### Build Tools (always in inputs.build)
 
 - `pkgs.cmake` - CMake build system
 - `pkgs.pkg-config` - Finding library dependencies
@@ -1231,7 +1299,7 @@ git add recipes/packages/<name>/recipe.nix
    ```
 
    Common fixes needed:
-   - Add missing dependencies to `requirements.native` or `requirements.build`
+   - Add missing dependencies to `inputs.build` or `inputs.run`
    - Set `sourceRoot` if CMakeLists.txt not in root
    - Patch build files to remove external downloads
    - Relax Python version constraints
@@ -1276,7 +1344,7 @@ This example demonstrates a complex CMake project with subdirectory structure:
 
   build.standardBuilder = {
     enable = true;
-    requirements = {
+    inputs = {
       # Build tools needed during compilation
       native = [
         pkgs.cmake        # CMake build system
@@ -1289,7 +1357,7 @@ This example demonstrates a complex CMake project with subdirectory structure:
     };
   };
 
-  build.extraDrvAttrs = {
+  build.extraAttrs = {
     # CMakeLists.txt is in geodiff/geodiff/, not the root directory
     # Repository structure: geodiff/geodiff/CMakeLists.txt
     sourceRoot = "source/geodiff";
@@ -1337,7 +1405,7 @@ This example demonstrates a Python project with complex dependencies:
 
   build.pythonAppBuilder = {
     enable = true;
-    requirements = {
+    inputs = {
       # Python build system packages
       build-system = [
         pkgs.python3Packages.setuptools
@@ -1357,7 +1425,7 @@ This example demonstrates a Python project with complex dependencies:
     };
   };
 
-  build.extraDrvAttrs = {
+  build.extraAttrs = {
     # Relax Cython version constraint from ~=3.0.2 to accept any version
     postPatch = ''
       substituteInPlace pyproject.toml \

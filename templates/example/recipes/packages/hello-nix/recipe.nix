@@ -19,7 +19,7 @@
     enable = true;
   };
 
-  build.extraDrvAttrs = {
+  build.extraAttrs = {
     makeFlags = [ "PREFIX=$(out)" ];
   };
 

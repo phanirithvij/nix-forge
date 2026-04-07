@@ -143,7 +143,7 @@ in
                           # Each builder module defines its own options and configuration logic.
 
                           # Common builder options (available to all builders)
-                          extraDrvAttrs = lib.mkOption {
+                          extraAttrs = lib.mkOption {
                             type = lib.types.attrsOf lib.types.anything;
                             default = { };
                             description = ''

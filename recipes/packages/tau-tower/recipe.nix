@@ -20,8 +20,8 @@
 
   build.rustPackageBuilder = {
     enable = true;
-    requirements = {
-      native = with pkgs; [
+    inputs = {
+      build = with pkgs; [
         perl
         pkg-config
       ];

@@ -29,8 +29,8 @@ in
                       Standard builder for autotools, CMake, or Makefile-based projects.
 
                       Automatically handles configure, build, and install phases'';
-                    requirements = {
-                      native = lib.mkOption {
+                    inputs = {
+                      build = lib.mkOption {
                         type = lib.types.listOf lib.types.package;
                         default = [ ];
                         description = ''
@@ -40,7 +40,7 @@ in
                         '';
                         example = lib.literalExpression "[ pkgs.cmake pkgs.pkg-config pkgs.ninja ]";
                       };
-                      build = lib.mkOption {
+                      run = lib.mkOption {
                         type = lib.types.listOf lib.types.package;
                         default = [ ];
                         description = ''
@@ -49,6 +49,16 @@ in
                           Libraries needed by the package at runtime.
                         '';
                         example = lib.literalExpression "[ pkgs.openssl pkgs.sqlite pkgs.zlib ]";
+                      };
+                      check = lib.mkOption {
+                        type = lib.types.listOf lib.types.package;
+                        default = [ ];
+                        description = ''
+                          Test dependencies.
+
+                          Packages needed to run tests.
+                        '';
+                        example = lib.literalExpression "[ pkgs.cunit ]";
                       };
                     };
                   };
@@ -76,12 +86,13 @@ in
                         version = pkg.version;
                         src = sharedBuildAttrs.pkgSource pkg;
                         patches = pkg.source.patches;
-                        nativeBuildInputs = pkg.build.standardBuilder.requirements.native;
-                        buildInputs = pkg.build.standardBuilder.requirements.build;
+                        nativeBuildInputs = pkg.build.standardBuilder.inputs.build;
+                        buildInputs = pkg.build.standardBuilder.inputs.run;
+                        checkInputs = pkg.build.standardBuilder.inputs.check;
                         passthru = sharedBuildAttrs.pkgPassthru pkg finalAttrs.finalPackage;
                         meta = sharedBuildAttrs.pkgMeta pkg;
                       }
-                      // pkg.build.extraDrvAttrs
+                      // pkg.build.extraAttrs
                       // lib.optionalAttrs pkg.build.debug sharedBuildAttrs.debugShellHookAttr
                     )
                     # Derivation end
