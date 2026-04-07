@@ -343,7 +343,7 @@ updateRoute route =
                                                     , pageApp_app = app
                                                     , pageApp_runtime = Just selectedAppRuntime
                                                     }
-                                            , model_errors = [ Error_App (ErrorApp_NoSuchRuntime selectedAppRuntime) ]
+                                            , model_errors = [ Error_App (ErrorApp_NoSuchRuntime app.app_name selectedAppRuntime) ]
                                         }
 
                         Nothing ->

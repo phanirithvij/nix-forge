@@ -6,7 +6,6 @@ import Html.Events exposing (onInput, preventDefaultOn)
 import Json.Decode as Decode
 import Main.Config exposing (..)
 import Main.Config.App exposing (..)
-import Main.Error
 import Main.Helpers.AppUrl exposing (..)
 import Main.Helpers.Html exposing (..)
 import Main.Helpers.Nix exposing (..)
@@ -16,6 +15,7 @@ import Main.Model.Preferences exposing (..)
 import Main.Route as Route exposing (..)
 import Main.Subscriptions exposing (decodeEscapeKey)
 import Main.Update exposing (..)
+import Main.View.Errors exposing (..)
 import Main.View.Page.App exposing (..)
 import Main.View.Page.Recipe exposing (..)
 
@@ -30,12 +30,12 @@ view model =
                 [ class "d-flex align-items-center gap-2 gap-md-3" ]
                 [ viewTitle
                 , div [ class "flex-grow-1" ]
-                    [ model |> viewSearchInput ]
+                    [ viewSearchInput model ]
                 , div
                     [ class "d-none d-md-flex align-items-center gap-4" ]
                     [ -- viewPackagesLink
                       viewRecipeOptionsLink
-                    , model |> viewThemeToggle
+                    , viewThemeToggle model
                     ]
                 , button
                     [ class "navbar-toggler d-md-none border-0 p-1"
@@ -67,22 +67,15 @@ view model =
                     [ ul [ class "nav flex-column gap-2" ]
                         [ -- li [ class "nav-item" ] [ viewPackagesLink ]
                           li [ class "nav-item" ] [ viewRecipeOptionsLink ]
-                        , li [ class "nav-item mt-2 pt-2 border-top" ] [ model |> viewThemeToggle ]
+                        , li [ class "nav-item mt-2 pt-2 border-top" ] [ viewThemeToggle model ]
                         ]
                     ]
                 ]
             ]
-        , div []
-            (model.model_errors
-                |> List.map
-                    (\error ->
-                        div [ class "alert alert-danger" ]
-                            [ text ("Error: " ++ Main.Error.showError error) ]
-                    )
-            )
+        , viewErrors model
         , main_
             [ class "flex-grow-1" ]
-            [ section [] [ model |> viewPage ] ]
+            [ section [] [ viewPage model ] ]
         , footer
             [ class "mt-auto py-3 border-top" ]
             [ viewPoweredBy model ]
