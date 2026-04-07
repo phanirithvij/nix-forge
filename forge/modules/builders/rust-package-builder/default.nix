@@ -39,8 +39,8 @@ in
                   src = sharedBuildAttrs.pkgSource pkg;
                   patches = pkg.source.patches or [ ];
 
-                  nativeBuildInputs = pkg.build.rustPackageBuilder.requirements.native;
-                  buildInputs = pkg.build.rustPackageBuilder.requirements.build;
+                  nativeBuildInputs = pkg.build.rustPackageBuilder.inputs.build;
+                  buildInputs = pkg.build.rustPackageBuilder.inputs.run;
 
                   cargoHash = pkg.build.rustPackageBuilder.cargoHash;
                   cargoBuildFlags = pkg.build.rustPackageBuilder.cargoBuildFlags;
@@ -48,7 +48,7 @@ in
                   passthru = sharedBuildAttrs.pkgPassthru pkg finalAttrs.finalPackage;
                   meta = sharedBuildAttrs.pkgMeta pkg;
                 }
-                // pkg.build.extraDrvAttrs
+                // pkg.build.extraAttrs
                 // lib.optionalAttrs pkg.build.debug sharedBuildAttrs.debugShellHookAttr
               )
               # Derivation end

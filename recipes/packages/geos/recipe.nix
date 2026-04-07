@@ -23,7 +23,7 @@
 
   build.standardBuilder = {
     enable = true;
-    requirements.native = [
+    inputs.build = [
       pkgs.cmake
       pkgs.ninja
     ];

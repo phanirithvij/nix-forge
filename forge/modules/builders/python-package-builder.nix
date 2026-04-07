@@ -29,7 +29,7 @@ in
                       Python package builder for reusable Python libraries.
 
                       Uses buildPythonPackage which allows the package to be used as a dependency by other packages'';
-                    requirements = {
+                    inputs = {
                       build-system = lib.mkOption {
                         type = lib.types.listOf lib.types.package;
                         default = [ ];
@@ -124,16 +124,16 @@ in
                         format = "pyproject";
                         src = sharedBuildAttrs.pkgSource pkg;
                         patches = pkg.source.patches;
-                        build-system = pkg.build.pythonPackageBuilder.requirements.build-system;
-                        dependencies = pkg.build.pythonPackageBuilder.requirements.dependencies;
-                        optional-dependencies = pkg.build.pythonPackageBuilder.requirements.optional-dependencies;
+                        build-system = pkg.build.pythonPackageBuilder.inputs.build-system;
+                        dependencies = pkg.build.pythonPackageBuilder.inputs.dependencies;
+                        optional-dependencies = pkg.build.pythonPackageBuilder.inputs.optional-dependencies;
                         pythonImportsCheck = pkg.build.pythonPackageBuilder.importsCheck;
                         pythonRelaxDeps = pkg.build.pythonPackageBuilder.relaxDeps;
                         disabledTests = pkg.build.pythonPackageBuilder.disabledTests;
                         passthru = sharedBuildAttrs.pkgPassthru pkg finalAttrs.finalPackage;
                         meta = sharedBuildAttrs.pkgMeta pkg;
                       }
-                      // pkg.build.extraDrvAttrs
+                      // pkg.build.extraAttrs
                       // lib.optionalAttrs pkg.build.debug sharedBuildAttrs.debugShellHookAttr
                     )
                     # Derivation end

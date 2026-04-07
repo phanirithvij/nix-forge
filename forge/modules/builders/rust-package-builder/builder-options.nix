@@ -12,8 +12,8 @@
 
       Uses rustPlatform.buildRustPackage'';
 
-    requirements = {
-      native = lib.mkOption {
+    inputs = {
+      build = lib.mkOption {
         type = lib.types.listOf lib.types.package;
         default = [ ];
         description = ''
@@ -23,7 +23,7 @@
         '';
         example = lib.literalExpression "[ pkgs.pkg-config pkgs.rustPlatform.bindgenHook ]";
       };
-      build = lib.mkOption {
+      run = lib.mkOption {
         type = lib.types.listOf lib.types.package;
         default = [ ];
         description = ''

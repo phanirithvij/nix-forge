@@ -20,10 +20,10 @@
 
   build.standardBuilder = {
     enable = true;
-    requirements.native = [
+    inputs.build = [
       pkgs.cmake
     ];
-    requirements.build = [
+    inputs.run = [
       pkgs.proj
     ];
   };

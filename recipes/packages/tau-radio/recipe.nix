@@ -20,12 +20,12 @@
 
   build.rustPackageBuilder = {
     enable = true;
-    requirements = {
-      native = with pkgs; [
+    inputs = {
+      build = with pkgs; [
         pkg-config
         rustPlatform.bindgenHook
       ];
-      build =
+      run =
         with pkgs;
         [
           libogg
@@ -41,7 +41,7 @@
     cargoHash = "sha256-zqucj1iNsUdA06D+tDyYkevF/gio31JmcP00bk5PC18=";
   };
 
-  build.extraDrvAttrs = {
+  build.extraAttrs = {
     # fatal error: 'opus.h' file not found
     env.NIX_CFLAGS_COMPILE = "-I${pkgs.libopus.dev}/include/opus";
   };

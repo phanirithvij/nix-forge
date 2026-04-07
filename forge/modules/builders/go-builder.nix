@@ -24,13 +24,13 @@ in
             type = lib.types.listOf (
               lib.types.submodule {
                 options = {
-                  build.goBuilder = {
+                  build.goPackageBuilder = {
                     enable = lib.mkEnableOption ''
                       Go module builder for applications and libraries.
 
                       Uses buildGoModule from nixpkgs under the hood.'';
-                    requirements = {
-                      native = lib.mkOption {
+                    inputs = {
+                      build = lib.mkOption {
                         type = lib.types.listOf lib.types.package;
                         default = [ ];
                         description = ''
@@ -40,7 +40,7 @@ in
                         '';
                         example = lib.literalExpression "[ pkgs.pkg-config pkgs.installShellFiles ]";
                       };
-                      build = lib.mkOption {
+                      run = lib.mkOption {
                         type = lib.types.listOf lib.types.package;
                         default = [ ];
                         description = ''
@@ -49,6 +49,16 @@ in
                           Use this for libraries needed by cgo-enabled packages.
                         '';
                         example = lib.literalExpression "[ pkgs.openssl pkgs.sqlite ]";
+                      };
+                      check = lib.mkOption {
+                        type = lib.types.listOf lib.types.package;
+                        default = [ ];
+                        description = ''
+                          Test dependencies.
+
+                          Packages needed to run Go tests.
+                        '';
+                        example = lib.literalExpression "[ pkgs.gotestsum ]";
                       };
                     };
                     vendorHash = lib.mkOption {
@@ -127,7 +137,7 @@ in
             let
               cfg = config.forge.packages;
 
-              goBuilderPkgs = lib.listToAttrs (
+              goPackageBuilderPkgs = lib.listToAttrs (
                 map (pkg: {
                   name = pkg.name;
                   value = pkgs.callPackage (
@@ -140,26 +150,27 @@ in
                         version = pkg.version;
                         src = sharedBuildAttrs.pkgSource pkg;
                         patches = pkg.source.patches;
-                        vendorHash = pkg.build.goBuilder.vendorHash;
-                        modRoot = pkg.build.goBuilder.modRoot;
-                        subPackages = pkg.build.goBuilder.subPackages;
-                        ldflags = pkg.build.goBuilder.ldflags;
-                        tags = pkg.build.goBuilder.tags;
-                        proxyVendor = pkg.build.goBuilder.proxyVendor;
-                        nativeBuildInputs = pkg.build.goBuilder.requirements.native;
-                        buildInputs = pkg.build.goBuilder.requirements.build;
+                        vendorHash = pkg.build.goPackageBuilder.vendorHash;
+                        modRoot = pkg.build.goPackageBuilder.modRoot;
+                        subPackages = pkg.build.goPackageBuilder.subPackages;
+                        ldflags = pkg.build.goPackageBuilder.ldflags;
+                        tags = pkg.build.goPackageBuilder.tags;
+                        proxyVendor = pkg.build.goPackageBuilder.proxyVendor;
+                        nativeBuildInputs = pkg.build.goPackageBuilder.inputs.build;
+                        buildInputs = pkg.build.goPackageBuilder.inputs.run;
+                        checkInputs = pkg.build.goPackageBuilder.inputs.check;
                         passthru = sharedBuildAttrs.pkgPassthru pkg finalAttrs.finalPackage;
                         meta = sharedBuildAttrs.pkgMeta pkg;
                       }
-                      // pkg.build.extraDrvAttrs
+                      // pkg.build.extraAttrs
                       // lib.optionalAttrs pkg.build.debug sharedBuildAttrs.debugShellHookAttr
                     )
                     # Derivation end
                   ) { };
-                }) (lib.filter (p: p.build.goBuilder.enable == true) cfg)
+                }) (lib.filter (p: p.build.goPackageBuilder.enable == true) cfg)
               );
             in
-            goBuilderPkgs;
+            goPackageBuilderPkgs;
         };
       }
     );

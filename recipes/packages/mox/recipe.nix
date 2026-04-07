@@ -21,7 +21,7 @@ rec {
     ];
   };
 
-  build.goBuilder = {
+  build.goPackageBuilder = {
     enable = true;
     vendorHash = null;
     ldflags = [
