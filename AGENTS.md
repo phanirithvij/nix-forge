@@ -10,9 +10,11 @@ This specification guides LLMs in generating Nix Forge recipes - declarative con
 
 1. **Python applications** - Projects with `pyproject.toml` or `setup.py` that provide CLI tools (use `pythonAppBuilder`)
 2. **Python libraries** - Projects with `pyproject.toml` or `setup.py` meant to be imported by other packages (use `pythonPackageBuilder`)
-3. **CMake-based projects** - Projects with `CMakeLists.txt` (use `standardBuilder`)
-4. **Autotools-based projects** - Projects with `configure` or `configure.ac` (use `standardBuilder`)
-5. **Makefile-based projects** - Projects with standard `Makefile` targets (use `standardBuilder`)
+3. **Go modules** - Projects with `go.mod` (use `goPackageBuilder`)
+4. **Rust crates** - Projects with `Cargo.toml` (use `rustPackageBuilder`)
+5. **CMake-based projects** - Projects with `CMakeLists.txt` (use `standardBuilder`)
+6. **Autotools-based projects** - Projects with `configure` or `configure.ac` (use `standardBuilder`)
+7. **Makefile-based projects** - Projects with standard `Makefile` targets (use `standardBuilder`)
 
 
 ## Recipe File Structure
@@ -251,6 +253,36 @@ error: flake does not provide attribute 'packages.x86_64-linux.<package-name>'
 - `inputs.build`: Build-time tools (pkg-config, installShellFiles)
 - `inputs.run`: CGO dependencies (openssl, sqlite)
 - `inputs.check`: Test tools (gotestsum)
+
+### 5. rustPackageBuilder (Rust Crates)
+**When to use**: Rust projects with Cargo
+
+```nix
+{
+  build.rustPackageBuilder = {
+    enable = true;
+    inputs.build = [
+      pkgs.pkg-config
+      pkgs.rustPlatform.bindgenHook
+    ];
+    inputs.run = [
+      pkgs.openssl
+      pkgs.sqlite
+    ];
+    cargoHash = "sha256-...";
+    cargoBuildFlags = [ "--release" ];
+  };
+}
+```
+
+**Characteristics**:
+- Uses `rustPlatform.buildRustPackage` from nixpkgs
+- Supports cargo hash verification
+- Handles native build inputs via bindgenHook for crates with C bindings
+
+**Inputs options**:
+- `inputs.build`: Build-time tools (pkg-config, bindgenHook)
+- `inputs.run`: Runtime dependencies (openssl, sqlite, etc.)
 
 ## Source Configuration
 
