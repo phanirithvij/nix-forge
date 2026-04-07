@@ -503,7 +503,7 @@ viewRecipeLink model pageApp =
                     [ model.model_config.config_repository |> showNixUrl
                     , "blob/" ++ commit
                     , model.model_config.config_recipe.configRecipe_apps
-                    , pageApp.pageApp_app.app_name
+                    , pageApp.pageApp_app.app_name ++ "-app"
                     , "recipe.nix"
                     ]
                 )
