@@ -647,7 +647,7 @@ viewPageRecipeOptions model pageRecipeOptions =
             (model.model_RecipeOptions.modelRecipeOptions_filtered
                 |> List.map (viewPageRecipeOption model pageRecipeOptions)
             )
-        , div []
+        , div [ class "d-flex justify-content-center align-items-center" ]
             [ if 1 < routeRecipeOptions.routeRecipeOptions_page then
                 Html.button
                     [ class "btn"
@@ -657,7 +657,6 @@ viewPageRecipeOptions model pageRecipeOptions =
 
               else
                 text ""
-            , text "Page "
             , text (pageRecipeOptions.pageRecipeOptions_route.routeRecipeOptions_page |> String.fromInt)
             , text " / "
             , text (pageRecipeOptions.pageRecipeOptions_LastPage |> String.fromInt)
