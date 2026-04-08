@@ -16,7 +16,8 @@ viewInstructionsUsage : Model -> PageApp -> Html Update
 viewInstructionsUsage _ pageApp =
     if not (String.isEmpty pageApp.pageApp_app.app_usage) then
         div [ id "usage", class "mt-4" ]
-            [ h4 [ class "mb-3" ] [ text "Usage Instructions" ]
+            [ hr [] []
+            , h4 [ class "mb-3" ] [ text "Usage Instructions" ]
             , div [ class "markdown-content" ]
                 (pageApp.pageApp_app.app_usage
                     |> Markdown.render
