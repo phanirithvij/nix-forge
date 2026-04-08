@@ -59,12 +59,18 @@ def generate_app(index: int):
     compose_file = f"/nix/store/{generate_hash()}-compose.yaml"
     greeting_env = f"GREETING={fake.sentence()}"
 
-    container_enable = fake.boolean()
-    nixos_enable = fake.boolean()
-
     return {
         "name": app_name,
         "description": description,
+        "container": {
+            "composeFile": compose_file,
+            "enable": fake.boolean(),
+            "imageConfig": {"Env": [greeting_env]},
+            "name": app_name,
+            "requirements": [req_path],
+            "result": "container",
+            "tag": "latest",
+        },
         "ngi": {
             "grants": generate_grants(),
         },
@@ -73,43 +79,31 @@ def generate_app(index: int):
             "docs": fake.word(),
             "source": fake.word(),
         },
+        "nixos": {
+            "enable": fake.boolean(),
+            "extraConfig": {},
+            "name": f"{app_name}-nixos",
+            "result": "nixos-vm-config",
+            "settings": {},
+            "vm": {
+                "cores": random.choice([2, 4, 8]),
+                "diskSize": random.choice([2048, 4096, 8192]),
+                "forwardPorts": [],
+                "memorySize": random.choice([1024, 2048, 4096]),
+            },
+        },
         "programs": {"enable": True, "requirements": [req_path]},
         "services": {
-            "components": {
-                app_name: {
-                    "argv": [],
-                    "command": cmd_path,
-                    "environment": [],
-                    "result": {
-                        "configData": {},
-                        "process": {"argv": [f"{cmd_path}/bin/{app_name}"]},
-                    },
-                }
-            },
-            "runtimes": {
-                "container": {
-                    "composeFile": compose_file,
-                    "enable": container_enable,
-                    "imageConfig": {"Env": [greeting_env]},
-                    "name": app_name,
-                    "requirements": [req_path],
-                    "result": "container",
-                    "tag": "latest",
+            app_name: {
+                "argv": [],
+                "command": cmd_path,
+                "configData": {},
+                "environment": {},
+                "result": {
+                    "configData": {},
+                    "process": {"argv": [f"{cmd_path}/bin/{app_name}"]},
                 },
-                "nixos": {
-                    "enable": nixos_enable,
-                    "extraConfig": {},
-                    "name": f"{app_name}-nixos",
-                    "result": "nixos-vm-config",
-                    "settings": {},
-                    "vm": {
-                        "cores": random.choice([2, 4, 8]),
-                        "diskSize": random.choice([2048, 4096, 8192]),
-                        "forwardPorts": [],
-                        "memorySize": random.choice([1024, 2048, 4096]),
-                    },
-                },
-            },
+            }
         },
         "usage": fake.text(),
     }
