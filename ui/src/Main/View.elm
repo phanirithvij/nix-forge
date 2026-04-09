@@ -94,15 +94,7 @@ viewTitle =
         , style "gap" ".5rem"
         , onClick (Update_Route (Route_Search { routeSearch_pattern = "" }))
         ]
-        [ img
-            [ src "favicon.svg"
-            , class "brand-logo-responsive"
-            ]
-            []
-        , span
-            [ class "brand-text fw-bold" ]
-            [ text "NGI Forge" ]
-        ]
+        []
 
 
 viewSearchInput : Model -> Html Update
