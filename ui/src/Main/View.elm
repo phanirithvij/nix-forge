@@ -95,7 +95,7 @@ viewTitle =
         , onClick (Update_Route (Route_Search { routeSearch_pattern = "" }))
         ]
         [
-          text "NO MORE TITLES!"
+          text "OK I am removing it now again TITLES!"
         ]
 
 
