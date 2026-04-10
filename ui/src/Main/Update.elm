@@ -147,9 +147,16 @@ update upd modelInit =
         Update_SearchInput usi ->
             case usi of
                 UpdateSearchInput_PreClear ->
-                    model
-                        |> updateSearch (update << Update_Route) ""
-                        |> updateModel (\m -> { m | model_page = model.model_page })
+                    (case model.model_page of
+                        Page_App _ ->
+                            ( { model | model_search = "" }
+                            , Cmd.none
+                            )
+
+                        _ ->
+                            model
+                                |> updateSearch (update << Update_Route) ""
+                    )
                         |> Cmd.append (Task.attempt Update_FocusResult (Dom.blur "main-search-bar"))
 
                 UpdateSearchInput_PreSet search ->
