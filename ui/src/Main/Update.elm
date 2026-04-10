@@ -328,11 +328,23 @@ updateRoute route =
                             routePackages.routePackages_search |> String.toLower
 
                         availableItems =
-                            model.model_config.config_packages
+                            case model.model_page of
+                                Page_Packages pagePackages ->
+                                    if String.contains pagePackages.pagePackages_route.routePackages_search search then
+                                        pagePackages.pagePackages_pagination.pagePagination_list
+                                            |> List.concat
+
+                                    else
+                                        model.model_config.config_packages
+                                            |> Dict.values
+
+                                _ ->
+                                    model.model_config.config_packages
+                                        |> Dict.values
 
                         filteredItems =
                             availableItems
-                                |> Dict.filter (\name _ -> String.contains search (name |> String.toLower))
+                                |> List.filter (\package -> String.contains search (package.package_name |> String.toLower))
                     in
                     ( { model
                         | model_page =
@@ -341,7 +353,7 @@ updateRoute route =
                                 , pagePackages_pagination =
                                     defaultPagePagination
                                         routePackages.routePackages_pagination
-                                        (filteredItems |> Dict.values)
+                                        filteredItems
                                 }
                         , model_search = routePackages.routePackages_search
                       }
@@ -375,11 +387,23 @@ updateRoute route =
                                 routeRecipe.routeRecipeOptions_search |> String.toLower
 
                             availableItems =
-                                model.model_RecipeOptions.recipeOptions_available
+                                case model.model_page of
+                                    Page_RecipeOptions pageRecipe ->
+                                        if String.contains pageRecipe.pageRecipeOptions_route.routeRecipeOptions_search search then
+                                            pageRecipe.pageRecipeOptions_pagination.pagePagination_list
+                                                |> List.concat
+
+                                        else
+                                            model.model_RecipeOptions.recipeOptions_available
+                                                |> Dict.toList
+
+                                    _ ->
+                                        model.model_RecipeOptions.recipeOptions_available
+                                            |> Dict.toList
 
                             filteredItems =
                                 availableItems
-                                    |> Dict.filter (\name _ -> String.contains search (name |> String.toLower))
+                                    |> List.filter (\( name, _ ) -> String.contains search (name |> String.toLower))
                         in
                         ( { model
                             | model_page =
@@ -388,7 +412,7 @@ updateRoute route =
                                     , pageRecipeOptions_pagination =
                                         defaultPagePagination
                                             routeRecipe.routeRecipeOptions_pagination
-                                            (filteredItems |> Dict.toList)
+                                            filteredItems
                                     }
                             , model_search = routeRecipe.routeRecipeOptions_search
                           }

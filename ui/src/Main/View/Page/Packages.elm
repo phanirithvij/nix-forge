@@ -69,22 +69,35 @@ viewPagePackagesItem model pagePackages package =
                     | routePackages_focus = Just <| RoutePackagesFocus_Package itemId
                 }
     in
-    a
+    div
         [ class "list-item list-group-item list-group-item-action flex-column align-items-start"
-        , href (onClickRoute |> Route.toString)
         , id itemId
-        , onClick (Update_Route onClickRoute)
         ]
-        [ div [ class "d-flex w-100 justify-content-between" ]
-            [ h5
-                [ class "mb-1"
+        [ div
+            []
+            [ div [ class "d-flex w-100 justify-content-between" ]
+                [ h5
+                    [ class "mb-1"
+                    ]
+                    [ code []
+                        [ text package.package_name
+                        ]
+                    , span
+                        [ style "font-variant" "italic"
+                        , style "margin-left" "1em"
+                        ]
+                        [ text package.package_version ]
+                    , a
+                        [ class "anchor-link"
+                        , href (onClickRoute |> Route.toString)
+                        , onClick (Update_Route onClickRoute)
+                        ]
+                        []
+                    ]
                 ]
-                [ code [] [ text package.package_name ]
-                ]
-            , span [ style "font-variant" "italic" ] [ text package.package_version ]
+            , div []
+                (package.package_description |> Markdown.render)
             ]
-        , div []
-            (package.package_description |> Markdown.render)
         , div []
             [ a
                 [ href <| showPackageRecipeLink model package
