@@ -346,7 +346,7 @@ updateRoute route =
                             availableItems
                                 |> List.filter (\package -> String.contains search (package.package_name |> String.toLower))
                     in
-                    ( { model
+                    { model
                         | model_page =
                             Page_Packages
                                 { pagePackages_route = routePackages
@@ -356,27 +356,17 @@ updateRoute route =
                                         filteredItems
                                 }
                         , model_search = routePackages.routePackages_search
-                      }
-                    , let
-                        isSameFocus =
-                            case model.model_page of
-                                Page_Packages oldPackagesPage ->
-                                    oldPackagesPage.pagePackages_route.routePackages_focus == routePackages.routePackages_focus
+                    }
+                        |> updateFocus
+                            showRoutePackagesFocus
+                            (case model.model_page of
+                                Page_Packages oldPagePackages ->
+                                    oldPagePackages.pagePackages_route.routePackages_focus
 
                                 _ ->
-                                    False
-                      in
-                      if isSameFocus then
-                        Cmd.none
-
-                      else
-                        case routePackages.routePackages_focus of
-                            Just targetId ->
-                                scrollToAndHighlight (targetId |> showRoutePackagesFocus)
-
-                            Nothing ->
-                                Cmd.none
-                    )
+                                    Nothing
+                            )
+                            routePackages.routePackages_focus
 
         Route_RecipeOptions routeRecipe ->
             updateConfig <|
@@ -405,7 +395,7 @@ updateRoute route =
                                 availableItems
                                     |> List.filter (\( name, _ ) -> String.contains search (name |> String.toLower))
                         in
-                        ( { model
+                        { model
                             | model_page =
                                 Page_RecipeOptions
                                     { pageRecipeOptions_route = routeRecipe
@@ -415,27 +405,17 @@ updateRoute route =
                                             filteredItems
                                     }
                             , model_search = routeRecipe.routeRecipeOptions_search
-                          }
-                        , let
-                            isSameFocus =
-                                case model.model_page of
-                                    Page_RecipeOptions oldRecipePage ->
-                                        oldRecipePage.pageRecipeOptions_route.routeRecipeOptions_focus == routeRecipe.routeRecipeOptions_focus
+                        }
+                            |> updateFocus
+                                showRouteRecipeOptionsFocus
+                                (case model.model_page of
+                                    Page_RecipeOptions oldPageRecipe ->
+                                        oldPageRecipe.pageRecipeOptions_route.routeRecipeOptions_focus
 
                                     _ ->
-                                        False
-                          in
-                          if isSameFocus then
-                            Cmd.none
-
-                          else
-                            case routeRecipe.routeRecipeOptions_focus of
-                                Just targetId ->
-                                    scrollToAndHighlight (targetId |> showRouteRecipeOptionsFocus)
-
-                                Nothing ->
-                                    Cmd.none
-                        )
+                                        Nothing
+                                )
+                                routeRecipe.routeRecipeOptions_focus
 
 
 {-| `updateConfig up` populates `model_config` if empty, then runs `up`.
@@ -512,6 +492,22 @@ updateModel : (Model -> Model) -> ( Model, Cmd Update ) -> ( Model, Cmd Update )
 updateModel up ( model, cmd ) =
     ( model |> up
     , cmd
+    )
+
+
+updateFocus : (a -> String) -> Maybe a -> Maybe a -> Model -> ( Model, Cmd Update )
+updateFocus showFocus prevFocus nextFocus model =
+    ( model
+    , case nextFocus of
+        Just focus ->
+            if Just focus /= prevFocus then
+                scrollToAndHighlight (focus |> showFocus)
+
+            else
+                Cmd.none
+
+        Nothing ->
+            Cmd.none
     )
 
 
