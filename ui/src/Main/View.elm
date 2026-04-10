@@ -37,10 +37,7 @@ view model =
                     [ viewSearchInput model ]
                 , div
                     [ class "d-none d-md-flex align-items-center gap-4" ]
-                    [ viewPagePackagesLink
-                    , viewPageRecipeOptionsLink
-                    , viewThemeToggle model
-                    ]
+                    []
                 , button
                     [ class "navbar-toggler d-md-none border-0 p-1"
                     , type_ "button"
