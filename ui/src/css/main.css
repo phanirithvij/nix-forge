@@ -130,6 +130,16 @@ body {
   border-color: royalblue;
 }
 
+/* for Prev and Next pagination buttons hide focus with mouse click */
+.focus-ring:focus:not(:focus-visible) {
+  box-shadow: none;
+}
+
+/* hide unset var(--bs-btn-active-border-color) border when clicking on buttons */
+.btn:active {
+  border-color: transparent !important;
+}
+
 /* Default: small screens */
 .m-item-grid {
   display: grid;

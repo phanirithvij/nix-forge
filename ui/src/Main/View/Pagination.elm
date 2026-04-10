@@ -1,6 +1,6 @@
 module Main.View.Pagination exposing (..)
 
-import Html exposing (Html, div, text, button, span)
+import Html exposing (Html, button, div, span, text)
 import Html.Attributes exposing (class, disabled, style)
 import Main.Config exposing (..)
 import Main.Config.Package exposing (..)
@@ -59,12 +59,16 @@ viewPaginationNavigation reRoute pagePagination =
     in
     div [ class "d-flex justify-content-center align-items-center my-2" ]
         [ button
-            ([ class "btn me-2 border-0"
-            ] ++ case routePagePreviousMaybe of
-              Nothing -> [ disabled True,  class "border-0" ]
-              Just routePagePrevious -> [onClick (Update_Route routePagePrevious), class "focus-ring"]
+            (class "btn me-2 border-0"
+                :: (case routePagePreviousMaybe of
+                        Nothing ->
+                            [ disabled True ]
+
+                        Just routePagePrevious ->
+                            [ onClick (Update_Route routePagePrevious), class "focus-ring" ]
+                   )
             )
-            [ text "Previous" ]
+            [ text "Prev" ]
         , span
             [ style "width" "2rem"
             , style "text-align" "center"
@@ -77,10 +81,14 @@ viewPaginationNavigation reRoute pagePagination =
             ]
             [ text (pagePagination.pagePagination_last |> String.fromInt) ]
         , button
-            ([ class "btn me-2 border-0"
-            ] ++ case routePageNextMaybe of
-              Nothing -> [ disabled True,  class "border-0" ]
-              Just routePageNext -> [onClick (Update_Route routePageNext), class "focus-ring"]
+            (class "btn ms-2 border-0"
+                :: (case routePageNextMaybe of
+                        Nothing ->
+                            [ disabled True ]
+
+                        Just routePageNext ->
+                            [ onClick (Update_Route routePageNext), class "focus-ring" ]
+                   )
             )
             [ text "Next" ]
         ]
