@@ -6,10 +6,21 @@ on:
     types:
       - completed
 
+# prevents more than one run of this type at time for single pr.
+# we can do it for this gha but not the tests workflow
+# because for tests we don't want to lose valuable time spent building the derivations
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: true
+
 jobs:
   deploy-preview:
     name: Push Preview to Netlify
     runs-on: ubuntu-latest
+    permissions:
+      deployments: write # deployments
+      statuses: write # commit statuses
+      pull-requests: write # pr comments
     if: >
       (github.event.workflow_run.event == 'pull_request' || github.event.workflow_run.event == 'workflow_dispatch') &&
       github.event.workflow_run.conclusion == 'success'
@@ -62,7 +73,14 @@ jobs:
             | tee deploy_output.txt
 
           PREVIEW_URL=$(grep 'Draft URL:' deploy_output.txt | awk '{print $3}' | tr -d '<>')
+          DEPLOY_ID=$(grep 'Build logs:' deploy_output.txt | grep -o 'deploys/[^>]*' | cut -d'/' -f2)
+
+          SITE_NAME=$(echo "$PREVIEW_URL" | sed -E 's/https:\/\/[^/]+--([^.]+)\.netlify\.app/\1/')
+          DEPLOY_URL="https://${DEPLOY_ID}--${SITE_NAME}.netlify.app"
+
           echo "PREVIEW_URL=$PREVIEW_URL" >> "$GITHUB_ENV"
+          echo "DEPLOY_URL=$DEPLOY_URL" >> "$GITHUB_ENV"
+          echo "DEPLOY_ID=$DEPLOY_ID" >> "$GITHUB_ENV"
 
       - name: Post PR Comment
         if: env.PR_NUMBER != ''
@@ -72,8 +90,16 @@ jobs:
           script: |
             const prNumber = parseInt(process.env.PR_NUMBER, 10);
             const previewUrl = process.env.PREVIEW_URL;
-            const time = new Date().toUTCString();
-            const messageBody = `🚀 **PR Preview Deployed!**\n\nYou can view the UI changes for this PR here: [${previewUrl}](${previewUrl})\n\n*(Last updated: ${time})*`;
+            const deployUrl = process.env.DEPLOY_URL;
+
+            const rev = process.env.PR_REV || 'unknown';
+            const shortRev = rev.length >= 7 ? rev.substring(0, 7) : rev;
+            const commitUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${rev}`;
+
+            const time = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+
+            const prDeployLine = `- Visit: ${previewUrl} (This url will not change for new commits in this pr)`;
+            const currentDeployLine = `- Unique snapshot URL: ${deployUrl} _(for commit [${shortRev}](${commitUrl}))_`;
 
             const comments = await github.rest.issues.listComments({
               owner: context.repo.owner,
@@ -81,7 +107,47 @@ jobs:
               issue_number: prNumber,
             });
 
-            const existingComment = comments.data.find(c => c.body && c.body.includes('PR Preview Deployed!'));
+            const existingComment = comments.data.find(c => c.body && c.body.includes('UI Preview Deployed'));
+
+            let pastDeploys = [];
+            if (existingComment) {
+              const stateMatch = existingComment.body.match(/<!--\n([\s\S]*?)\n-->/);
+              if (stateMatch && stateMatch[1].trim()) {
+                pastDeploys = stateMatch[1].trim().split('\n').filter(line => line.trim().startsWith('- '));
+              }
+            }
+
+            const histCurrentDeployEntry = `- [${process.env.DEPLOY_ID}](${deployUrl}) ([${shortRev}](${commitUrl})) _${time}_`;
+            const allDeployState = [histCurrentDeployEntry, ...pastDeploys];
+
+            const messageBodyParts = [
+              '🚀 **UI Preview Deployed**',
+              '',
+              prDeployLine,
+              currentDeployLine,
+              ''
+            ];
+
+            if (pastDeploys.length > 0) {
+              messageBodyParts.push(
+                '<details><summary><b>Previous Deployments</b></summary>',
+                '',
+                ...pastDeploys,
+                '</details>',
+                ''
+              );
+            }
+
+            messageBodyParts.push(
+              '---',
+              '**Note:** See the **checks** section at the bottom of this PR. Once the Netlify run is green, you can click **Details** to visit the deployment directly.',
+              '',
+              '<!--',
+              ...allDeployState,
+              '-->'
+            );
+
+            const messageBody = messageBodyParts.join('\n');
 
             if (existingComment) {
               await github.rest.issues.updateComment({
@@ -131,3 +197,24 @@ jobs:
               description: 'Deployment failed. Click details for logs.',
               target_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
             });
+
+      - name: Create Native GitHub Deployment
+        if: env.PR_NUMBER != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DEPLOY_ID=$(echo '{
+            "ref": "${{ env.PR_REV }}",
+            "environment": "Preview PR-${{ env.PR_NUMBER }}",
+            "description": "Netlify PR Preview",
+            "transient_environment": true,
+            "auto_merge": false,
+            "required_contexts": []
+          }' | gh api --method POST repos/${{ github.repository }}/deployments --input - --jq '.id')
+
+          echo "Created Deployment ID: $DEPLOY_ID"
+
+          gh api --method POST repos/${{ github.repository }}/deployments/$DEPLOY_ID/statuses \
+            -f state="success" \
+            -f environment_url="${{ env.DEPLOY_URL }}" \
+            -f description="Preview is ready!"
