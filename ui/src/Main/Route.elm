@@ -169,23 +169,23 @@ appUrlToRoutePagination url =
 
 routePaginationToQueryParameters : RoutePagination -> QueryParameters
 routePaginationToQueryParameters routePagination =
-    [ ( "page"
-      , case routePagination.routePagination_current of
+    List.concat
+        [ case routePagination.routePagination_current of
+            Nothing ->
+                []
+
+            Just 1 ->
+                []
+
+            Just p ->
+                [ ( "page", [ p |> String.fromInt ] ) ]
+        , case routePagination.routePagination_MaxSize of
             Nothing ->
                 []
 
             Just p ->
-                [ p |> String.fromInt ]
-      )
-    , ( "page-size"
-      , case routePagination.routePagination_MaxSize of
-            Nothing ->
-                []
-
-            Just p ->
-                [ p |> String.fromInt ]
-      )
-    ]
+                [ ( "page-size", [ p |> String.fromInt ] ) ]
+        ]
         |> Dict.fromList
 
 
