@@ -11,22 +11,6 @@
   options = {
     enable = lib.mkEnableOption "NixOS/VM output";
 
-    # TODO:
-    # - wire this up with nimi
-    # - maybe rename to `nimi` or `nimi-settings`?
-    settings = lib.mkOption {
-      type = lib.types.attrsOf lib.types.anything;
-      default = { };
-      description = "Nimi settings for the NixOS configuration.";
-      example = lib.literalExpression ''
-        {
-          restart.mode = "always";
-          restart.time = 1000;
-          logging.enable = true;
-        }
-      '';
-    };
-
     setup = lib.mkOption {
       type = lib.types.str;
       default = "";
