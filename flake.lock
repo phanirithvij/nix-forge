@@ -94,18 +94,21 @@
     "nimi": {
       "inputs": {
         "nix2container": "nix2container",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": [
+          "nixpkgs"
+        ]
       },
       "locked": {
-        "lastModified": 1774008115,
-        "narHash": "sha256-hq30WyJ3AsrUOS5yWaXDmLM34YblRadQTidfUzTKZxw=",
-        "owner": "weyl-ai",
+        "lastModified": 1776159258,
+        "narHash": "sha256-QtbbkPw4LJ1IQyogfyt9wx9xpaam5uQcX9ff11sAVcE=",
+        "owner": "ngi-nix",
         "repo": "nimi",
-        "rev": "d47f6d735b768d234d19c27d540c3e6fb4d450a3",
+        "rev": "68e2a43c984e77e74d2f005fab9c1ff01e9478c4",
         "type": "github"
       },
       "original": {
-        "owner": "weyl-ai",
+        "owner": "ngi-nix",
+        "ref": "nixpkgs-update-portable-lib",
         "repo": "nimi",
         "type": "github"
       }
@@ -149,11 +152,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1773821835,
-        "narHash": "sha256-TJ3lSQtW0E2JrznGVm8hOQGVpXjJyXY2guAxku2O9A4=",
+        "lastModified": 1775294664,
+        "narHash": "sha256-xA9GUXyFT0OHCWzgikiTQaQquyaZUP06h9ltfOnXPNc=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "b40629efe5d6ec48dd1efba650c797ddbd39ace0",
+        "rev": "1baf57f3a0a12a99c1f1e74134e3df09c6ef7bfb",
         "type": "github"
       },
       "original": {
@@ -178,22 +181,6 @@
         "type": "github"
       }
     },
-    "nixpkgs_2": {
-      "locked": {
-        "lastModified": 1775294664,
-        "narHash": "sha256-xA9GUXyFT0OHCWzgikiTQaQquyaZUP06h9ltfOnXPNc=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "1baf57f3a0a12a99c1f1e74134e3df09c6ef7bfb",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "root": {
       "inputs": {
         "devshell": "devshell",
@@ -202,7 +189,7 @@
         "import-tree": "import-tree",
         "nimi": "nimi",
         "nix-utils": "nix-utils",
-        "nixpkgs": "nixpkgs_2",
+        "nixpkgs": "nixpkgs",
         "treefmt-nix": "treefmt-nix"
       }
     },

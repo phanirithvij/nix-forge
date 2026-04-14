@@ -33,7 +33,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nimi.url = "github:weyl-ai/nimi";
+    nimi = {
+      url = "github:ngi-nix/nimi/nixpkgs-update-portable-lib";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =

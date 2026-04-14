@@ -131,33 +131,29 @@
 
   config = {
     result.modules = [
+      # nimi NixOS module — runs services via nimi process manager
+      inputs.nimi.nixosModules.default
       {
-        # modular services
-        system = {
-          services = lib.pipe app.services.components [
-            # NixOS already defines `configData."*".path`, but other runtimes
-            # don't do that. Since it's a read-only option, we can't just
-            # change its priority, so here we just filter out any non-NixOS
-            # declarations of that option.
-            # TODO: is there a more robust way of doing this?
-            # configData."*".path -> remove
-            (lib.filterAttrsRecursive (name: value: name != "path"))
-            (lib.mapAttrs (
-              _: service:
-              lib.recursiveUpdate service.result {
-                systemd.mainExecStart = lib.escapeShellArgs service.result.process.argv;
-                systemd.service = {
-                  environment = service.environment;
+        nimi = lib.mapAttrs (
+          serviceName: service:
+          {
+            services.${serviceName} = {
+              imports = [
+                service.result
+                {
+                  options.nimi = lib.mkOption {
+                    type = with lib.types; lazyAttrsOf (attrsOf anything);
+                    default = { };
+                    description = ''
+                      Let the modular service know that it's evaluated for nimi,
+                      by testing `options ? nimi`.
+                    '';
+                  };
                 }
-                // lib.optionalAttrs (config.setup != "") {
-                  # make sure services run after setup is done
-                  after = [ "${app.name}-setup.service" ];
-                  requires = [ "${app.name}-setup.service" ];
-                };
-              }
-            ))
-          ];
-        };
+              ];
+            };
+          }
+        ) app.services.components;
 
         environment.variables = lib.concatMapAttrs (_: value: value.environment) app.services.components;
       }
