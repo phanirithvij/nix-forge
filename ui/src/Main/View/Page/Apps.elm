@@ -14,7 +14,7 @@ import Main.Model.Preferences exposing (..)
 import Main.Route as Route exposing (..)
 import Main.Update exposing (..)
 import Main.View.Page.App exposing (..)
-import Main.View.Pagination exposing (viewPaginationItems, viewPaginationNavigation)
+import Main.View.Pagination exposing (PaginationVisibility(..), viewPaginationItems, viewPaginationNavigation)
 
 
 viewPageApps : Model -> PageApps -> Html Update
@@ -38,7 +38,7 @@ viewPageAppsPagination : PagePagination a -> (a -> Html Update) -> ((RoutePagina
 viewPageAppsPagination pagePagination viewItem reRoute =
     div []
         [ div [ class "m-item-grid" ] (viewPaginationItems pagePagination viewItem)
-        , viewPaginationNavigation reRoute pagePagination
+        , viewPaginationNavigation PaginationVisibility_HiddenIfSinglePage reRoute pagePagination
         ]
 
 

@@ -16,12 +16,17 @@ import Main.Route exposing (..)
 import Main.Update exposing (..)
 
 
-viewPagination : PagePagination a -> (a -> Html Update) -> ((RoutePagination -> RoutePagination) -> Route) -> Html Update
-viewPagination pagePagination viewItem reRoute =
+type PaginationVisibility
+    = PaginationVisibility_AlwaysVisible
+    | PaginationVisibility_HiddenIfSinglePage
+
+
+viewPagination : PaginationVisibility -> PagePagination a -> (a -> Html Update) -> ((RoutePagination -> RoutePagination) -> Route) -> Html Update
+viewPagination visibility pagePagination viewItem reRoute =
     div []
-        [ viewPaginationNavigation reRoute pagePagination
+        [ viewPaginationNavigation visibility reRoute pagePagination
         , viewPaginationContent pagePagination viewItem
-        , viewPaginationNavigation reRoute pagePagination
+        , viewPaginationNavigation visibility reRoute pagePagination
         ]
 
 
@@ -39,60 +44,73 @@ viewPaginationItems pagePagination viewItem =
         |> List.map viewItem
 
 
-viewPaginationNavigation : ((RoutePagination -> RoutePagination) -> Route) -> PagePagination a -> Html Update
-viewPaginationNavigation reRoute pagePagination =
+viewPaginationNavigation : PaginationVisibility -> ((RoutePagination -> RoutePagination) -> Route) -> PagePagination a -> Html Update
+viewPaginationNavigation visibility reRoute pagePagination =
     let
-        updatePageNumber pagination =
-            reRoute <|
-                \routePagination ->
-                    { routePagination
-                        | routePagination_current = Just pagination.pagePagination_current
-                    }
+        isHidden =
+            case visibility of
+                PaginationVisibility_AlwaysVisible ->
+                    False
 
-        routePagePreviousMaybe : Maybe Route
-        routePagePreviousMaybe =
-            pagePagination
-                |> previousPagePagination
-                |> Maybe.map updatePageNumber
-
-        routePageNextMaybe : Maybe Route
-        routePageNextMaybe =
-            pagePagination
-                |> nextPagePagination
-                |> Maybe.map updatePageNumber
+                PaginationVisibility_HiddenIfSinglePage ->
+                    pagePagination.pagePagination_last <= 1
     in
-    div [ class "d-flex justify-content-center align-items-center my-2" ]
-        [ button
-            (class "btn me-2 border-0"
-                :: (case routePagePreviousMaybe of
-                        Nothing ->
-                            [ disabled True ]
+    if isHidden then
+        text ""
 
-                        Just routePagePrevious ->
-                            [ onClick (Update_Route routePagePrevious), class "focus-ring" ]
-                   )
-            )
-            [ text "Prev" ]
-        , span
-            [ style "width" "2rem"
-            , style "text-align" "center"
-            ]
-            [ text (pagePagination.pagePagination_current |> String.fromInt) ]
-        , text " / "
-        , span
-            [ style "width" "2rem"
-            , style "text-align" "center"
-            ]
-            [ text (pagePagination.pagePagination_last |> String.fromInt) ]
-        , button
-            (class "btn ms-2 border-0"
-                :: (case routePageNextMaybe of
-                        Nothing ->
-                            [ disabled True ]
+    else
+        let
+            updatePageNumber pagination =
+                reRoute <|
+                    \routePagination ->
+                        { routePagination
+                            | routePagination_current = Just pagination.pagePagination_current
+                        }
 
-                        Just routePageNext ->
-                            [ onClick (Update_Route routePageNext), class "focus-ring" ]
-                   )
-            )
-            [ text "Next" ]
-        ]
+            routePagePreviousMaybe : Maybe Route
+            routePagePreviousMaybe =
+                pagePagination
+                    |> previousPagePagination
+                    |> Maybe.map updatePageNumber
+
+            routePageNextMaybe : Maybe Route
+            routePageNextMaybe =
+                pagePagination
+                    |> nextPagePagination
+                    |> Maybe.map updatePageNumber
+        in
+        div [ class "d-flex justify-content-center align-items-center my-2" ]
+            [ button
+                (class "btn me-2 border-0"
+                    :: (case routePagePreviousMaybe of
+                            Nothing ->
+                                [ disabled True ]
+
+                            Just routePagePrevious ->
+                                [ onClick (Update_Route routePagePrevious), class "focus-ring" ]
+                       )
+                )
+                [ text "Prev" ]
+            , span
+                [ style "width" "2rem"
+                , style "text-align" "center"
+                ]
+                [ text (pagePagination.pagePagination_current |> String.fromInt) ]
+            , text " / "
+            , span
+                [ style "width" "2rem"
+                , style "text-align" "center"
+                ]
+                [ text (pagePagination.pagePagination_last |> String.fromInt) ]
+            , button
+                (class "btn ms-2 border-0"
+                    :: (case routePageNextMaybe of
+                            Nothing ->
+                                [ disabled True ]
+
+                            Just routePageNext ->
+                                [ onClick (Update_Route routePageNext), class "focus-ring" ]
+                       )
+                )
+                [ text "Next" ]
+            ]

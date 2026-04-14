@@ -41,6 +41,7 @@ viewPageRecipeOptionsLink =
 viewPageRecipeOptions : Model -> PageRecipeOptions -> Html Update
 viewPageRecipeOptions model pageRecipeOptions =
     viewPagination
+        PaginationVisibility_AlwaysVisible
         pageRecipeOptions.pageRecipeOptions_pagination
         (viewPageRecipeOptionsItem model pageRecipeOptions)
         (\modifyRoutePagination ->
