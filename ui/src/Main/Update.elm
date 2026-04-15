@@ -152,7 +152,9 @@ update upd modelInit =
 
         Update_AmbientKeyPress input ->
             if input.key == "Escape" then
-                model |> update (Update_Search "")
+                model
+                    |> update (Update_Search "")
+                    |> Cmd.append (Task.attempt Update_FocusResult (Dom.blur "main-search-bar"))
 
             else if not input.focusedTyping && not input.hasModifier then
                 if input.key == "/" then
@@ -301,8 +303,57 @@ updateRoute route =
         Route_Apps routeApps ->
             updateConfig <|
                 \model ->
-                    ( { model
-                        | model_page = Page_Apps { pageApps_route = routeApps }
+                    ( let
+                        search =
+                            routeApps.routeApps_search |> String.toLower
+
+                        filterMatches =
+                            List.filter
+                                (\app ->
+                                    let
+                                        -- Case Insensitive search
+                                        app_name =
+                                            String.toLower app.app_name
+
+                                        app_description =
+                                            String.toLower app.app_description
+
+                                        name_matches =
+                                            String.contains search app_name
+
+                                        desc_matches =
+                                            String.contains search app_description
+                                    in
+                                    name_matches || desc_matches
+                                )
+
+                        availableItems =
+                            getAvailableItems
+                                model.model_page
+                                (\page ->
+                                    case page of
+                                        Page_Apps pageApps ->
+                                            Just ( pageApps.pageApps_route.routeApps_search, pageApps.pageApps_pagination.pagePagination_list )
+
+                                        _ ->
+                                            Nothing
+                                )
+                                (model.model_config.config_apps |> Dict.values)
+                                search
+
+                        filteredItems =
+                            availableItems
+                                |> filterMatches
+                      in
+                      { model
+                        | model_page =
+                            Page_Apps
+                                { pageApps_route = routeApps
+                                , pageApps_pagination =
+                                    defaultPagePagination
+                                        routeApps.routeApps_pagination
+                                        filteredItems
+                                }
                         , model_search = routeApps.routeApps_search
                       }
                     , Cmd.none
@@ -336,19 +387,18 @@ updateRoute route =
                                 )
 
                         availableItems =
-                            case model.model_page of
-                                Page_Packages pagePackages ->
-                                    if String.contains pagePackages.pagePackages_route.routePackages_search search then
-                                        pagePackages.pagePackages_pagination.pagePagination_list
-                                            |> List.concat
+                            getAvailableItems
+                                model.model_page
+                                (\page ->
+                                    case page of
+                                        Page_Packages pagePackages ->
+                                            Just ( pagePackages.pagePackages_route.routePackages_search, pagePackages.pagePackages_pagination.pagePagination_list )
 
-                                    else
-                                        model.model_config.config_packages
-                                            |> Dict.values
-
-                                _ ->
-                                    model.model_config.config_packages
-                                        |> Dict.values
+                                        _ ->
+                                            Nothing
+                                )
+                                (model.model_config.config_packages |> Dict.values)
+                                search
 
                         filteredItems =
                             availableItems
@@ -405,19 +455,18 @@ updateRoute route =
                                     )
 
                             availableItems =
-                                case model.model_page of
-                                    Page_RecipeOptions pageRecipe ->
-                                        if String.contains pageRecipe.pageRecipeOptions_route.routeRecipeOptions_search search then
-                                            pageRecipe.pageRecipeOptions_pagination.pagePagination_list
-                                                |> List.concat
+                                getAvailableItems
+                                    model.model_page
+                                    (\page ->
+                                        case page of
+                                            Page_RecipeOptions pageRecipe ->
+                                                Just ( pageRecipe.pageRecipeOptions_route.routeRecipeOptions_search, pageRecipe.pageRecipeOptions_pagination.pagePagination_list )
 
-                                        else
-                                            model.model_RecipeOptions.recipeOptions_available
-                                                |> Dict.toList
-
-                                    _ ->
-                                        model.model_RecipeOptions.recipeOptions_available
-                                            |> Dict.toList
+                                            _ ->
+                                                Nothing
+                                    )
+                                    (model.model_RecipeOptions.recipeOptions_available |> Dict.toList)
+                                    search
 
                             filteredItems =
                                 availableItems
@@ -474,15 +523,22 @@ updateConfig up model =
 routeSearch : Model -> Search -> Route
 routeSearch model search =
     case model.model_page of
-        Page_App pageApp ->
-            Route_Apps { routeApps_search = search }
+        Page_App _ ->
+            Route_Apps { defaultRouteApps | routeApps_search = search }
 
         Page_Apps pageApps ->
             let
                 routeApps =
                     pageApps.pageApps_route
+
+                routePagination =
+                    routeApps.routeApps_pagination
             in
-            Route_Apps { routeApps | routeApps_search = search }
+            Route_Apps
+                { routeApps
+                    | routeApps_search = search
+                    , routeApps_pagination = { routePagination | routePagination_current = Nothing }
+                }
 
         Page_Packages pagePackages ->
             let
@@ -552,3 +608,19 @@ updateRecipeOptions up model =
 
     else
         model |> up
+
+
+{-| Optimization to avoid re-filtering the entire list when the new search contains the previous search.
+-}
+getAvailableItems : Page -> (Page -> Maybe ( String, List (List a) )) -> List a -> String -> List a
+getAvailableItems model_page getPagePagination defaultItems search =
+    case getPagePagination model_page of
+        Just ( prevSearch, paginationList ) ->
+            if not (String.isEmpty prevSearch) && String.contains prevSearch search then
+                paginationList |> List.concat
+
+            else
+                defaultItems
+
+        Nothing ->
+            defaultItems

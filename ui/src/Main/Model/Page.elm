@@ -19,7 +19,7 @@ type Page
 
 defaultPage : Page
 defaultPage =
-    Page_Apps defaultPageApps
+    Page_Apps (defaultPageApps defaultRoutePagination [])
 
 
 isPageSearch : Page -> Bool
@@ -49,12 +49,14 @@ type alias PageApp =
 
 type alias PageApps =
     { pageApps_route : RouteApps
+    , pageApps_pagination : PagePagination App
     }
 
 
-defaultPageApps : PageApps
-defaultPageApps =
+defaultPageApps : RoutePagination -> List App -> PageApps
+defaultPageApps routePagination apps =
     { pageApps_route = defaultRouteApps
+    , pageApps_pagination = defaultPagePagination routePagination apps
     }
 
 
@@ -113,7 +115,7 @@ defaultPagePagination : RoutePagination -> List a -> PagePagination a
 defaultPagePagination routePagination items =
     let
         maxResultsPerPage =
-            routePagination.routePagination_MaxSize |> Maybe.withDefault 10
+            routePagination.routePagination_MaxSize |> Maybe.withDefault 12
     in
     { pagePagination_current = routePagination.routePagination_current |> Maybe.withDefault 1
     , pagePagination_list =

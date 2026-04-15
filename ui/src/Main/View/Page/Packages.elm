@@ -39,6 +39,7 @@ viewPagePackagesLink =
 viewPagePackages : Model -> PagePackages -> Html Update
 viewPagePackages model pagePackages =
     viewPagination
+        PaginationVisibility_AlwaysVisible
         pagePackages.pagePackages_pagination
         (viewPagePackagesItem model pagePackages)
         (\modifyRoutePagination ->
