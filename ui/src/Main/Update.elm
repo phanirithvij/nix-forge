@@ -328,8 +328,18 @@ updateRoute route =
                                 )
 
                         availableItems =
-                            model.model_config.config_apps
-                                |> Dict.values
+                            getAvailableItems
+                                model.model_page
+                                (\page ->
+                                    case page of
+                                        Page_Apps pageApps ->
+                                            Just ( pageApps.pageApps_route.routeApps_search, pageApps.pageApps_pagination.pagePagination_list )
+
+                                        _ ->
+                                            Nothing
+                                )
+                                (model.model_config.config_apps |> Dict.values)
+                                search
 
                         filteredItems =
                             availableItems
@@ -377,8 +387,18 @@ updateRoute route =
                                 )
 
                         availableItems =
-                            model.model_config.config_packages
-                                |> Dict.values
+                            getAvailableItems
+                                model.model_page
+                                (\page ->
+                                    case page of
+                                        Page_Packages pagePackages ->
+                                            Just ( pagePackages.pagePackages_route.routePackages_search, pagePackages.pagePackages_pagination.pagePagination_list )
+
+                                        _ ->
+                                            Nothing
+                                )
+                                (model.model_config.config_packages |> Dict.values)
+                                search
 
                         filteredItems =
                             availableItems
@@ -435,8 +455,18 @@ updateRoute route =
                                     )
 
                             availableItems =
-                                model.model_RecipeOptions.recipeOptions_available
-                                    |> Dict.toList
+                                getAvailableItems
+                                    model.model_page
+                                    (\page ->
+                                        case page of
+                                            Page_RecipeOptions pageRecipe ->
+                                                Just ( pageRecipe.pageRecipeOptions_route.routeRecipeOptions_search, pageRecipe.pageRecipeOptions_pagination.pagePagination_list )
+
+                                            _ ->
+                                                Nothing
+                                    )
+                                    (model.model_RecipeOptions.recipeOptions_available |> Dict.toList)
+                                    search
 
                             filteredItems =
                                 availableItems
@@ -578,3 +608,19 @@ updateRecipeOptions up model =
 
     else
         model |> up
+
+
+{-| Optimization to avoid re-filtering the entire list when the new search contains the previous search.
+-}
+getAvailableItems : Page -> (Page -> Maybe ( String, List (List a) )) -> List a -> String -> List a
+getAvailableItems model_page getPagePagination defaultItems search =
+    case getPagePagination model_page of
+        Just ( prevSearch, paginationList ) ->
+            if not (String.isEmpty prevSearch) && String.contains prevSearch search then
+                paginationList |> List.concat
+
+            else
+                defaultItems
+
+        Nothing ->
+            defaultItems
