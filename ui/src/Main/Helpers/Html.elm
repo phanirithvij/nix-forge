@@ -32,3 +32,18 @@ onClick : update -> Attribute update
 onClick update =
     Html.Events.preventDefaultOn "click"
         (Json.Decode.succeed ( update, True ))
+
+
+{-| Stop a click event from bubbling up to a parent element.
+Use this on external links nested inside an `onClick` parent.
+
+-}
+onClickStopPropagation : Attribute Update
+onClickStopPropagation =
+    Html.Events.custom "click"
+        (Json.Decode.succeed
+            { message = Update_NoOp
+            , stopPropagation = True
+            , preventDefault = False
+            }
+        )
