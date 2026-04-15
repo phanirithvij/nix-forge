@@ -100,12 +100,14 @@ viewPagePackagesItem model pagePackages package =
                 [ href package.package_license.license_url
                 , target "_blank"
                 , rel "noopener"
+                , onClickStopPropagation
                 ]
                 [ text package.package_license.license_spdxId ]
             , a
                 [ href <| showPackageRecipeLink model package
                 , target "_blank"
                 , rel "noopener"
+                , onClickStopPropagation
                 ]
                 [ text "Forge Recipe" ]
             ]
