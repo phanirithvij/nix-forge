@@ -25,14 +25,14 @@ def generate_package_recipe(name, index):
 
 {{
   name = "{name}";
-  version = "1.{index}.0";
+  version = "0.0.{index}";
   description = "{fake.sentence()}";
   homePage = "{fake.url()}";
   mainProgram = "{name}";
   license = lib.licenses.mit;
 
   source.url = "https://example.com/{name}.tar.gz";
-  source.hash = "sha256-{"0" * 43}=";
+  source.hash = lib.fakeHash;
 
   build.standardBuilder.enable = true;
 }}
@@ -50,10 +50,10 @@ def generate_app_recipe(name, index, is_test_app=False):
 
     grants_nix = "{\n" + "\n".join(grant_lines) + "\n  }"
 
-    # Force features for test app
+    # Force enable all runtimes for test app
     shell_en = "true" if is_test_app else str(fake.boolean()).lower()
-    cont_en = "true" if is_test_app else str(fake.boolean()).lower()
-    vm_en = "true" if is_test_app else str(fake.boolean()).lower()
+    container_en = "true" if is_test_app else str(fake.boolean()).lower()
+    nixos_vm_en = "true" if is_test_app else str(fake.boolean()).lower()
 
     return f"""{{
   config,
@@ -81,11 +81,11 @@ def generate_app_recipe(name, index, is_test_app=False):
     }};
     runtimes = {{
       container = {{
-        enable = {cont_en};
+        enable = {container_en};
         packages = [ pkgs.hello ];
       }};
       nixos = {{
-        enable = {vm_en};
+        enable = {nixos_vm_en};
         extraConfig = {{ }};
       }};
     }};
@@ -118,7 +118,7 @@ def main():
     if not out_path.is_absolute():
         out_path = git_root / out_path
 
-    print(f"Generating mock data for {num_apps} apps and {num_packages} packages...")
+    print(f"Generating mock recipes for {num_apps} apps and {num_packages} packages...")
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
@@ -171,12 +171,12 @@ def main():
             ["git", "init"], cwd=str(temp_path), check=True, capture_output=True
         )
         subprocess.run(
-            ["git", "config", "user.email", "mock@example.com"],
+            ["git", "config", "user.email", "sample@example.com"],
             cwd=str(temp_path),
             check=True,
         )
         subprocess.run(
-            ["git", "config", "user.name", "Mock Generator"],
+            ["git", "config", "user.name", "mock user"],
             cwd=str(temp_path),
             check=True,
         )
@@ -184,7 +184,7 @@ def main():
             ["git", "add", "."], cwd=str(temp_path), check=True, capture_output=True
         )
         subprocess.run(
-            ["git", "commit", "-m", "mock"],
+            ["git", "commit", "-m", "gen mock recipes"],
             cwd=str(temp_path),
             check=True,
             capture_output=True,
