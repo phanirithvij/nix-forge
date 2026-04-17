@@ -55,7 +55,7 @@ jobs:
           name: ngi-forge
 
       - name: Run Playwright tests
-        run: nix develop -c playwright test -c ui/tests/e2e --project=${{ matrix.project }}
+        run: nix develop -c playwright test -c ui/tests/e2e --project=${{ matrix.project }} -x
 
   build-preview-ui:
     name: Build UI artifact
