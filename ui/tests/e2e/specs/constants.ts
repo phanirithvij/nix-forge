@@ -1,4 +1,4 @@
-export const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
+export const BASE_URL = process.env.BASE_URL || "http://127.0.0.1:3000";
 const isProd = BASE_URL.includes("netlify.app") || BASE_URL.includes("github.io");
 
 export const TEST_APP_NAME = process.env.TEST_APP_NAME || (isProd ? "python-web-app" : "mock-test-app");

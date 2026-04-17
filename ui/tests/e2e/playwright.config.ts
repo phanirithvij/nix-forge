@@ -8,14 +8,14 @@ export default defineConfig({
     // NOTE: https://github.com/microsoft/playwright/issues/22592#issuecomment-1519991484
     // BASE_URL should end with "/"
     // every test should us relative paths prepended with "./"
-    baseURL: process.env.BASE_URL || "http://localhost:3000/",
+    baseURL: process.env.BASE_URL || "http://127.0.0.1:3000/",
     trace: "retain-on-failure",
     video: "retain-on-failure",
     colorScheme: "dark", // assume dark by default
   },
   webServer: {
     command: "dev-ui-mock",
-    url: "http://localhost:3000",
+    url: "http://127.0.0.1:3000/",
     reuseExistingServer: !process.env.CI,
     stdout: "pipe",
     stderr: "pipe",
