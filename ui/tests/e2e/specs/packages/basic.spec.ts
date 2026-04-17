@@ -3,6 +3,7 @@ import { TEST_PKG_SEARCH } from "../constants";
 
 test.describe("Packages Page", () => {
   test.beforeEach(async ({ page }) => {
+
     const responsePromise = page.waitForResponse((response) => response.url().includes("forge-config.json"));
     await page.goto("./packages");
     await responsePromise;
