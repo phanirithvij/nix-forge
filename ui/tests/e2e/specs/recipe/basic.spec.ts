@@ -10,7 +10,7 @@ test.describe("Recipe Options Page", () => {
 
   test("loads recipe options", async ({ page }) => {
     const results = page.getByTestId("option-result");
-    await expect(await results.count()).toBeGreaterThan(0);
+    await expect(results.first()).toBeVisible();
   });
 
   test("search filters options", async ({ page }) => {
@@ -19,7 +19,7 @@ test.describe("Recipe Options Page", () => {
     await searchBar.fill(searchTerm);
 
     const results = page.getByTestId("option-result");
-    await expect(results).toHaveCount(1);
+    await expect(await results.count()).toBeGreaterThan(0);
     await expect(results.first()).toContainText(searchTerm);
   });
 

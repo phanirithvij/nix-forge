@@ -3,12 +3,14 @@ import { TEST_PKG_SEARCH } from "../constants";
 
 test.describe("Packages Page", () => {
   test.beforeEach(async ({ page }) => {
+    const responsePromise = page.waitForResponse((response) => response.url().includes("forge-config.json"));
     await page.goto("./packages");
+    await responsePromise;
   });
 
   test("loads package results", async ({ page }) => {
     const results = page.getByTestId("package-result");
-    await expect(await results.count()).toBeGreaterThan(0);
+    await expect(results.first()).toBeVisible();
   });
 
   test("search filters packages", async ({ page }) => {
