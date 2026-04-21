@@ -34,30 +34,7 @@ viewPageRecipeOptionsNav _ page =
     in
     page.pageRecipeOptions_trees
         |> List.map (viewPageRecipeOptionsNavNodes page initInh)
-        |> (\hs ->
-                let
-                    h =
-                        viewPageRecipeOptionsNavNode page
-                            { inhRecipeOptionsNav_pathReversed = []
-                            , inhRecipeOptionsNav_children = page.pageRecipeOptions_trees
-                            , inhRecipeOptionsNav_unfolded = True
-                            }
-                            (Tree.tree ( "", [] ) page.pageRecipeOptions_trees)
-                            { nodeRecipeOptionsNav_foldable = True
-                            , nodeRecipeOptionsNav_unfolded = True
-                            , nodeRecipeOptionsNav_showable = True
-                            , nodeRecipeOptionsNav_shown = True
-                            }
-                in
-                nav [ class "option-dirs" ]
-                    [ div
-                        [ style "margin-left" "1rem"
-                        ]
-                        (h
-                            :: hs
-                        )
-                    ]
-           )
+        |> nav []
 
 
 viewPageRecipeOptionsNavNodes : PageRecipeOptions -> InhRecipeOptionsNav -> Tree NodeNixOption -> Html Update
@@ -142,7 +119,6 @@ viewPageRecipeOptionsNavNode page inh tree node =
     div
         [ style "font-family" "monospace"
         ]
-    <|
         [ span [ style "white-space" "pre" ] <|
             [ viewPageRecipeOptionsNavNodeName page inh tree node
             ]
@@ -171,12 +147,7 @@ viewPageRecipeOptionsNavNodeName page inh tree node =
                 else
                     "none"
             ]
-            [ text <|
-                if name == "" then
-                    "<recipe>"
-
-                else
-                    name
+            [ text name
             ]
         ]
 
@@ -241,7 +212,7 @@ routePageRecipeOptionsNavNodeToggle page path =
                         |> Set.filter (List.isPrefixOf path >> not)
                         |> Set.insert (path |> List.dropLast |> Maybe.withDefault [])
                 , routeRecipeOptions_scope =
-                    if route.routeRecipeOptions_scope == path then
+                    if List.isPrefixOf path route.routeRecipeOptions_scope then
                         []
 
                     else
