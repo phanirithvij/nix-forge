@@ -38,7 +38,7 @@ viewPageAppsPagination : PagePagination a -> (a -> Html Update) -> ((RoutePagina
 viewPageAppsPagination pagePagination viewItem reRoute =
     div []
         [ div [ class "m-item-grid" ] (viewPaginationItems pagePagination viewItem)
-        , viewPaginationNavigation PaginationVisibility_HiddenIfSinglePage reRoute pagePagination
+        , viewPaginationNavigation PaginationVisibility_HiddenIfSinglePage pagePagination reRoute
         ]
 
 

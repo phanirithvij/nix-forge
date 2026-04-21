@@ -41,11 +41,35 @@ viewPageRecipeOptionsLink =
 
 viewPageRecipeOptions : Model -> PageRecipeOptions -> Html Update
 viewPageRecipeOptions model page =
+    let
+        paginationNav =
+            viewPaginationNavigation
+                PaginationVisibility_AlwaysVisible
+                page.pageRecipeOptions_pagination
+                (\modifyRoutePagination ->
+                    let
+                        route =
+                            page.pageRecipeOptions_route
+                    in
+                    Route_RecipeOptions
+                        { route
+                            | routeRecipeOptions_pagination = route.routeRecipeOptions_pagination |> modifyRoutePagination
+                            , routeRecipeOptions_focus = Nothing
+                        }
+                )
+    in
     div
         [ style "display" "grid"
         , style "grid-template-columns" "1fr 4fr"
         , style "gap" "0rem 1rem"
         ]
-        [ viewPageRecipeOptionsNav model page
-        , viewPageRecipeOptionsItems model page
+        [ div [ style "grid-column" "2 / 2" ]
+            [ paginationNav
+            ]
+        , viewPageRecipeOptionsNav model page
+        , viewPaginationContent page.pageRecipeOptions_pagination
+            (viewPageRecipeOptionsItem model page)
+        , div [ style "grid-column" "2 / 2" ]
+            [ paginationNav
+            ]
         ]

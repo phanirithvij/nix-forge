@@ -21,31 +21,40 @@ type PaginationVisibility
     | PaginationVisibility_HiddenIfSinglePage
 
 
-viewPagination : PaginationVisibility -> PagePagination a -> (a -> Html Update) -> ((RoutePagination -> RoutePagination) -> Route) -> Html Update
-viewPagination visibility pagePagination viewItem reRoute =
+viewPagination :
+    PaginationVisibility
+    -> PagePagination a
+    -> (a -> Html Update)
+    -> ((RoutePagination -> RoutePagination) -> Route)
+    -> Html Update
+viewPagination visibility page viewItem reRoute =
     div []
-        [ viewPaginationNavigation visibility reRoute pagePagination
-        , viewPaginationContent pagePagination viewItem
-        , viewPaginationNavigation visibility reRoute pagePagination
+        [ viewPaginationNavigation visibility page reRoute
+        , viewPaginationContent page viewItem
+        , viewPaginationNavigation visibility page reRoute
         ]
 
 
 viewPaginationContent : PagePagination a -> (a -> Html Update) -> Html Update
-viewPaginationContent pagePagination viewItem =
+viewPaginationContent page viewItem =
     div [ class "list-group" ]
-        (viewPaginationItems pagePagination viewItem)
+        (viewPaginationItems page viewItem)
 
 
 viewPaginationItems : PagePagination a -> (a -> Html Update) -> List (Html Update)
-viewPaginationItems pagePagination viewItem =
-    pagePagination.pagePagination_list
-        |> List.at (pagePagination.pagePagination_current - 1)
+viewPaginationItems page viewItem =
+    page.pagePagination_list
+        |> List.at (page.pagePagination_current - 1)
         |> Maybe.withDefault []
         |> List.map viewItem
 
 
-viewPaginationNavigation : PaginationVisibility -> ((RoutePagination -> RoutePagination) -> Route) -> PagePagination a -> Html Update
-viewPaginationNavigation visibility reRoute pagePagination =
+viewPaginationNavigation :
+    PaginationVisibility
+    -> PagePagination a
+    -> ((RoutePagination -> RoutePagination) -> Route)
+    -> Html Update
+viewPaginationNavigation visibility page reRoute =
     let
         isHidden =
             case visibility of
@@ -53,7 +62,7 @@ viewPaginationNavigation visibility reRoute pagePagination =
                     False
 
                 PaginationVisibility_HiddenIfSinglePage ->
-                    pagePagination.pagePagination_last <= 1
+                    page.pagePagination_last <= 1
     in
     if isHidden then
         text ""
@@ -62,20 +71,20 @@ viewPaginationNavigation visibility reRoute pagePagination =
         let
             updatePageNumber pagination =
                 reRoute <|
-                    \routePagination ->
-                        { routePagination
+                    \route ->
+                        { route
                             | routePagination_current = Just pagination.pagePagination_current
                         }
 
             routePagePreviousMaybe : Maybe Route
             routePagePreviousMaybe =
-                pagePagination
+                page
                     |> previousPagePagination
                     |> Maybe.map updatePageNumber
 
             routePageNextMaybe : Maybe Route
             routePageNextMaybe =
-                pagePagination
+                page
                     |> nextPagePagination
                     |> Maybe.map updatePageNumber
         in
@@ -98,13 +107,13 @@ viewPaginationNavigation visibility reRoute pagePagination =
                 , style "text-align" "center"
                 , attribute "data-testid" "pagination-current"
                 ]
-                [ text (pagePagination.pagePagination_current |> String.fromInt) ]
+                [ text (page.pagePagination_current |> String.fromInt) ]
             , text " / "
             , span
                 [ style "width" "2rem"
                 , style "text-align" "center"
                 ]
-                [ text (pagePagination.pagePagination_last |> String.fromInt) ]
+                [ text (page.pagePagination_last |> String.fromInt) ]
             , button
                 ([ class "btn me-2 border-0"
                  , attribute "data-testid" "pagination-next"

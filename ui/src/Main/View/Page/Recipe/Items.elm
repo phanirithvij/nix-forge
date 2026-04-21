@@ -1,4 +1,4 @@
-module Main.View.Page.Recipe.Items exposing (viewPageRecipeOptionsItems)
+module Main.View.Page.Recipe.Items exposing (..)
 
 import Html exposing (Html, a, code, div, h5, span, text)
 import Html.Attributes exposing (attribute, class, href, id)
@@ -18,25 +18,6 @@ import Main.Update.Types exposing (..)
 import Main.View.Nix exposing (..)
 import Main.View.Page.App exposing (..)
 import Main.View.Pagination exposing (..)
-
-
-viewPageRecipeOptionsItems : Model -> PageRecipeOptions -> Html Update
-viewPageRecipeOptionsItems model page =
-    viewPagination
-        PaginationVisibility_AlwaysVisible
-        page.pageRecipeOptions_pagination
-        (viewPageRecipeOptionsItem model page)
-        (\modifyRoutePagination ->
-            let
-                route =
-                    page.pageRecipeOptions_route
-            in
-            Route_RecipeOptions
-                { route
-                    | routeRecipeOptions_pagination = route.routeRecipeOptions_pagination |> modifyRoutePagination
-                    , routeRecipeOptions_focus = Nothing
-                }
-        )
 
 
 viewPageRecipeOptionsItem : Model -> PageRecipeOptions -> ( NixPath, NixModuleOption ) -> Html Update
