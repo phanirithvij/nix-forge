@@ -104,12 +104,11 @@ viewNodes page inh tree =
     <|
         List.concat
             [ if shown then
-                [ viewNode page inh tree node
-                ]
+                viewNode page inh tree node
+                    :: childrenHtml
 
               else
                 []
-            , childrenHtml
             ]
 
 
