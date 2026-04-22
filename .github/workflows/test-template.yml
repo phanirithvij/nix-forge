@@ -25,8 +25,6 @@ jobs:
       package: hello-nix
       app: hello-app
       test_shell: true
-      test_container: true
-      test_vm: true
       test_forge_ui: true
 
   test-consumer:
