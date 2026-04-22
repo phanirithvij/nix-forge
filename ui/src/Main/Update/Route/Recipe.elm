@@ -97,10 +97,17 @@ scopeRecipeOptions path trees =
                 |> List.concatMap
                     (\tree ->
                         if tree |> Tree.label |> first |> (==) p then
-                            [ Tree.tree
-                                (NodeNixOptionFiltered_Out (tree |> Tree.label |> first))
-                                (tree |> Tree.children |> scopeRecipeOptions ps)
-                            ]
+                            if ps == [] && (tree |> Tree.children |> (==) []) then
+                                [ Tree.tree
+                                    (NodeNixOptionFiltered_In (tree |> Tree.label))
+                                    []
+                                ]
+
+                            else
+                                [ Tree.tree
+                                    (NodeNixOptionFiltered_Out (tree |> Tree.label |> first))
+                                    (tree |> Tree.children |> scopeRecipeOptions ps)
+                                ]
 
                         else
                             []

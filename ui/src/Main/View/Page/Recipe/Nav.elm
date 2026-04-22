@@ -63,23 +63,18 @@ viewPageRecipeOptionsNavNodes page inh tree =
                 , inhRecipeOptionsNav_children = tree |> Tree.children
             }
 
-        synHtml =
-            tree |> Tree.children |> List.map (viewPageRecipeOptionsNavNodes page childrenInh)
+        ( nodeChildrenLeaves, nodeChildrenBranches ) =
+            tree |> Tree.children |> List.partition (Tree.children >> List.isEmpty)
+
+        childrenHtml =
+            [ nodeChildrenLeaves, nodeChildrenBranches ]
+                |> List.concatMap (List.map (viewPageRecipeOptionsNavNodes page childrenInh))
 
         path =
             pathPageRecipeOptionsNav inh tree
 
-        nodeBranches =
-            synHtml |> List.length
-
-        showable =
-            0 < nodeBranches
-
         shown =
-            showable
-                && (unfolded
-                        || inh.inhRecipeOptionsNav_unfolded
-                   )
+            unfolded || inh.inhRecipeOptionsNav_unfolded
 
         unfolded =
             Set.member path unfoldedAncestorsOrSelf
@@ -88,13 +83,11 @@ viewPageRecipeOptionsNavNodes page inh tree =
         foldable =
             tree
                 |> Tree.children
-                |> List.filter (Tree.children >> List.length >> (<) 0)
                 |> List.length
                 |> (<) 0
 
         node =
-            { nodeRecipeOptionsNav_showable = showable
-            , nodeRecipeOptionsNav_foldable = foldable
+            { nodeRecipeOptionsNav_foldable = foldable
             , nodeRecipeOptionsNav_unfolded = unfolded
             , nodeRecipeOptionsNav_shown = shown
             }
@@ -110,7 +103,7 @@ viewPageRecipeOptionsNavNodes page inh tree =
 
               else
                 []
-            , synHtml
+            , childrenHtml
             ]
 
 
@@ -120,52 +113,10 @@ viewPageRecipeOptionsNavNode page inh tree node =
         [ style "font-family" "monospace"
         ]
         [ span [ style "white-space" "pre" ] <|
-            [ viewPageRecipeOptionsNavNodeName page inh tree node
+            [ viewPageRecipeOptionsNavNodeToggle page inh tree node
+            , viewPageRecipeOptionsNavNodeName page inh tree node
             ]
         ]
-
-
-viewPageRecipeOptionsNavNodeName : PageRecipeOptions -> InhRecipeOptionsNav -> Tree NodeNixOption -> NodeRecipeOptionsNav -> Html Update
-viewPageRecipeOptionsNavNodeName page inh tree node =
-    let
-        name =
-            tree |> Tree.label |> first
-
-        path =
-            pathPageRecipeOptionsNav inh tree
-    in
-    span []
-        [ viewPageRecipeOptionsNavNodeToggle page inh tree node
-        , a
-            [ href (routePageRecipeOptionsNavNodeName page path |> routeToString)
-            , onClick (Update_Route (routePageRecipeOptionsNavNodeName page path))
-            , class "text-primary"
-            , style "text-decoration" <|
-                if path == page.pageRecipeOptions_route.routeRecipeOptions_scope then
-                    "underline"
-
-                else
-                    "none"
-            ]
-            [ text name
-            ]
-        ]
-
-
-routePageRecipeOptionsNavNodeName : PageRecipeOptions -> NixPath -> Route
-routePageRecipeOptionsNavNodeName page path =
-    let
-        route =
-            page.pageRecipeOptions_route
-    in
-    Route_RecipeOptions
-        { route
-            | routeRecipeOptions_scope = path
-            , routeRecipeOptions_unfolds =
-                route.routeRecipeOptions_unfolds
-                    |> Set.insert path
-            , routeRecipeOptions_focus = Nothing
-        }
 
 
 viewPageRecipeOptionsNavNodeToggle : PageRecipeOptions -> InhRecipeOptionsNav -> Tree NodeNixOption -> NodeRecipeOptionsNav -> Html Update
@@ -196,6 +147,53 @@ viewPageRecipeOptionsNavNodeToggle page inh tree node =
           else
             text "  "
         ]
+
+
+viewPageRecipeOptionsNavNodeName : PageRecipeOptions -> InhRecipeOptionsNav -> Tree NodeNixOption -> NodeRecipeOptionsNav -> Html Update
+viewPageRecipeOptionsNavNodeName page inh tree node =
+    let
+        name =
+            tree |> Tree.label |> first
+
+        path =
+            pathPageRecipeOptionsNav inh tree
+    in
+    span []
+        [ a
+            [ href (routePageRecipeOptionsNavNodeName page path |> routeToString)
+            , onClick (Update_Route (routePageRecipeOptionsNavNodeName page path))
+            , class <|
+                if tree |> Tree.children |> (==) [] then
+                    "text-secondary-emphasis"
+
+                else
+                    "text-primary"
+            , style "text-decoration" <|
+                if path == page.pageRecipeOptions_route.routeRecipeOptions_scope then
+                    "underline"
+
+                else
+                    "none"
+            ]
+            [ text name
+            ]
+        ]
+
+
+routePageRecipeOptionsNavNodeName : PageRecipeOptions -> NixPath -> Route
+routePageRecipeOptionsNavNodeName page path =
+    let
+        route =
+            page.pageRecipeOptions_route
+    in
+    Route_RecipeOptions
+        { route
+            | routeRecipeOptions_scope = path
+            , routeRecipeOptions_unfolds =
+                route.routeRecipeOptions_unfolds
+                    |> Set.insert path
+            , routeRecipeOptions_focus = Nothing
+        }
 
 
 routePageRecipeOptionsNavNodeToggle : PageRecipeOptions -> NixPath -> Route
@@ -248,6 +246,5 @@ pathPageRecipeOptionsNav inh tree =
 type alias NodeRecipeOptionsNav =
     { nodeRecipeOptionsNav_foldable : Bool
     , nodeRecipeOptionsNav_unfolded : Bool
-    , nodeRecipeOptionsNav_showable : Bool
     , nodeRecipeOptionsNav_shown : Bool
     }
