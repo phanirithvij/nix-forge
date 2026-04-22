@@ -117,4 +117,4 @@ nixOptionsTrees opts =
                 in
                 ( path, opt )
             )
-        |> Tree.unflattenChart
+        |> Tree.chartToTrees
