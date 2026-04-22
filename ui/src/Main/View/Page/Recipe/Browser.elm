@@ -92,7 +92,6 @@ viewNodes page inh tree =
         node =
             { node_foldable = foldable
             , node_unfolded = unfolded
-            , node_shown = shown
             }
     in
     div
@@ -270,5 +269,4 @@ type alias Inh =
 type alias Node =
     { node_foldable : Bool
     , node_unfolded : Bool
-    , node_shown : Bool
     }
