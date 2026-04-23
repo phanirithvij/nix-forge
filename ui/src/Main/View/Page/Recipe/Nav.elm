@@ -97,8 +97,12 @@ viewPageRecipeOptionsNavNodes page inh tree =
             }
     in
     div
-        [ style "margin-left" "1rem"
-        ]
+        (if node.nodeRecipeOptionsNav_foldable then
+            [ style "margin-left" "1rem" ]
+
+         else
+            [ style "margin-left" "calc(2rem + 3px)" ]
+        )
     <|
         List.concat
             [ if shown then
@@ -116,10 +120,8 @@ viewPageRecipeOptionsNavNode page inh tree node =
     div
         [ style "font-family" "monospace"
         ]
-        [ span [ style "white-space" "pre" ] <|
-            [ viewPageRecipeOptionsNavNodeToggle page inh tree node
-            , viewPageRecipeOptionsNavNodeName page inh tree
-            ]
+        [ viewPageRecipeOptionsNavNodeToggle page inh tree node
+        , viewPageRecipeOptionsNavNodeName page inh tree node
         ]
 
 
@@ -129,11 +131,11 @@ viewPageRecipeOptionsNavNodeToggle page inh tree node =
         path =
             pathPageRecipeOptionsNav inh tree
     in
-    span
-        [ style "white-space" "pre"
-        ]
-        [ if node.nodeRecipeOptionsNav_foldable then
-            a
+    if node.nodeRecipeOptionsNav_foldable then
+        span
+            [ style "white-space" "pre"
+            ]
+            [ a
                 [ href (routePageRecipeOptionsNavNodeToggle page path |> routeToString)
                 , onClick (Update_Route (routePageRecipeOptionsNavNodeToggle page path))
                 , style "color" "inherit"
@@ -147,14 +149,14 @@ viewPageRecipeOptionsNavNodeToggle page inh tree node =
                     else
                         "› "
                 ]
+            ]
 
-          else
-            text "  "
-        ]
+    else
+        text ""
 
 
-viewPageRecipeOptionsNavNodeName : PageRecipeOptions -> InhRecipeOptionsNav -> Tree NodeNixOption -> Html Update
-viewPageRecipeOptionsNavNodeName page inh tree =
+viewPageRecipeOptionsNavNodeName : PageRecipeOptions -> InhRecipeOptionsNav -> Tree NodeNixOption -> NodeRecipeOptionsNav -> Html Update
+viewPageRecipeOptionsNavNodeName page inh tree node =
     let
         name =
             tree |> Tree.label |> first
