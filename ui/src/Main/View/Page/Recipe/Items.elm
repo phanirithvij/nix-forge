@@ -46,12 +46,12 @@ viewPageRecipeOptionsItem _ page ( optionPath, option ) =
             [ h5
                 [ class "mb-1"
                 ]
-                [ code [] [ text optionName ]
+                [ code [ class "option-name" ] [ text optionName ]
                 ]
             ]
         , div []
             [ span [ class "fw-bold" ] [ text "Type: " ]
-            , code [] [ text option.nixModuleOption_type ]
+            , code [ class "option-type" ] [ text option.nixModuleOption_type ]
             ]
         , div []
             [ span [ class "fw-bold" ] [ text "Description: " ]

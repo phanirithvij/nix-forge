@@ -165,7 +165,7 @@ viewPageRecipeOptionsNavNodeName page inh tree =
                   , onClick (Update_Route (routePageRecipeOptionsNavNodeName page path))
                   ]
                 , if path == page.pageRecipeOptions_route.routeRecipeOptions_scope then
-                    [ style "font-weight" "bold"
+                    [ style "font-weight" "bolder"
                     , class <|
                         if tree |> Tree.children |> (/=) [] then
                             "text-primary-emphasis"
