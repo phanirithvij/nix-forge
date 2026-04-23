@@ -191,29 +191,33 @@ viewNodeName page inh tree =
         path =
             inh.inh_parentPath ++ [ name ]
     in
-    a
-        (List.concat
-            [ [ href (routeNodeName page path |> routeToString)
-              , onClick (Update_Route (routeNodeName page path))
-              ]
-            , if path == page.pageRecipeOptions_route.routeRecipeOptions_scope then
-                [ style "font-weight" "bolder"
-                , class <|
-                    if tree |> Tree.children |> (/=) [] then
-                        "text-primary-emphasis"
+    (if path == page.pageRecipeOptions_route.routeRecipeOptions_scope then
+        span
 
-                    else
-                        "text-secondary-emphasis"
+     else
+        a
+            << (++)
+                [ href (routeNodeName page path |> routeToString)
+                , onClick (Update_Route (routeNodeName page path))
                 ]
+    )
+        (if path == page.pageRecipeOptions_route.routeRecipeOptions_scope then
+            [ style "font-weight" "bolder"
+            , class <|
+                if tree |> Tree.children |> (/=) [] then
+                    "text-primary-emphasis"
 
-              else
-                [ class <|
-                    if tree |> Tree.children |> (/=) [] then
-                        "text-primary"
+                else
+                    "text-secondary-emphasis"
+            ]
 
-                    else
-                        "text-secondary"
-                ]
+         else
+            [ class <|
+                if tree |> Tree.children |> (/=) [] then
+                    "text-primary"
+
+                else
+                    "text-secondary"
             ]
         )
         [ text name
