@@ -34,7 +34,11 @@ viewPageRecipeOptionsNav _ page =
     in
     page.pageRecipeOptions_trees
         |> List.map (viewPageRecipeOptionsNavNodes page initInh)
-        |> nav []
+        |> nav
+            [ style "border" "1px solid var(--bs-border-color)"
+            , style "border-radius" "6px"
+            , style "padding" "1em .5em 1em 0"
+            ]
 
 
 viewPageRecipeOptionsNavNodes : PageRecipeOptions -> InhRecipeOptionsNav -> Tree NodeNixOption -> Html Update
@@ -93,8 +97,12 @@ viewPageRecipeOptionsNavNodes page inh tree =
             }
     in
     div
-        [ style "margin-left" "1rem"
-        ]
+        (if node.nodeRecipeOptionsNav_foldable then
+            [ style "margin-left" "1rem" ]
+
+         else
+            [ style "margin-left" "calc(2rem + 3px)" ]
+        )
     <|
         List.concat
             [ if shown then
@@ -112,10 +120,8 @@ viewPageRecipeOptionsNavNode page inh tree node =
     div
         [ style "font-family" "monospace"
         ]
-        [ span [ style "white-space" "pre" ] <|
-            [ viewPageRecipeOptionsNavNodeToggle page inh tree node
-            , viewPageRecipeOptionsNavNodeName page inh tree
-            ]
+        [ viewPageRecipeOptionsNavNodeToggle page inh tree node
+        , viewPageRecipeOptionsNavNodeName page inh tree node
         ]
 
 
@@ -125,11 +131,11 @@ viewPageRecipeOptionsNavNodeToggle page inh tree node =
         path =
             pathPageRecipeOptionsNav inh tree
     in
-    span
-        [ style "white-space" "pre"
-        ]
-        [ if node.nodeRecipeOptionsNav_foldable then
-            a
+    if node.nodeRecipeOptionsNav_foldable then
+        span
+            [ style "white-space" "pre"
+            ]
+            [ a
                 [ href (routePageRecipeOptionsNavNodeToggle page path |> routeToString)
                 , onClick (Update_Route (routePageRecipeOptionsNavNodeToggle page path))
                 , style "color" "inherit"
@@ -143,14 +149,14 @@ viewPageRecipeOptionsNavNodeToggle page inh tree node =
                     else
                         "› "
                 ]
+            ]
 
-          else
-            text "  "
-        ]
+    else
+        text ""
 
 
-viewPageRecipeOptionsNavNodeName : PageRecipeOptions -> InhRecipeOptionsNav -> Tree NodeNixOption -> Html Update
-viewPageRecipeOptionsNavNodeName page inh tree =
+viewPageRecipeOptionsNavNodeName : PageRecipeOptions -> InhRecipeOptionsNav -> Tree NodeNixOption -> NodeRecipeOptionsNav -> Html Update
+viewPageRecipeOptionsNavNodeName page inh tree node =
     let
         name =
             tree |> Tree.label |> first
@@ -165,7 +171,7 @@ viewPageRecipeOptionsNavNodeName page inh tree =
                   , onClick (Update_Route (routePageRecipeOptionsNavNodeName page path))
                   ]
                 , if path == page.pageRecipeOptions_route.routeRecipeOptions_scope then
-                    [ style "font-weight" "bold"
+                    [ style "font-weight" "bolder"
                     , class <|
                         if tree |> Tree.children |> (/=) [] then
                             "text-primary-emphasis"

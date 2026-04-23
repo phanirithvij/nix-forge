@@ -305,3 +305,59 @@ a:link {
     background-color: transparent;
   }
 }
+
+/* custom bootstrap col width */
+@media (min-width: 1400px) {
+  .col-xxl-3-5 {
+    flex: 0 0 auto;
+    width: 29.166667%; /* (3.5 / 12) * 100 */
+  }
+  .col-xxl-8-5 {
+    flex: 0 0 auto;
+    width: 70.833334%; /* (8.5 / 12) * 100 */
+  }
+}
+
+/* options filters colors */
+
+[data-bs-theme="light"] {
+  --bs-primary-rgb: 76, 110, 181; /* nixos logo color dark blue - Not enough contrast */
+  --bs-primary-text-emphasis: #4d6fb6;
+}
+
+[data-bs-theme="dark"] {
+  --bs-primary-rgb: 117, 178, 219; /* nixos logo color light blue */
+  --bs-secondary-rgb: 158, 158, 158;
+  --bs-primary-text-emphasis: #75b2db; /* nixos logo color light blue */
+}
+
+/* options tiles colors */
+
+.option-type {
+  color: var(--option-type-color);
+}
+
+.option-name {
+  color: var(--option-name-color);
+}
+
+[data-bs-theme="dark"] {
+  --option-name-color: #75b2db; /* nixos logo color light blue */
+  --option-type-color: #7fc741; /* nlnet logo color green adjusted for contrast - original #74aa00 */
+}
+
+[data-bs-theme="light"] {
+  /*--option-name-color: #4c6eb5;*/ /* nixos logo color dark blue - Not enough contrast */
+  --option-name-color: #00418f;
+  --option-type-color: #2d6101; /* another green adjusted for contrast */
+}
+
+/* packages tiles colors */
+
+[data-bs-theme="light"] {
+  --bs-code-color: #00408d;
+}
+
+[data-bs-theme="dark"] {
+  --bs-code-color: #b2d5ff;
+}

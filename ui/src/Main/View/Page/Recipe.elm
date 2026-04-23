@@ -17,14 +17,26 @@ import Main.View.Page.App exposing (..)
 import Main.View.Page.Recipe.Items exposing (..)
 import Main.View.Page.Recipe.Nav exposing (..)
 import Main.View.Pagination exposing (..)
+import Set
 
 
-viewPageRecipeOptionsLink : Html Update
-viewPageRecipeOptionsLink =
+type PageLayout
+    = Layout_Mobile
+    | Layout_Desktop
+
+
+viewPageRecipeOptionsLink : PageLayout -> Html Update
+viewPageRecipeOptionsLink layout =
     let
         onClickRoute =
             Route_RecipeOptions
-                defaultRouteRecipeOptions
+                (case layout of
+                    Layout_Desktop ->
+                        defaultRouteRecipeOptions
+
+                    Layout_Mobile ->
+                        { defaultRouteRecipeOptions | routeRecipeOptions_unfolds = Set.empty }
+                )
     in
     a
         [ href (onClickRoute |> routeToString)
@@ -42,10 +54,11 @@ viewPageRecipeOptionsLink =
 viewPageRecipeOptions : Model -> PageRecipeOptions -> Html Update
 viewPageRecipeOptions model page =
     let
-        paginationNav =
-            viewPaginationNavigation
+        viewPaginationRecipeOptions =
+            viewPagination
                 PaginationVisibility_AlwaysVisible
                 page.pageRecipeOptions_pagination
+                (viewPageRecipeOptionsItem model page)
                 (\modifyRoutePagination ->
                     let
                         route =
@@ -59,17 +72,12 @@ viewPageRecipeOptions model page =
                 )
     in
     div
-        [ style "display" "grid"
-        , style "grid-template-columns" "1fr 4fr"
-        , style "gap" "0rem 1rem"
-        ]
-        [ div [ style "grid-column" "2 / 2" ]
-            [ paginationNav
+        [ class "row" ]
+        [ div
+            [ class "col-12 col-md-6 col-lg-5 col-xl-4 col-xxl-3-5"
+            , style "margin-top" "calc(36px + 1em)"
             ]
-        , viewPageRecipeOptionsNav model page
-        , viewPaginationContent page.pageRecipeOptions_pagination
-            (viewPageRecipeOptionsItem model page)
-        , div [ style "grid-column" "2 / 2" ]
-            [ paginationNav
-            ]
+            [ viewPageRecipeOptionsNav model page ]
+        , div [ class "col-12 col-md-6 col-lg-7 col-xl-8 col-xxl-8-5" ]
+            [ viewPaginationRecipeOptions ]
         ]
