@@ -42,7 +42,7 @@ viewPageRecipeOptionsItem _ page ( optionPath, option ) =
         , id optionName
         , onClick (Update_Route routeItem)
         ]
-        [ div [ class "d-flex w-100 justify-content-between" ]
+        [ div []
             [ h5
                 [ class "mb-1"
                 ]

@@ -38,7 +38,7 @@ view model =
                 , div
                     [ class "d-none d-md-flex align-items-center gap-4" ]
                     [ viewPagePackagesLink
-                    , viewPageRecipeOptionsLink
+                    , viewPageRecipeOptionsLink Layout_Desktop
                     , viewThemeToggle model
                     ]
                 , button
@@ -71,7 +71,7 @@ view model =
                     [ class "card card-body bg-body-tertiary shadow-sm" ]
                     [ ul [ class "nav flex-column gap-2" ]
                         [ li [ class "nav-item" ] [ viewPagePackagesLink ]
-                        , li [ class "nav-item" ] [ viewPageRecipeOptionsLink ]
+                        , li [ class "nav-item" ] [ viewPageRecipeOptionsLink Layout_Mobile ]
                         , li [ class "nav-item mt-2 pt-2 border-top" ] [ viewThemeToggle model ]
                         ]
                     ]

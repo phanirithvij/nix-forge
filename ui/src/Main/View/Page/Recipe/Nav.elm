@@ -34,7 +34,11 @@ viewPageRecipeOptionsNav _ page =
     in
     page.pageRecipeOptions_trees
         |> List.map (viewPageRecipeOptionsNavNodes page initInh)
-        |> nav []
+        |> nav
+            [ style "border" "1px solid var(--bs-border-color)"
+            , style "border-radius" "6px"
+            , style "padding" "1em .5em 1em 0"
+            ]
 
 
 viewPageRecipeOptionsNavNodes : PageRecipeOptions -> InhRecipeOptionsNav -> Tree NodeNixOption -> Html Update

@@ -306,6 +306,18 @@ a:link {
   }
 }
 
+/* custom bootstrap col width */
+@media (min-width: 1400px) {
+  .col-xxl-3-5 {
+    flex: 0 0 auto;
+    width: 29.166667%; /* (3.5 / 12) * 100 */
+  }
+  .col-xxl-8-5 {
+    flex: 0 0 auto;
+    width: 70.833334%; /* (8.5 / 12) * 100 */
+  }
+}
+
 /* options filters colors */
 
 [data-bs-theme="light"] {
