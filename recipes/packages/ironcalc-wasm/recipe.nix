@@ -9,6 +9,10 @@
   name = "ironcalc-wasm";
   version = "0.7.1-unstable-2026-04-29";
   description = "Ironcalc wasm bindings";
+  license = with lib.licenses; [
+    mit
+    asl20
+  ];
 
   source = {
     git = "github:ironcalc/ironcalc/8461ff71347ab19145cd7ad50ef829181ba765c2";

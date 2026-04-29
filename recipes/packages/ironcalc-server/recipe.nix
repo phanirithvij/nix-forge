@@ -9,9 +9,9 @@
   name = "ironcalc-server";
   version = "0.7.1-unstable-2026-04-29";
   description = "IronCalc server package";
-  license = [
-    lib.licenses.asl20
-    lib.licenses.mit
+  license = with lib.licenses; [
+    mit
+    asl20
   ];
 
   source = {

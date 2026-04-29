@@ -9,6 +9,10 @@
   name = "ironcalc";
   version = "0.7.1-unstable-2026-04-29";
   description = "Open source selfhosted spreadsheet engine";
+  license = with lib.licenses; [
+    mit
+    asl20
+  ];
   mainProgram = "ironcalc";
 
   source = {

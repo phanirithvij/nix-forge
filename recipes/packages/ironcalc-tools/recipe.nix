@@ -9,6 +9,10 @@
   name = "ironcalc-tools";
   version = "0.7.1-unstable-2026-04-29";
   description = "IronCalc helper tools";
+  license = with lib.licenses; [
+    mit
+    asl20
+  ];
   mainProgram = "xlsx_2_icalc";
 
   source = {
