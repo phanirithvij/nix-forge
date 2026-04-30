@@ -81,7 +81,7 @@ in
                   meta = sharedBuildAttrs.pkgMeta pkg;
                 }
                 // lib.optionalAttrs (builderCfg.sourceRoot != null) {
-                  sourceRoot = "source/${lib.last (lib.splitString "/" builderCfg.sourceRoot)}";
+                  inherit (builderCfg) sourceRoot;
                 }
                 // pkg.build.extraAttrs
                 // lib.optionalAttrs pkg.build.debug sharedBuildAttrs.debugShellHookAttr
