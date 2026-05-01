@@ -123,6 +123,9 @@ in
               script = pkg.test.script + "\ntouch $out";
             };
             devenv = pkgs.mkShell {
+              dontBuild = true;
+              phases = [ "installPhase" ];
+              installPhase = "touch $out";
               env.DEVENV_PACKAGE_NAME = "${pkg.name}";
               env.DEVENV_PACKAGE_SOURCE = "${finalPkg.src}";
               inputsFrom = [
