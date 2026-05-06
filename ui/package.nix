@@ -5,6 +5,7 @@
   symlinkJoin,
 
   _forge-config,
+  _forge-docs,
   _forge-options,
   appIcons,
   ...
@@ -77,6 +78,9 @@ symlinkJoin {
       mkdir -p "$page"
       ln -s $out/index.html "$page/index.html"
     done
+
+    # Install docs
+    ln -s ${_forge-docs} docs
 
     popd
   '';
