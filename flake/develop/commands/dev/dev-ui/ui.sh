@@ -52,6 +52,7 @@ Environment=PATH=$PATH
 WorkingDirectory=$rootDir
 ExecStart=$(command -v nix) build -f "$rootDir" _forge-ui.passthru.bootstrapCss -o "$rootDir/ui/build/bootstrap" --show-trace
 ExecStart=$(command -v nix) build -f "$rootDir" _forge-options -o "$rootDir/ui/build/forge-options.json" --show-trace
+ExecStart=$(command -v nix) build -f "$rootDir" _forge-docs -o "$rootDir/ui/build/docs" --show-trace
 ExecStart=$BACKEND_COMMAND
 ExecStart=$rootDir/flake/develop/commands/dev/dev-ui/build_app_resources.py
 EOT
@@ -122,6 +123,12 @@ watchman -j <<EOT
       [
         "pcre",
         "^(forge|recipes)/.*\\\.nix\$",
+        "wholename",
+        {"includedotfiles": false}
+      ],
+      [
+        "pcre",
+        "^docs/.*",
         "wholename",
         {"includedotfiles": false}
       ]
