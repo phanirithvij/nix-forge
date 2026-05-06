@@ -40,7 +40,7 @@ viewPageAppRun model pageApp =
                 , onClick (Update_RouteWithoutHistory onClickRoute)
                 ]
                 [ div
-                    [ class "modal-dialog modal-lg"
+                    [ class "modal-dialog modal-lm-custom"
                     , stopPropagationOn "click" (Decode.succeed ( Update_NoOp, True ))
                     ]
                     [ div [ class "modal-content" ]

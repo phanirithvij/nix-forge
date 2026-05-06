@@ -329,6 +329,13 @@ a:link {
   }
 }
 
+/* custom bootstrap modal width */
+@media (min-width: 992px) {
+  .modal-lm-custom {
+    max-width: 950px;
+  }
+}
+
 /* options filters colors */
 
 [data-bs-theme="light"] {
