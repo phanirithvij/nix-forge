@@ -11,6 +11,42 @@ announcements/index.md
 
 Welcome to NGI Forge, the software distribution system for projects funded via [Next Generation Internet (NGI)](https://www.ngi.eu/).
 
+::::{grid} 2
+:::{grid-item-card} User Manual
+:link: manuals/user/prerequisites
+:link-type: doc
+:text-align: center
+
+How to use NGI Forge applications
+:::
+
+:::{grid-item-card} Contributor Manual
+:link: manuals/contributor/how_to/package_recipe
+:link-type: doc
+:text-align: center
+
+How to create package and application recipes
+:::
+::::
+
+::::{grid} 2
+:::{grid-item-card} Developer Manual
+:link: manuals/developer/how_to/develop
+:link-type: doc
+:text-align: center
+
+How to develop NGI Forge
+:::
+
+:::{grid-item-card} Announcements
+:link: announcements/index
+:link-type: doc
+:text-align: center
+
+Release notes and project news
+:::
+::::
+
 ## Quick Start
 
 1. Visit the [NGI Forge web UI](https://ngi-nix.github.io/forge) in your browser.
