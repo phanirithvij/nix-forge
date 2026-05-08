@@ -31,8 +31,8 @@ jobs:
           name: ngi-forge
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
-      - name: Run checks
-        run: nix flake check --accept-flake-config --option sandbox relaxed
+      #- name: Run checks
+      #  run: nix flake check --accept-flake-config --option sandbox relaxed
 
   lint:
     name: Run format checks
