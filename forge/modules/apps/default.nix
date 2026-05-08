@@ -96,20 +96,19 @@ in
               }
               // lib.optionalAttrs app.services.runtimes.nixos.enable {
                 vm = app.services.runtimes.nixos.result.build;
-                nixosModules.default = {
-                  imports =
-                    let
-                      m = app.services.runtimes.nixos.result.modules;
-                    in
-                    [
-                      m.setup
-                      m.nimi
-                      m.packages
-                      m.extraConfig
-                    ];
-                };
                 nixos = {
-                  modules = app.services.runtimes.nixos.result.modules;
+                  modules.default = {
+                    imports =
+                      let
+                        m = app.services.runtimes.nixos.result.modules;
+                      in
+                      [
+                        m.setup
+                        m.nimi
+                        m.packages
+                        m.extraConfig
+                      ];
+                  };
                   vm = app.services.runtimes.nixos.result.build;
                 };
               }
