@@ -11,7 +11,7 @@
     overlays = [ ];
     inherit system;
   },
-  lib ? import "${inputs.nixpkgs}/lib",
+  lib ? import (inputs.nixpkgs + "/lib"),
 }:
 let
   default = lib.makeScope pkgs.newScope (def: {
