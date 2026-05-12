@@ -49,6 +49,7 @@ defaultRouteApp =
 type RouteAppFocus
     = RouteAppFocus_Resources
     | RouteAppFocus_Grants
+    | RouteAppFocus_Configuration
 
 
 showRouteAppFocus : RouteAppFocus -> String
@@ -59,6 +60,9 @@ showRouteAppFocus x =
 
         RouteAppFocus_Grants ->
             "grants"
+
+        RouteAppFocus_Configuration ->
+            "configuration"
 
 
 type alias RouteApps =
@@ -267,6 +271,9 @@ appUrlToRoute url =
 
                                         "grants" ->
                                             Just RouteAppFocus_Grants
+
+                                        "configuration" ->
+                                            Just RouteAppFocus_Configuration
 
                                         _ ->
                                             Nothing

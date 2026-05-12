@@ -113,9 +113,29 @@ viewPageAppUsage _ pageApp =
 
 viewPageAppConfiguration : Model -> PageApp -> Html Update
 viewPageAppConfiguration _ pageApp =
+    let
+        routeApp =
+            pageApp.pageApp_route
+    in
     div
-        [ class "box-container mb-3" ]
-        [ h6 [ class "mt-3 mb-3 ms-2" ] [ text "Configuration" ]
+        [ class "box-container target-highlight mb-3"
+        , id (showRouteAppFocus RouteAppFocus_Configuration)
+        , tabindex -1
+        ]
+        [ h6
+            [ class "mt-3 mb-3 ms-2"
+            ]
+            [ text "Configuration"
+            , a
+                [ class "anchor-link"
+                , href
+                    ({ routeApp | routeApp_focus = Just RouteAppFocus_Configuration }
+                        |> Route_App
+                        |> routeToString
+                    )
+                ]
+                []
+            ]
         , if List.isEmpty pageApp.pageApp_app.app_services.appServices_ports then
             text ""
 
@@ -153,7 +173,7 @@ viewPageAppResources model pageApp =
     in
     div
         [ class "box-container target-highlight mb-3"
-        , id "resources"
+        , id (showRouteAppFocus RouteAppFocus_Resources)
         , tabindex -1
         ]
         [ h6
@@ -225,7 +245,7 @@ viewPageAppNgiGrants _ pageApp =
     else
         div
             [ class "box-container target-highlight mb-3"
-            , id "grants"
+            , id (showRouteAppFocus RouteAppFocus_Grants)
             , tabindex -1
             ]
             [ h6
