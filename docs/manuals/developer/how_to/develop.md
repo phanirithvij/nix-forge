@@ -1,33 +1,29 @@
 # How to develop
 
-Enter a development shell provisioning the toolchain:
+Enter a development shell environment:
 
 ```bash
-nix -L develop
+nix develop
 ```
 
-Alternatively, use [`direnv`](https://direnv.net/):
+Alternatively, use [`direnv`](https://direnv.net/) to automatically launch the
+environment when entering Forge source code directory:
 
 ```bash
 echo -e "watch_dir flake/develop/\nuse nix" >.envrc
+
 direnv allow
 ```
 
-Warning(compat): If you ever want to debug a package using
-`nix develop` and then run the usual `runPhase unpackPhase`,
-first get out of the `direnv` with `direnv deny` to avoid problems.
+## UI development
 
-## Run a development Web server
-
-Run `elm-watch` and `esbuild` systemd user services,
-along with a `watchman` rebuilding the JSON files provided by the backend,
-with:
+Launch development server with automatic rebuild on change:
 
 ```bash
 dev-ui
 ```
 
-End the services by sending them a SIGINT (usually Ctrl-C).
+Stop the services by pressing Ctrl-C.
 
 You can supervise those services with:
 
@@ -35,4 +31,5 @@ You can supervise those services with:
 systemctl --user status ngi_nix_dev-'*'.service
 ```
 
-For convenience `systemd-manager-tui` is also provisioned by the development shell to do the same.
+For convenience `systemd-manager-tui` is also provisioned by the development
+shell to do the same.
