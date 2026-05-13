@@ -14,7 +14,7 @@ export default defineConfig({
     colorScheme: "dark", // assume dark by default
   },
   webServer: {
-    command: "dev-ui-mock",
+    command: "dev-ui",
     url: "http://127.0.0.1:3000/",
     reuseExistingServer: !process.env.CI,
     stdout: "pipe",

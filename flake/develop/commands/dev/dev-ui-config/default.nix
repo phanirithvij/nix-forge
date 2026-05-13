@@ -8,7 +8,7 @@
 }:
 let
   devUIDir = builtins.toString ../dev-ui;
-  script = writers.writePython3Bin "mock-forge-config.py" {
+  script = writers.writePython3Bin "dev-ui-config.py" {
     libraries = [ python3.pkgs.faker ];
     flakeIgnore = [
       "E402"
@@ -17,7 +17,7 @@ let
   } (builtins.replaceStrings [ "@devUIDir@" ] [ devUIDir ] (builtins.readFile ./generate.py));
 in
 writeShellApplication {
-  name = "mock-forge-config";
+  name = "dev-ui-config";
   runtimeInputs = [
     gnutar
     gitMinimal
@@ -25,5 +25,5 @@ writeShellApplication {
   text = ''
     ${lib.getExe script} "$@"
   '';
-  meta.description = "Helper script for UI tests to generate mock backend recipes";
+  meta.description = "configure Forge content for dev-ui";
 }

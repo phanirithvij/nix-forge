@@ -1,49 +1,10 @@
 # Usage:
 #   nix-shell --run 'dev-ui'
 {
-  replaceVarsWith,
-  writeShellApplication,
-
-  coreutils,
-  gitMinimal,
-  python3,
-  runtimeShell,
-  systemd,
-
-  mockBackend ? "false",
-  defaultListenPort ? 3000,
-  numApps ? 20,
-  numPackages ? 20,
-  name ? "dev-ui",
-  description ? "UI dev script",
+  callPackage,
 }:
-let
-  substitutedScript = replaceVarsWith {
-    name = "dev-ui-inner";
-    isExecutable = true;
-    dir = "bin";
-    src = ./ui.sh;
-    replacements = {
-      inherit
-        runtimeShell
-        mockBackend
-        defaultListenPort
-        numApps
-        numPackages
-        ;
-    };
-  };
-in
-writeShellApplication {
-  inherit name;
-  runtimeInputs = [
-    coreutils
-    gitMinimal
-    python3
-    systemd
-  ];
-  text = ''
-    exec ${substitutedScript}/bin/dev-ui-inner "$@"
-  '';
-  meta = { inherit description; };
-}
+(callPackage ../forge-ui {
+  mockBackend = "true";
+  name = "dev-ui";
+  description = "launch Forge development server";
+})

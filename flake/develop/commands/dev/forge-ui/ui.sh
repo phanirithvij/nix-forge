@@ -36,7 +36,7 @@ mkdir -p "$rootDir/ui/build/js"
 
 if [ "@mockBackend@" = "true" ]; then
   # Using the explicit path from our devshell environment
-  BACKEND_COMMAND="$DEVSHELL_DIR/bin/mock-forge-config @numApps@ @numPackages@ \"$rootDir/ui/build/forge-config.json\""
+  BACKEND_COMMAND="$DEVSHELL_DIR/bin/dev-ui-config @numApps@ @numPackages@ \"$rootDir/ui/build/forge-config.json\""
 else
   BACKEND_COMMAND="$(command -v nix) build -f \"$rootDir\" _forge-config -o \"$rootDir/ui/build/forge-config.json\" --show-trace"
 fi
@@ -54,7 +54,7 @@ ExecStart=$(command -v nix) build -f "$rootDir" _forge-ui.passthru.bootstrapCss 
 ExecStart=$(command -v nix) build -f "$rootDir" _forge-options -o "$rootDir/ui/build/forge-options.json" --show-trace
 ExecStart=$(command -v nix) build -f "$rootDir" _forge-docs -o "$rootDir/ui/build/docs" --show-trace
 ExecStart=$BACKEND_COMMAND
-ExecStart=$rootDir/flake/develop/commands/dev/dev-ui/build_app_resources.py
+ExecStart=$rootDir/flake/develop/commands/dev/forge-ui/build_app_resources.py
 EOT
 
 systemctl --user edit --runtime --force --full "$unit"-elm-watch.service --stdin <<EOT

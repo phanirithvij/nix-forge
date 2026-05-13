@@ -10,5 +10,5 @@ let
   '';
 in
 script.overrideAttrs (_: {
-  meta.description = "UI playwright test script";
+  meta.description = "run UI tests";
 })

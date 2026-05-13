@@ -7,7 +7,7 @@
 Run basic tests using [Playwright](https://playwright.dev/):
 
 ```bash
-dev-ui-mock
+dev-ui
 
 test-ui --project=chromium
 ```
