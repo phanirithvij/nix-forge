@@ -27,12 +27,6 @@
               description = "Script to run once at container startup.";
             };
 
-            tag = lib.mkOption {
-              type = lib.types.str;
-              default = "latest";
-              description = "Tag of the generated container.";
-            };
-
             packages = lib.mkOption {
               type = lib.types.listOf lib.types.package;
               default = [ ];
@@ -55,11 +49,11 @@
       apply =
         self:
         let
-          unknownComponents = lib.subtractLists (lib.attrNames app.services.components) (lib.attrNames self);
+          knownComponents = lib.attrNames app.services.components;
+          unknownComponents = lib.subtractLists knownComponents (lib.attrNames self);
         in
-        if unknownComponents != [ ] then
-          throw "services.runtimes.container.components: unknown component(s): ${lib.concatStringsSep ", " unknownComponents}. Must be one of: ${lib.concatStringsSep ", " (lib.attrNames app.services.components)}"
-        else
+        lib.throwIf (unknownComponents != [ ])
+          "services.runtimes.container.components: unknown component(s): ${lib.concatStringsSep ", " unknownComponents}. Must be one of: ${lib.concatStringsSep ", " knownComponents}"
           self;
     };
 
@@ -106,15 +100,12 @@
   config = {
     result.modules = lib.mapAttrs (serviceName: service: {
       settings = import ./modules/settings.nix (
-        args
-        // {
+        {
           inherit service;
-          componentConfig =
-            config.components.${serviceName} or {
-              setup = "";
-              packages = [ ];
-              extraConfig = { };
-            };
+        }
+        // args
+        // lib.optionalAttrs (config.components ? ${serviceName}) {
+          componentConfig = config.components.${serviceName};
         }
       );
       services = import ../mkNimiImports.nix { inherit lib service serviceName; };
@@ -145,9 +136,7 @@
 
         build-oci-images = pkgs.writeShellScriptBin "build-oci-images" (
           lib.concatMapAttrsStringSep "\n" (name: value: ''
-            ${value.copyTo}/bin/copy-to oci-archive:${name}.tar:${name}:${
-              config.components.${name}.tag or "latest"
-            }
+            ${value.copyTo}/bin/copy-to oci-archive:${name}.tar:${name}:latest
             echo "Created container image in $(pwd)/${name}.tar"
           '') config.result.recipes
         );
