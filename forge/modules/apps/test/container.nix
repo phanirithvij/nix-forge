@@ -26,7 +26,7 @@
         nodes.machine = {
           virtualisation.podman.enable = true;
           virtualisation.containers.enable = true;
-          virtualisation.diskSize = 4096;
+          virtualisation.diskSize = 8192;
           system.stateVersion = "25.11";
           environment.systemPackages = app.programs.packages ++ config.packages ++ [ pkgs.podman-compose ];
         };

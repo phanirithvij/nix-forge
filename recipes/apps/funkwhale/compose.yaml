@@ -1,0 +1,60 @@
+version: "3.8"
+services:
+  funkwhale-server:
+    image: localhost/funkwhale-server:latest
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - funkwhale-data:/var/lib/funkwhale
+  funkwhale-web:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "5000:5000"
+    depends_on:
+      - funkwhale-server
+    volumes:
+      - funkwhale-data:/var/lib/funkwhale:ro
+    command: >
+      sh -c "while [ ! -f /var/lib/funkwhale/nginx/funkwhale.conf ]; do sleep 1; done &&
+             cp /var/lib/funkwhale/nginx/funkwhale.conf /etc/nginx/conf.d/default.conf &&
+             exec nginx -g 'daemon off;'"
+  funkwhale-worker:
+    image: localhost/funkwhale-worker:latest
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - funkwhale-data:/var/lib/funkwhale
+  funkwhale-beat:
+    image: localhost/funkwhale-beat:latest
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - funkwhale-data:/var/lib/funkwhale
+  postgres:
+    image: postgres:17-alpine
+    restart: always
+    command: >
+      sh -c "if [ -f /var/lib/postgresql/data/pg_hba.conf ]; then
+               grep -q '0.0.0.0/0' /var/lib/postgresql/data/pg_hba.conf || echo 'host all all 0.0.0.0/0 trust' >> /var/lib/postgresql/data/pg_hba.conf;
+             fi;
+             exec docker-entrypoint.sh postgres -c listen_addresses='*'"
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+  redis:
+    image: redis:alpine
+    restart: always
+    volumes:
+      - redis-data:/data
+volumes:
+  funkwhale-data:
+  postgres-data:
+  redis-data:
