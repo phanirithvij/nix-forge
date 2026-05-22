@@ -1,0 +1,59 @@
+services:
+  funkwhale-server:
+    image: localhost/funkwhale-server:latest
+    restart: always
+    volumes:
+      - funkwhale-data:/var/lib/funkwhale
+    depends_on:
+      - funkwhale-system
+      - funkwhale-typesense
+  funkwhale-worker:
+    image: localhost/funkwhale-server:latest
+    entrypoint: ["/bin/sh", "-c"]
+    restart: always
+    volumes:
+      - funkwhale-data:/var/lib/funkwhale
+    command: >
+      "export PATH=$PATH:/bin &&
+       while [ ! -f /var/lib/funkwhale/config/django_secret_key.env ]; do sleep 1; done &&
+       . /var/lib/funkwhale/config/django_secret_key.env &&
+       export DJANGO_SECRET_KEY &&
+       exec celery --app funkwhale_api.taskapp worker --loglevel INFO"
+    depends_on:
+      - funkwhale-server
+  funkwhale-beat:
+    image: localhost/funkwhale-server:latest
+    entrypoint: ["/bin/sh", "-c"]
+    restart: always
+    volumes:
+      - funkwhale-data:/var/lib/funkwhale
+    command: >
+      "export PATH=$PATH:/bin &&
+       while [ ! -f /var/lib/funkwhale/config/django_secret_key.env ]; do sleep 1; done &&
+       . /var/lib/funkwhale/config/django_secret_key.env &&
+       export DJANGO_SECRET_KEY &&
+       exec celery --app funkwhale_api.taskapp beat --loglevel INFO"
+    depends_on:
+      - funkwhale-server
+  funkwhale-system:
+    restart: always
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - redis-data:/var/lib/redis
+      - funkwhale-data:/var/lib/funkwhale
+    networks:
+      default:
+        aliases:
+          - postgres
+          - redis
+          - funkwhale-web
+  funkwhale-typesense:
+    image: localhost/funkwhale-typesense:latest
+    restart: always
+    volumes:
+      - typesense-data:/var/lib/typesense
+volumes:
+  funkwhale-data:
+  postgres-data:
+  redis-data:
+  typesense-data:
