@@ -5,6 +5,28 @@
   ...
 }:
 
+let
+  mkEnv = isLocal: {
+    FUNKWHALE_URL = "http://localhost:5000";
+    DJANGO_SETTINGS_MODULE = "config.settings.production";
+    DJANGO_ALLOWED_HOSTS = "127.0.0.1:5000,localhost:5000,0.0.0.0:5000";
+
+    DATABASE_URL = "postgresql://postgres@${if isLocal then "localhost" else "postgres"}:5432/postgres";
+    CACHE_URL = "redis://${if isLocal then "localhost" else "redis"}:6379/0";
+    TYPESENSE_URL = "http://${if isLocal then "localhost" else "funkwhale-typesense"}:8108";
+    TYPESENSE_API_KEY = "publicly-secret-key";
+
+    FUNKWHALE_SPA_HTML_ROOT = "/var/lib/funkwhale/frontend/index.html";
+    MEDIA_ROOT = "/var/lib/funkwhale/media";
+    MUSIC_DIRECTORY_PATH = "/var/lib/funkwhale/music";
+
+    REVERSE_PROXY_TYPE = "nginx";
+    C_FORCE_ROOT = "true";
+  };
+
+  containerEnv = mkEnv false;
+  nixosEnv = mkEnv true;
+in
 {
   name = "funkwhale-app";
   displayName = "Funkwhale";
@@ -14,23 +36,39 @@
 
     To manage your instance, you first need to create a superuser account:
 
+    **Containers:**
+
     ```bash
     podman-compose -f result/*/compose.yaml exec funkwhale-server \
       sh -c "set -a; . /var/lib/funkwhale/config/django_secret_key.env; funkwhale-manage fw users create --superuser"
+    ```
+
+    **NixOS VM (inside the VM):**
+
+    ```bash
+    sudo funkwhale-manage fw users create --superuser
     ```
 
     #### Open registrations
 
     By default, registrations are closed. You can open them via the web UI settings or by running:
 
+    **Containers:**
+
     ```bash
     podman-compose -f result/*/compose.yaml exec funkwhale-server \
       sh -c "set -a; . /var/lib/funkwhale/config/django_secret_key.env; funkwhale-manage fw settings set users.registration_enabled true"
     ```
 
+    **NixOS VM (inside the VM):**
+
+    ```bash
+    sudo funkwhale-manage fw settings set users.registration_enabled true
+    ```
+
     #### Access management shell
 
-    You also access the Funkwhale management tools
+    You access the Funkwhale management tools via the shell
 
     ```bash
     funkwhale-manage --help
@@ -79,91 +117,13 @@
         cp -rL ${pkgs.mypkgs.funkwhale-frontend}/* "$DATA_DIR/frontend/"
 
         mkdir -p "$DATA_DIR/nginx"
-        cat > "$DATA_DIR/nginx/funkwhale.conf" <<EOF
+        cat > "$DATA_DIR/nginx/funkwhale.conf" <<'EOF'
         server {
           listen 5000;
-          client_max_body_size 100M;
-          root /var/lib/funkwhale/frontend/;
-          sendfile off;
-          charset utf-8;
-
-          gzip on;
-          gzip_types application/javascript application/vnd.geo+json application/vnd.ms-fontobject application/x-font-ttf application/x-web-app-manifest+json font/opentype image/bmp image/svg+xml image/x-icon text/cache-manifest text/css text/plain text/vcard text/vnd.rim.location.xloc text/vtt text/x-component text/x-cross-domain-policy;
-
-          add_header Content-Security-Policy "default-src 'self'; connect-src https: wss: http: ws: 'self' 'unsafe-eval'; script-src 'self' 'wasm-unsafe-eval'; style-src https: http: 'self' 'unsafe-inline'; img-src https: http: 'self' data:; font-src https: http: 'self' data:; media-src https: http: 'self' data:; object-src 'none'";
-          add_header Referrer-Policy "strict-origin-when-cross-origin";
-          add_header X-Frame-Options "SAMEORIGIN" always;
-          add_header Service-Worker-Allowed "/";
-
-          location / {
-            try_files \$uri \$uri/ @backend;
-          }
-
-          location @backend {
-            proxy_pass http://funkwhale-server:5001;
-            proxy_set_header Host \$host;
-            proxy_set_header X-Real-IP \$remote_addr;
-            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto \$scheme;
-          }
-
-          location /rest/ {
-            proxy_pass http://funkwhale-server:5001/api/subsonic/rest/;
-          }
-
-          location ~ ^/@(vite-plugin-pwa|vite|id)/ {
-            alias /var/lib/funkwhale/frontend/;
-            try_files \$uri \$uri/ /index.html;
-          }
-
-          location ~ ^/(api|federation|auth|.well-known)/ {
-            proxy_pass http://funkwhale-server:5001;
-            proxy_set_header Host \$host;
-            proxy_set_header X-Real-IP \$remote_addr;
-            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto \$scheme;
-          }
-
-          location /staticfiles/ {
-            alias /var/lib/funkwhale/static/;
-            expires 30d;
-            add_header Cache-Control "public";
-          }
-
-          location /media/ {
-            alias /var/lib/funkwhale/media/;
-          }
-
-          location /media/__sized__/ {
-            alias /var/lib/funkwhale/media/__sized__/;
-            add_header Access-Control-Allow-Origin '*';
-          }
-
-          location /media/attachments/ {
-            alias /var/lib/funkwhale/media/attachments/;
-            add_header Access-Control-Allow-Origin '*';
-          }
-
-          location /media/dynamic_preferences/ {
-            alias /var/lib/funkwhale/media/dynamic_preferences/;
-            add_header Access-Control-Allow-Origin '*';
-          }
-
-          location ~ /_protected/media/(.+) {
-            internal;
-            alias /var/lib/funkwhale/media/\$1;
-            add_header Access-Control-Allow-Origin '*';
-          }
-
-          location /_protected/music/ {
-            internal;
-            alias /var/lib/funkwhale/music/;
-            add_header Access-Control-Allow-Origin '*';
-          }
-
-          location /manifest.json {
-            return 302 http://\$host:5000/api/v2/instance/spa-manifest.json;
-          }
+          ${import ./nginx.conf.nix {
+            frontendPath = "/var/lib/funkwhale/frontend/";
+            backendUrl = "http://funkwhale-server:5001";
+          }}
         }
         EOF
 
@@ -173,19 +133,28 @@
 
         exec ${pkgs.mypkgs.funkwhale-server}/bin/uvicorn config.asgi:application --host 0.0.0.0 --port 5001
       ''}";
-      ports = [ "5001:5001" ];
-      environment = {
-        FUNKWHALE_URL = "http://localhost:5000";
-        DJANGO_SETTINGS_MODULE = "config.settings.production";
-        DJANGO_ALLOWED_HOSTS = "127.0.0.1,localhost,0.0.0.0,127.0.0.1:5000,localhost:5000";
-        DATABASE_URL = "postgresql://postgres@postgres:5432/postgres";
-        CACHE_URL = "redis://redis:6379/0";
-        FUNKWHALE_SPA_HTML_ROOT = "/var/lib/funkwhale/frontend/index.html";
-        MEDIA_ROOT = "/var/lib/funkwhale/media";
-        MUSIC_DIRECTORY_PATH = "/var/lib/funkwhale/music";
-        REVERSE_PROXY_TYPE = "nginx";
-        C_FORCE_ROOT = "true";
-      };
+      environment = containerEnv;
+    };
+
+    funkwhale-web = {
+      command = "${pkgs.writeShellScript "web-init" ''
+        exec ${pkgs.nginx}/bin/nginx -c /var/lib/funkwhale/nginx/funkwhale.conf -g "daemon off;"
+      ''}";
+      ports = [ "5000:5000" ];
+    };
+
+    funkwhale-typesense = {
+      command = "${pkgs.writeShellScript "typesense-init" ''
+        export DATA_DIR="''${DATA_DIR:-/var/lib/funkwhale}/typesense"
+        export PATH=$PATH:${pkgs.coreutils}/bin
+
+        mkdir -p "$DATA_DIR"
+        exec ${pkgs.typesense}/bin/typesense-server \
+          --data-dir "$DATA_DIR" \
+          --api-key "publicly-secret-key" \
+          --api-address 0.0.0.0 \
+          --api-port 8108
+      ''}";
     };
 
     funkwhale-worker = {
@@ -195,18 +164,7 @@
         set -a; source "$DATA_DIR/config/django_secret_key.env"; set +a
         exec ${pkgs.mypkgs.funkwhale-server}/bin/celery --app funkwhale_api.taskapp worker --loglevel INFO
       ''}";
-      environment = {
-        FUNKWHALE_URL = "http://localhost:5000";
-        DJANGO_SETTINGS_MODULE = "config.settings.production";
-        DJANGO_ALLOWED_HOSTS = "127.0.0.1,localhost,0.0.0.0,127.0.0.1:5000,localhost:5000";
-        DATABASE_URL = "postgresql://postgres@postgres:5432/postgres";
-        CACHE_URL = "redis://redis:6379/0";
-        FUNKWHALE_SPA_HTML_ROOT = "/var/lib/funkwhale/frontend/index.html";
-        MEDIA_ROOT = "/var/lib/funkwhale/media";
-        MUSIC_DIRECTORY_PATH = "/var/lib/funkwhale/music";
-        REVERSE_PROXY_TYPE = "nginx";
-        C_FORCE_ROOT = "true";
-      };
+      environment = containerEnv;
     };
 
     funkwhale-beat = {
@@ -216,18 +174,7 @@
         set -a; source "$DATA_DIR/config/django_secret_key.env"; set +a
         exec ${pkgs.mypkgs.funkwhale-server}/bin/celery --app funkwhale_api.taskapp beat --loglevel INFO
       ''}";
-      environment = {
-        FUNKWHALE_URL = "http://localhost:5000";
-        DJANGO_SETTINGS_MODULE = "config.settings.production";
-        DJANGO_ALLOWED_HOSTS = "127.0.0.1,localhost,0.0.0.0,127.0.0.1:5000,localhost:5000";
-        DATABASE_URL = "postgresql://postgres@postgres:5432/postgres";
-        CACHE_URL = "redis://redis:6379/0";
-        FUNKWHALE_SPA_HTML_ROOT = "/var/lib/funkwhale/frontend/index.html";
-        MEDIA_ROOT = "/var/lib/funkwhale/media";
-        MUSIC_DIRECTORY_PATH = "/var/lib/funkwhale/music";
-        REVERSE_PROXY_TYPE = "nginx";
-        C_FORCE_ROOT = "true";
-      };
+      environment = containerEnv;
     };
   };
 
@@ -245,17 +192,79 @@
     };
     components.funkwhale-worker.packages = [ pkgs.mypkgs.funkwhale-server ];
     components.funkwhale-beat.packages = [ pkgs.mypkgs.funkwhale-server ];
+    components.funkwhale-typesense.packages = [ pkgs.typesense ];
+    components.funkwhale-web.packages = [ pkgs.nginx ];
+  };
+
+  test = {
+    packages = [
+      pkgs.curl
+      pkgs.gnugrep
+    ];
+    script = ''
+      echo "Waiting for Funkwhale API..."
+      curl="curl --retry 30 --retry-delay 2 --retry-all-errors -s -f"
+
+      if $curl http://localhost:5000/api/v1/instance/nodeinfo/2.0/; then
+        echo "Funkwhale API is up!"
+      else
+        echo "Timed out waiting for API"
+        exit 1
+      fi
+
+      echo "Checking Frontend UI..."
+      if $curl http://localhost:5000 | grep -q "funkwhale"; then
+        echo "Frontend is serving correctly!"
+      else
+        echo "Frontend check failed"
+        exit 1
+      fi
+
+      echo "Checking static assets..."
+      if $curl -I http://localhost:5000/manifest.json | grep -qi "application/json"; then
+        echo "Static assets have correct MIME types!"
+      else
+        echo "MIME type check failed"
+        exit 1
+      fi
+    '';
+    sandbox = false;
   };
 
   services.runtimes.nixos = {
     enable = true;
+    packages = [
+      (pkgs.writeShellScriptBin "funkwhale-manage" ''
+        ${lib.concatStringsSep "\n" (lib.mapAttrsToList (k: v: "export ${k}=\"${v}\"") nixosEnv)}
+
+        if [ -f /var/lib/funkwhale/config/django_secret_key.env ]; then
+          set -a; . /var/lib/funkwhale/config/django_secret_key.env; set +a
+        fi
+
+        exec ${pkgs.mypkgs.funkwhale-server}/bin/funkwhale-manage "$@"
+      '')
+    ];
     nixosConfig = {
       services.postgresql = {
         enable = true;
         enableTCPIP = true;
-        authentication = "host all all 0.0.0.0/0 trust";
+        authentication = lib.mkForce ''
+          local all all trust
+          host all all 0.0.0.0/0 trust
+          host all all ::0/0 trust
+        '';
       };
       services.redis.servers."".enable = true;
+      services.typesense = {
+        enable = true;
+        settings.server.api-address = "127.0.0.1";
+        apiKeyFile = pkgs.writeText "surely-not-in-store" "publicly-secret-key";
+      };
+
+      systemd.services = lib.mapAttrs (name: _: {
+        environment = lib.mkForce nixosEnv;
+      }) config.services.components;
+
       services.nginx = {
         enable = true;
         virtualHosts."localhost" = {
@@ -265,19 +274,10 @@
               port = 5000;
             }
           ];
-          root = "${pkgs.mypkgs.funkwhale-frontend}/";
-          locations."/" = {
-            tryFiles = "\$uri \$uri/ @backend";
+          extraConfig = import ./nginx.conf.nix {
+            frontendPath = "${pkgs.mypkgs.funkwhale-frontend}/";
+            backendUrl = "http://127.0.0.1:5001";
           };
-          locations."@backend" = {
-            proxyPass = "http://127.0.0.1:5001";
-            extraConfig = "proxy_set_header Host \$host;";
-          };
-          locations."~ ^/(api|federation|auth|.well-known)/" = {
-            proxyPass = "http://127.0.0.1:5001";
-          };
-          locations."/staticfiles/".alias = "/var/lib/funkwhale/static/";
-          locations."/media/".alias = "/var/lib/funkwhale/media/";
         };
       };
     };

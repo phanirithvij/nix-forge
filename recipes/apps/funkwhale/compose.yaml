@@ -6,6 +6,7 @@ services:
     depends_on:
       - postgres
       - redis
+      - funkwhale-typesense
     volumes:
       - funkwhale-data:/var/lib/funkwhale
   funkwhale-web:
@@ -25,16 +26,14 @@ services:
     image: localhost/funkwhale-worker:latest
     restart: always
     depends_on:
-      - postgres
-      - redis
+      - funkwhale-server
     volumes:
       - funkwhale-data:/var/lib/funkwhale
   funkwhale-beat:
     image: localhost/funkwhale-beat:latest
     restart: always
     depends_on:
-      - postgres
-      - redis
+      - funkwhale-server
     volumes:
       - funkwhale-data:/var/lib/funkwhale
   postgres:
@@ -54,6 +53,11 @@ services:
     restart: always
     volumes:
       - redis-data:/data
+  funkwhale-typesense:
+    image: localhost/funkwhale-typesense:latest
+    restart: always
+    volumes:
+      - funkwhale-data:/var/lib/funkwhale
 volumes:
   funkwhale-data:
   postgres-data:
