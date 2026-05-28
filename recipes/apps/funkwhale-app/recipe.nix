@@ -212,6 +212,7 @@ in
     };
 
     services.runtimes.container = {
+      unifiedExtraComponents = true;
       enable = true;
       composeFile = ./compose.yaml;
       components.funkwhale-server.packages = [
@@ -235,12 +236,6 @@ in
         };
         users.groups.funkwhale = { };
 
-        services.typesense = {
-          enable = true;
-          settings.server.api-address = "127.0.0.1";
-          apiKeyFile = pkgs.writeText "typesense-api-key-secret" commonEnv.TYPESENSE_API_KEY;
-        };
-
         systemd.services.funkwhale-server = {
           environment = lib.mkForce env;
           serviceConfig = {
@@ -250,7 +245,13 @@ in
           };
         };
 
-        systemd.services.funkwhale-typesense.enable = lib.mkForce false;
+        systemd.services.funkwhale-typesense = {
+          serviceConfig = {
+            User = lib.mkForce "funkwhale";
+            Group = lib.mkForce "funkwhale";
+            StateDirectory = lib.mkForce "typesense";
+          };
+        };
 
         systemd.services.funkwhale-worker = {
           description = "Funkwhale Celery Worker";

@@ -5,17 +5,8 @@ services:
     volumes:
       - funkwhale-data:/var/lib/funkwhale
     depends_on:
-      - postgres
-      - redis
+      - funkwhale-system
       - funkwhale-typesense
-  funkwhale-web:
-    restart: always
-    ports:
-      - "5000:5000"
-    volumes:
-      - funkwhale-data:/var/lib/funkwhale
-    depends_on:
-      - funkwhale-server
   funkwhale-worker:
     image: localhost/funkwhale-server:latest
     entrypoint: ["/bin/sh", "-c"]
@@ -44,14 +35,12 @@ services:
        exec celery --app funkwhale_api.taskapp beat --loglevel INFO"
     depends_on:
       - funkwhale-server
-  postgres:
+  funkwhale-system:
     restart: always
     volumes:
       - postgres-data:/var/lib/postgresql
-  redis:
-    restart: always
-    volumes:
       - redis-data:/var/lib/redis
+      - funkwhale-data:/var/lib/funkwhale
   funkwhale-typesense:
     image: localhost/funkwhale-typesense:latest
     restart: always
