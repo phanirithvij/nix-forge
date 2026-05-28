@@ -55,6 +55,17 @@
         ) self;
     };
 
+    extraComponents = lib.mkOption {
+      type = lib.types.attrsOf (
+        lib.types.submoduleWith {
+          inherit specialArgs;
+          modules = [ ./extraComponent.nix ];
+        }
+      );
+      default = { };
+      description = "Systemd powered extra components.";
+    };
+
     runtimes = lib.mkOption {
       type = lib.types.submoduleWith {
         inherit specialArgs;
