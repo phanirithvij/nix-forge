@@ -3,6 +3,7 @@
   inputs,
   config,
   system,
+  app,
   ...
 }@args:
 {
@@ -124,6 +125,9 @@
       packages = {
         environment.systemPackages = config.packages;
       };
+      extraComponents = {
+        imports = lib.mapAttrsToList (name: value: value.nixosConfig) app.services.extraComponents;
+      };
     };
 
     result.nixosModule = {
@@ -132,6 +136,7 @@
         config.result.modules.nimi
         config.result.modules.packages
         config.result.modules.nixosConfig
+        config.result.modules.extraComponents
       ];
     };
 

@@ -84,6 +84,36 @@
           self;
     };
 
+    extraComponents = lib.mkOption {
+      type = lib.types.attrsOf (
+        lib.types.submoduleWith {
+          inherit specialArgs;
+          modules = [
+            {
+              options = {
+                nixosConfig = lib.mkOption {
+                  type = with lib.types; deferredModule;
+                  default = { };
+                  description = "Container runtime specific NixOS system configuration.";
+                };
+              };
+            }
+          ];
+        }
+      );
+      default = { };
+      description = "Per-component container runtime specific NixOS extra configurations.";
+      apply =
+        self:
+        let
+          knownComponents = lib.attrNames app.services.extraComponents;
+          unknownComponents = lib.subtractLists knownComponents (lib.attrNames self);
+        in
+        lib.throwIf (unknownComponents != [ ])
+          "services.runtimes.container.extraComponents: unknown extraComponent(s): ${lib.concatStringsSep ", " unknownComponents}. Must be one of: ${lib.concatStringsSep ", " knownComponents}"
+          self;
+    };
+
     result = {
       modules = lib.mkOption {
         internal = true;
@@ -96,6 +126,13 @@
         readOnly = true;
         type = with lib.types; lazyAttrsOf (either attrs anything);
         description = "Nimi module evaluation.";
+      };
+
+      arionEval = lib.mkOption {
+        internal = true;
+        readOnly = true;
+        type = with lib.types; lazyAttrsOf (either attrs anything);
+        description = "Arion module evaluation.";
       };
 
       recipes = lib.mkOption {
@@ -152,6 +189,37 @@
       }
     ) app.services.components;
 
+    result.arionEval = inputs.ngi-forge.inputs.arion.lib.eval {
+      inherit pkgs;
+      modules = [
+        {
+          project.name = app.name;
+          services = lib.mapAttrs (name: value: {
+            nixos.useSystemd = true;
+            nixos.configuration = {
+              imports = [
+                {
+                  system.disableInstallerTools = true;
+                  system.switch.enable = false;
+                  nix.enable = false;
+                  systemd.oomd.enable = false;
+                  boot.tmp.useTmpfs = true;
+                  networking.useDHCP = false;
+                  services.nscd.enable = false;
+                  system.nssModules = lib.mkForce [ ];
+                  system.stateVersion = "26.05";
+                }
+                value.nixosConfig
+                (config.extraComponents.${name}.nixosConfig or { })
+              ];
+            };
+            service.ports = value.ports;
+            service.useHostStore = false;
+          }) app.services.extraComponents;
+        }
+      ];
+    };
+
     result.build =
       let
         effectiveComposeFile =
@@ -182,6 +250,14 @@
           install -D ${effectiveComposeFile} $out/${app.name}/compose.yaml
         '';
 
+        hasExtraComponents = app.services.extraComponents != { };
+        arionComposeFile = config.result.arionEval.config.out.dockerComposeYaml;
+        arionImages = if hasExtraComponents then
+          lib.concatMapStringsSep "\n" (name: ''
+            ${config.result.arionEval.config.services.${name}.build.image} | podman load
+          '') (lib.attrNames app.services.extraComponents)
+        else "";
+
         run-podman = pkgs.writeShellScriptBin "run-podman" ''
           TMPDIR=$(mktemp -d)
 
@@ -191,13 +267,16 @@
             ${lib.getExe build-oci-images}
 
             for image in *.tar; do
+              [ -e "$image" ] || continue
               podman load < "$image"
               rm "$image"
             done
+            ${arionImages}
           popd
 
           ${lib.getExe pkgs.podman-compose} \
             -f ${compose-file}/${app.name}/compose.yaml \
+            ${lib.optionalString hasExtraComponents "-f ${arionComposeFile}"} \
             up --force-recreate "$@"
         '';
 
