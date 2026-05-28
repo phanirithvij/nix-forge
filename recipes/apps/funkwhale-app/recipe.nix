@@ -320,7 +320,6 @@ in
           exit 1
         fi
       '';
-      sandbox = false;
     };
   };
 }
