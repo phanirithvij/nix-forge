@@ -7,6 +7,7 @@
   app,
   pkgs,
   specialArgs,
+  forgeConfig,
   ...
 }@args:
 {
@@ -214,8 +215,14 @@
           install -D ${effectiveComposeFile} $out/${app.name}/compose.yaml
         '';
 
+        repoInfo = builtins.parseFlakeRef forgeConfig.repositoryUrl;
+
+        cacheDir = "\${XDG_CACHE_HOME:-$HOME/.cache}/${repoInfo.owner}/${repoInfo.repo}/tmp";
+
         run-podman = pkgs.writeShellScriptBin "run-podman" ''
-          TMPDIR=$(mktemp -d)
+          CACHE_DIR="${cacheDir}"
+          mkdir -p "$CACHE_DIR"
+          TMPDIR=$(mktemp -d -p "$CACHE_DIR")
 
           trap 'rm -rf "$TMPDIR"' EXIT
 

@@ -20,7 +20,9 @@
               description = "Applications indexed by their `name`.";
               type = lib.types.attrsOf (
                 lib.types.submoduleWith {
-                  inherit specialArgs;
+                  specialArgs = specialArgs // {
+                    forgeConfig = forgeArgs.config;
+                  };
                   modules = [ ./app.nix ];
                 }
               );
