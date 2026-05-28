@@ -56,28 +56,34 @@
         python-web = {
           command = pkgs.python-web;
           ports = [ "5000:5000" ];
+          environment = {
+            DB_HOST = "postgresql";
+          };
         };
+      };
+
+      extraComponents.postgresql = {
+        nixosConfig = {
+          services.postgresql.enable = true;
+          services.postgresql.enableTCPIP = true;
+          services.postgresql.authentication = ''
+            local all all trust
+            host all all 0.0.0.0/0 trust
+            host all all ::0/0 trust
+          '';
+          networking.extraHosts = "127.0.0.1 postgresql";
+        };
+        ports = [ "5432:5432" ];
       };
 
       runtimes = {
         container = {
           enable = true;
-          composeFile = ./compose.yaml;
           components.python-web.packages = [ pkgs.python-web ];
         };
 
         nixos = {
           enable = true;
-          nixosConfig = {
-            # database service
-            services.postgresql.enable = true;
-            services.postgresql.enableTCPIP = true;
-            services.postgresql.authentication = ''
-              local all all trust
-              host all all 0.0.0.0/0 trust
-              host all all ::0/0 trust
-            '';
-          };
         };
       };
     };
@@ -95,8 +101,6 @@
 
         $curl localhost:5000/users
       '';
-      # test-container requires database image from Internet registry
-      sandbox = false;
     };
   };
 }
