@@ -21,17 +21,12 @@ let
     C_FORCE_ROOT = "true";
   };
 
-  mkEnv =
-    isLocal:
-    {
-      DATABASE_URL = "postgresql://postgres@${if isLocal then "localhost" else "postgres"}:5432/postgres";
-      CACHE_URL = "redis://${if isLocal then "localhost" else "redis"}:6379/0";
-      TYPESENSE_URL = "http://${if isLocal then "localhost" else "funkwhale-typesense"}:8108";
-    }
-    // commonEnv;
-
-  containerEnv = mkEnv false;
-  nixosEnv = mkEnv true;
+  env = {
+    DATABASE_URL = "postgresql://postgres@postgres:5432/postgres";
+    CACHE_URL = "redis://redis:6379/0";
+    TYPESENSE_URL = "http://funkwhale-typesense:8108";
+  }
+  // commonEnv;
 
   mkHelpers =
     env:
@@ -143,23 +138,13 @@ in
           rm -rf "$DATA_DIR/frontend/"*
           cp -rL --no-preserve=mode ${pkgs.funkwhale-frontend}/* "$DATA_DIR/frontend/"
 
-          cat > "$DATA_DIR/nginx/funkwhale.conf" <<'EOF'
-          server {
-            listen 5000;
-            ${import ./_nginx.conf.nix {
-              frontendPath = "/var/lib/funkwhale/frontend/";
-              backendUrl = "http://127.0.0.1:5001";
-            }}
-          }
-          EOF
-
           ${pkgs.funkwhale-server}/bin/funkwhale-manage migrate --no-input
           export STATIC_ROOT="$DATA_DIR/static"
           ${pkgs.funkwhale-server}/bin/funkwhale-manage collectstatic --no-input
 
           exec ${pkgs.funkwhale-server}/bin/uvicorn config.asgi:application --host 0.0.0.0 --port 5001
         ''}";
-        environment = containerEnv;
+        environment = env;
         ports = [ "5000:5000" ];
       };
 
@@ -179,6 +164,53 @@ in
       };
     };
 
+    services.extraComponents = {
+      postgres = {
+        nixosConfig = {
+          services.postgresql = {
+            enable = true;
+            enableTCPIP = true;
+            authentication = lib.mkForce ''
+              local all all trust
+              host all all 0.0.0.0/0 trust
+              host all all ::0/0 trust
+            '';
+          };
+          systemd.services.postgresql.serviceConfig.StateDirectory = lib.mkForce "postgresql";
+          networking.extraHosts = "127.0.0.1 postgres";
+        };
+        ports = [ "5432:5432" ];
+      };
+      redis = {
+        nixosConfig = {
+          services.redis.servers."".enable = true;
+          systemd.services."redis-".serviceConfig.StateDirectory = lib.mkForce "redis";
+          networking.extraHosts = "127.0.0.1 redis";
+        };
+      };
+      funkwhale-web = {
+        nixosConfig = {
+          services.nginx = {
+            enable = true;
+            virtualHosts.localhost = {
+              listen = [
+                {
+                  addr = "0.0.0.0";
+                  port = 5000;
+                }
+              ];
+              extraConfig = import ./_nginx.conf.nix {
+                frontendPath = "${pkgs.funkwhale-frontend}/";
+                backendUrl = "http://funkwhale-server:5001";
+              };
+            };
+          };
+          networking.extraHosts = "127.0.0.1 funkwhale-server";
+        };
+        ports = [ "5000:5000" ];
+      };
+    };
+
     services.runtimes.container = {
       enable = true;
       composeFile = ./compose.yaml;
@@ -189,13 +221,13 @@ in
         pkgs.rsync
         pkgs.bash
       ]
-      ++ (mkHelpers containerEnv);
+      ++ (mkHelpers env);
       components.funkwhale-typesense.packages = [ pkgs.typesense ];
     };
 
     services.runtimes.nixos = {
       enable = true;
-      packages = mkHelpers nixosEnv;
+      packages = mkHelpers env;
       nixosConfig = {
         users.users.funkwhale = {
           isSystemUser = true;
@@ -203,16 +235,6 @@ in
         };
         users.groups.funkwhale = { };
 
-        services.postgresql = {
-          enable = true;
-          enableTCPIP = true;
-          authentication = lib.mkForce ''
-            local all all trust
-            host all all 0.0.0.0/0 trust
-            host all all ::0/0 trust
-          '';
-        };
-        services.redis.servers."".enable = true;
         services.typesense = {
           enable = true;
           settings.server.api-address = "127.0.0.1";
@@ -220,7 +242,7 @@ in
         };
 
         systemd.services.funkwhale-server = {
-          environment = lib.mkForce nixosEnv;
+          environment = lib.mkForce env;
           serviceConfig = {
             User = lib.mkForce "funkwhale";
             Group = lib.mkForce "funkwhale";
@@ -235,7 +257,7 @@ in
           wantedBy = [ "multi-user.target" ];
           after = [ "funkwhale-server.service" ];
           requires = [ "funkwhale-server.service" ];
-          environment = nixosEnv;
+          environment = env;
           serviceConfig = {
             User = "funkwhale";
             Group = "funkwhale";
@@ -255,7 +277,7 @@ in
           wantedBy = [ "multi-user.target" ];
           after = [ "funkwhale-server.service" ];
           requires = [ "funkwhale-server.service" ];
-          environment = nixosEnv;
+          environment = env;
           serviceConfig = {
             User = "funkwhale";
             Group = "funkwhale";
@@ -267,22 +289,6 @@ in
               set -a; source "$DATA_DIR/config/django_secret_key.env"; set +a
               exec ${pkgs.funkwhale-server}/bin/celery --app funkwhale_api.taskapp beat --loglevel INFO
             ''}";
-          };
-        };
-
-        services.nginx = {
-          enable = true;
-          virtualHosts.localhost = {
-            listen = [
-              {
-                addr = "0.0.0.0";
-                port = 5000;
-              }
-            ];
-            extraConfig = import ./_nginx.conf.nix {
-              frontendPath = "${pkgs.funkwhale-frontend}/";
-              backendUrl = "http://127.0.0.1:5001";
-            };
           };
         };
       };
