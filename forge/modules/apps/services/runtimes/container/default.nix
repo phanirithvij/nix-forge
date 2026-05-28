@@ -142,6 +142,20 @@
         description = "Script that builds container image recipe.";
       };
 
+      buildOciImages = lib.mkOption {
+        internal = true;
+        type = lib.types.nullOr lib.types.package;
+        default = null;
+        description = "Script that builds OCI images dynamically.";
+      };
+
+      testContainerRunner = lib.mkOption {
+        internal = true;
+        type = lib.types.nullOr lib.types.package;
+        default = null;
+        description = "Runner for test-container using nix-store tarballs.";
+      };
+
       build = lib.mkOption {
         internal = true;
         type = lib.types.nullOr lib.types.package;
@@ -220,6 +234,89 @@
       ];
     };
 
+    result.buildOciImages = pkgs.writeShellScriptBin "build-oci-images" (
+      lib.concatMapAttrsStringSep "\n" (name: value: ''
+        ${value.copyTo}/bin/copy-to oci-archive:${name}.tar:${name}:latest
+        echo "Created container image in $(pwd)/${name}.tar"
+      '') config.result.recipes
+    );
+
+    result.testContainerRunner =
+      let
+        effectiveComposeFile =
+          if config.composeFile != null then
+            config.composeFile
+          else
+            pkgs.writeText "${app.name}-compose.yaml" (
+              lib.generators.toYAML { } {
+                services = lib.mapAttrs (name: service: {
+                  image = "localhost/${name}:latest";
+                  ports = service.ports;
+                  depends_on = lib.genAttrs service.after (_name: { });
+                  tmpfs = [ "/tmp:rw,size=64m" ];
+                  volumes = [ "${name}-data:${service.stateDir}" ];
+                }) app.services.components;
+                volumes = lib.mapAttrs' (name: _: lib.nameValuePair "${name}-data" { }) app.services.components;
+              }
+            );
+
+        compose-file = pkgs.runCommand "compose-file" { } ''
+          install -D ${effectiveComposeFile} $out/${app.name}/compose.yaml
+        '';
+
+        hasExtraComponents = app.services.extraComponents != { };
+        arionComposeFile = config.result.arionEval.config.out.dockerComposeYaml;
+
+        nimiTarballs = lib.mapAttrs (
+          name: value:
+          pkgs.runCommandLocal "${name}-image.tar" { } ''
+            export TMPDIR=$TMP
+            export XDG_RUNTIME_DIR=$TMP
+            sed 's/skopeo --insecure-policy copy/skopeo --tmpdir=$TMP --insecure-policy copy/' ${value.copyTo}/bin/copy-to > copy-to
+            chmod +x copy-to
+            ./copy-to docker-archive:$out:localhost/${name}:latest
+          ''
+        ) config.result.recipes;
+
+        arionTarballs = lib.mapAttrs (
+          name: _:
+          pkgs.runCommandLocal "${name}-arion-image.tar" { } ''
+            ${config.result.arionEval.config.services.${name}.build.image} > $out
+          ''
+        ) app.services.extraComponents;
+
+        run-podman-test = pkgs.writeShellScriptBin "run-podman" ''
+          ${lib.concatStringsSep "\n" (
+            lib.mapAttrsToList (name: tarball: ''
+              podman load < "${tarball}"
+            '') nimiTarballs
+          )}
+          ${lib.concatStringsSep "\n" (
+            lib.mapAttrsToList (name: tarball: ''
+              podman load < "${tarball}"
+            '') arionTarballs
+          )}
+
+          ${lib.getExe pkgs.podman-compose} \
+            -f ${compose-file}/${app.name}/compose.yaml \
+            ${lib.optionalString hasExtraComponents "-f ${arionComposeFile}"} \
+            up --force-recreate "$@"
+        '';
+
+        run-container-test = pkgs.writeShellScriptBin "run-container" ''
+          ${lib.getExe run-podman-test} "$@"
+        '';
+      in
+      pkgs.symlinkJoin {
+        name = "run-container-test";
+        paths = [
+          compose-file
+          run-podman-test
+          run-container-test
+        ];
+        meta.mainProgram = "run-container";
+      };
+
     result.build =
       let
         effectiveComposeFile =
@@ -239,12 +336,7 @@
               }
             );
 
-        build-oci-images = pkgs.writeShellScriptBin "build-oci-images" (
-          lib.concatMapAttrsStringSep "\n" (name: value: ''
-            ${value.copyTo}/bin/copy-to oci-archive:${name}.tar:${name}:latest
-            echo "Created container image in $(pwd)/${name}.tar"
-          '') config.result.recipes
-        );
+        build-oci-images = config.result.buildOciImages;
 
         compose-file = pkgs.runCommand "compose-file" { } ''
           install -D ${effectiveComposeFile} $out/${app.name}/compose.yaml
@@ -252,11 +344,13 @@
 
         hasExtraComponents = app.services.extraComponents != { };
         arionComposeFile = config.result.arionEval.config.out.dockerComposeYaml;
-        arionImages = if hasExtraComponents then
-          lib.concatMapStringsSep "\n" (name: ''
-            ${config.result.arionEval.config.services.${name}.build.image} | podman load
-          '') (lib.attrNames app.services.extraComponents)
-        else "";
+        arionImages =
+          if hasExtraComponents then
+            lib.concatMapStringsSep "\n" (name: ''
+              ${config.result.arionEval.config.services.${name}.build.image} | podman load
+            '') (lib.attrNames app.services.extraComponents)
+          else
+            "";
 
         run-podman = pkgs.writeShellScriptBin "run-podman" ''
           TMPDIR=$(mktemp -d)

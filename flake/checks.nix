@@ -47,6 +47,7 @@
       // (passthruAttr "vm")
       // (passthruAttr "test")
       // (passthruAttr "test-container")
+      // (passthruAttr "test-container-build")
       // (passthruAttr "test-program");
     };
 }

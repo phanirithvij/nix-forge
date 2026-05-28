@@ -78,6 +78,20 @@
         // lib.optionalAttrs (app.services.runtimes.container.enable && app.test.script != "") {
           test-container = app.test.result.containerBuild;
         }
+        // lib.optionalAttrs app.services.runtimes.container.enable {
+          test-container-build = pkgs.runCommand "${app.name}-test-container-build" { } ''
+            TMPDIR=$(mktemp -d)
+            pushd $TMPDIR
+            ${lib.getExe app.services.runtimes.container.result.buildOciImages}
+            ${lib.concatStringsSep "\n" (
+              lib.mapAttrsToList (name: _: ''
+                ${app.services.runtimes.container.result.arionEval.config.services.${name}.build.image} > /dev/null
+              '') app.services.extraComponents
+            )}
+            popd
+            touch $out
+          '';
+        }
         // lib.optionalAttrs (app.services.runtimes.nixos.enable && app.test.script != "") {
           test = app.test.result.build;
         };
