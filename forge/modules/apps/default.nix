@@ -68,6 +68,20 @@
             }
             // lib.optionalAttrs (app.test.programs.script != "") {
               test-programs = testProgramsDrv;
+            }
+            // lib.optionalAttrs app.services.runtimes.container.enable {
+              test-container-build = pkgs.runCommand "${app.name}-test-container-build" { } ''
+                TMPDIR=$(mktemp -d)
+                pushd $TMPDIR
+                ${lib.getExe app.services.runtimes.container.result.buildOciImages}
+                ${lib.concatStringsSep "\n" (
+                  lib.mapAttrsToList (name: _: ''
+                    ${app.services.runtimes.container.result.arionEval.config.services.${name}.build.image} > /dev/null
+                  '') app.services.runtimes.container.result.arionEval.config.services
+                )}
+                popd
+                touch $out
+              '';
             };
         in
         lib.fix (self: {

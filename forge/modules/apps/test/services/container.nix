@@ -36,7 +36,7 @@
         testScript = ''
           machine.start()
           machine.wait_for_unit("multi-user.target")
-          machine.succeed("${lib.getExe containerRuntime.result.build} --detach")
+          machine.succeed("${lib.getExe containerRuntime.result.testContainerRunner} --detach")
           machine.succeed("${pkgs.writeShellScript "${app.name}-container-test-script" config.script}")
         '';
       }).overrideTestDerivation
