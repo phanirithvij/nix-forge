@@ -41,6 +41,12 @@ services:
       - postgres-data:/var/lib/postgresql
       - redis-data:/var/lib/redis
       - funkwhale-data:/var/lib/funkwhale
+    networks:
+      default:
+        aliases:
+          - postgres
+          - redis
+          - funkwhale-web
   funkwhale-typesense:
     image: localhost/funkwhale-typesense:latest
     restart: always

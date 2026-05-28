@@ -21,12 +21,18 @@ let
     C_FORCE_ROOT = "true";
   };
 
-  env = {
-    DATABASE_URL = "postgresql://postgres@postgres:5432/postgres";
-    CACHE_URL = "redis://redis:6379/0";
-    TYPESENSE_URL = "http://funkwhale-typesense:8108";
-  }
-  // commonEnv;
+  mkEnv =
+    isLocal:
+    {
+      DATABASE_URL = "postgresql://postgres@${if isLocal then "localhost" else "postgres"}:5432/postgres";
+      CACHE_URL = "redis://${if isLocal then "localhost" else "redis"}:6379/0";
+      CELERY_BROKER_URL = "redis://${if isLocal then "localhost" else "redis"}:6379/0";
+      TYPESENSE_URL = "http://${if isLocal then "localhost" else "funkwhale-typesense"}:8108";
+    }
+    // commonEnv;
+
+  containerEnv = mkEnv false;
+  nixosEnv = mkEnv true;
 
   mkHelpers =
     env:
@@ -144,7 +150,7 @@ in
 
           exec ${pkgs.funkwhale-server}/bin/uvicorn config.asgi:application --host 0.0.0.0 --port 5001
         ''}";
-        environment = env;
+        environment = containerEnv;
         ports = [ "5000:5000" ];
       };
 
@@ -184,6 +190,8 @@ in
       redis = {
         nixosConfig = {
           services.redis.servers."".enable = true;
+          services.redis.servers."".bind = "0.0.0.0";
+          services.redis.servers."".settings."protected-mode" = "no";
           systemd.services."redis-".serviceConfig.StateDirectory = lib.mkForce "redis";
           networking.extraHosts = "127.0.0.1 redis";
         };
@@ -222,13 +230,13 @@ in
         pkgs.rsync
         pkgs.bash
       ]
-      ++ (mkHelpers env);
+      ++ (mkHelpers containerEnv);
       components.funkwhale-typesense.packages = [ pkgs.typesense ];
     };
 
     services.runtimes.nixos = {
       enable = true;
-      packages = mkHelpers env;
+      packages = mkHelpers nixosEnv;
       nixosConfig = {
         users.users.funkwhale = {
           isSystemUser = true;
@@ -237,7 +245,16 @@ in
         users.groups.funkwhale = { };
 
         systemd.services.funkwhale-server = {
-          environment = lib.mkForce env;
+          wantedBy = [ "multi-user.target" ];
+          after = [
+            "postgresql.service"
+            "redis.service"
+          ];
+          requires = [
+            "postgresql.service"
+            "redis.service"
+          ];
+          environment = lib.mkForce nixosEnv;
           serviceConfig = {
             User = lib.mkForce "funkwhale";
             Group = lib.mkForce "funkwhale";
@@ -258,7 +275,7 @@ in
           wantedBy = [ "multi-user.target" ];
           after = [ "funkwhale-server.service" ];
           requires = [ "funkwhale-server.service" ];
-          environment = env;
+          environment = nixosEnv;
           serviceConfig = {
             User = "funkwhale";
             Group = "funkwhale";
@@ -278,7 +295,7 @@ in
           wantedBy = [ "multi-user.target" ];
           after = [ "funkwhale-server.service" ];
           requires = [ "funkwhale-server.service" ];
-          environment = env;
+          environment = nixosEnv;
           serviceConfig = {
             User = "funkwhale";
             Group = "funkwhale";
