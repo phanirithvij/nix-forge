@@ -115,6 +115,15 @@
           self;
     };
 
+    unifiedExtraComponents = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        Whether to unify all extraComponents into a single container.
+        This significantly reduces image size overhead when there are multiple extra components.
+      '';
+    };
+
     result = {
       modules = lib.mkOption {
         internal = true;
@@ -209,28 +218,53 @@
       modules = [
         {
           project.name = app.name;
-          services = lib.mapAttrs (name: value: {
-            nixos.useSystemd = true;
-            nixos.configuration = {
-              imports = [
-                {
-                  system.disableInstallerTools = true;
-                  system.switch.enable = false;
-                  nix.enable = false;
-                  systemd.oomd.enable = false;
-                  boot.tmp.useTmpfs = true;
-                  networking.useDHCP = false;
-                  services.nscd.enable = false;
-                  system.nssModules = lib.mkForce [ ];
-                  system.stateVersion = "26.05";
-                }
-                value.nixosConfig
-                (config.extraComponents.${name}.nixosConfig or { })
-              ];
-            };
-            service.ports = value.ports;
-            service.useHostStore = false;
-          }) app.services.extraComponents;
+          services =
+            let
+              minimalContainerConfig = {
+                system.disableInstallerTools = true;
+                system.switch.enable = false;
+                nix.enable = false;
+                systemd.oomd.enable = false;
+                boot.tmp.useTmpfs = true;
+                networking.useDHCP = false;
+                services.nscd.enable = false;
+                system.nssModules = lib.mkForce [ ];
+                system.stateVersion = "26.05";
+              };
+            in
+            if config.unifiedExtraComponents && app.services.extraComponents != { } then
+              {
+                "${app.name}-system" = {
+                  nixos.useSystemd = true;
+                  nixos.configuration = {
+                    imports = [
+                      minimalContainerConfig
+                    ]
+                    ++ lib.mapAttrsToList (name: value: value.nixosConfig) app.services.extraComponents
+                    ++ lib.mapAttrsToList (
+                      name: value: config.extraComponents.${name}.nixosConfig or { }
+                    ) app.services.extraComponents;
+                  };
+                  service.ports = lib.flatten (
+                    lib.mapAttrsToList (name: value: value.ports) app.services.extraComponents
+                  );
+                  service.useHostStore = false;
+                  service.networks.default.aliases = lib.attrNames app.services.extraComponents;
+                };
+              }
+            else
+              lib.mapAttrs (name: value: {
+                nixos.useSystemd = true;
+                nixos.configuration = {
+                  imports = [
+                    minimalContainerConfig
+                    value.nixosConfig
+                    (config.extraComponents.${name}.nixosConfig or { })
+                  ];
+                };
+                service.ports = value.ports;
+                service.useHostStore = false;
+              }) app.services.extraComponents;
         }
       ];
     };
@@ -284,7 +318,7 @@
           pkgs.runCommandLocal "${name}-arion-image.tar" { } ''
             ${config.result.arionEval.config.services.${name}.build.image} > $out
           ''
-        ) app.services.extraComponents;
+        ) config.result.arionEval.config.services;
 
         run-podman-test = pkgs.writeShellScriptBin "run-podman" ''
           ${lib.concatStringsSep "\n" (
@@ -349,7 +383,7 @@
           if hasExtraComponents then
             lib.concatMapStringsSep "\n" (name: ''
               ${config.result.arionEval.config.services.${name}.build.image} | podman load
-            '') (lib.attrNames app.services.extraComponents)
+            '') (lib.attrNames config.result.arionEval.config.services)
           else
             "";
 

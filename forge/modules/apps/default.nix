@@ -88,7 +88,7 @@
             ${lib.concatStringsSep "\n" (
               lib.mapAttrsToList (name: _: ''
                 ${app.services.runtimes.container.result.arionEval.config.services.${name}.build.image} > /dev/null
-              '') app.services.extraComponents
+              '') app.services.runtimes.container.result.arionEval.config.services
             )}
             popd
             touch $out
