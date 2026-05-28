@@ -7,6 +7,7 @@
   app,
   pkgs,
   specialArgs,
+  forgeConfig,
   ...
 }@args:
 {
@@ -353,7 +354,9 @@
             "";
 
         run-podman = pkgs.writeShellScriptBin "run-podman" ''
-          TMPDIR=$(mktemp -d)
+          CACHE_DIR="''${XDG_CACHE_HOME:-$HOME/.cache}/${builtins.baseNameOf forgeConfig.repositoryUrl}/tmp"
+          mkdir -p "$CACHE_DIR"
+          TMPDIR=$(mktemp -d -p "$CACHE_DIR")
 
           trap 'rm -rf "$TMPDIR"' EXIT
 
