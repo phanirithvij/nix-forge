@@ -55,6 +55,119 @@ let
           && echo "New user registrations enabled." || echo "Failed to enable new user registrations."
       '')
     ];
+
+  baseCSP = ''
+    add_header Content-Security-Policy "default-src 'self'; connect-src https: wss: http: ws: 'self' 'unsafe-eval'; script-src 'self' 'wasm-unsafe-eval'; style-src https: http: 'self' 'unsafe-inline'; img-src https: http: 'self' data:; font-src https: http: 'self' data:; media-src https: http: 'self' data:; object-src 'none'";
+    add_header Referrer-Policy "strict-origin-when-cross-origin";
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header Service-Worker-Allowed "/";
+  '';
+
+  nginxLocations =
+    {
+      frontendPath,
+      backendUrl,
+      mediaRoot,
+      musicDir,
+      staticRoot,
+    }:
+    {
+      "/api/" = {
+        proxyPass = backendUrl;
+        proxyWebsockets = true;
+        extraConfig = "client_max_body_size 100M;";
+      };
+      "~ ^/library/(albums|tracks|artists|playlists)/" = {
+        proxyPass = backendUrl;
+        proxyWebsockets = true;
+      };
+      "/channels/" = {
+        proxyPass = backendUrl;
+        proxyWebsockets = true;
+      };
+      "~ ^/@(vite-plugin-pwa|vite|id)/" = {
+        proxyPass = backendUrl;
+        proxyWebsockets = true;
+      };
+      "/front/" = {
+        alias = "''${frontendPath}/";
+        extraConfig = "expires 1d;";
+      };
+      "~ \"/(front/)?embed.html\"" = {
+        alias = "''${frontendPath}/embed.html";
+        extraConfig = ''
+          add_header Content-Security-Policy "connect-src https: http: 'self'; default-src 'self'; script-src 'self' unpkg.com 'unsafe-inline' 'unsafe-eval'; style-src https: http: 'self' 'unsafe-inline'; img-src https: http: 'self' data:; font-src https: http: 'self' data:; object-src 'none'; media-src https: http: 'self' data:";
+          add_header Referrer-Policy "strict-origin-when-cross-origin";
+          expires 1d;
+        '';
+      };
+      "/federation/" = {
+        proxyPass = backendUrl;
+        proxyWebsockets = true;
+      };
+      "/rest/" = {
+        proxyPass = "''${backendUrl}/api/subsonic/rest/";
+        proxyWebsockets = true;
+      };
+      "/.well-known/" = {
+        proxyPass = backendUrl;
+        proxyWebsockets = true;
+      };
+      "/media/__sized__/" = {
+        alias = "''${mediaRoot}/__sized__/";
+        extraConfig = "add_header Access-Control-Allow-Origin '*';";
+      };
+      "/media/attachments/" = {
+        alias = "''${mediaRoot}/attachments/";
+        extraConfig = "add_header Access-Control-Allow-Origin '*';";
+      };
+      "/media/dynamic_preferences/" = {
+        alias = "''${mediaRoot}/dynamic_preferences/";
+        extraConfig = "add_header Access-Control-Allow-Origin '*';";
+      };
+      "~ /_protected/media/(.+)" = {
+        alias = "''${mediaRoot}/$1";
+        extraConfig = "internal;\nadd_header Access-Control-Allow-Origin '*';";
+      };
+      "/_protected/music/" = {
+        alias = "''${musicDir}/";
+        extraConfig = "internal;\nadd_header Access-Control-Allow-Origin '*';";
+      };
+      "/manifest.json" = {
+        return = "302 http://$host/api/v2/instance/spa-manifest.json";
+      };
+      "/staticfiles/" = {
+        alias = "''${staticRoot}/";
+      };
+      "/" = {
+        alias = "''${frontendPath}/";
+        extraConfig = "try_files $uri $uri/ /index.html;";
+      };
+    };
+
+  mkNginxConf =
+    locations:
+    lib.concatStringsSep "\n" (
+      lib.mapAttrsToList (path: loc: ''
+        location ${path} {
+          ${lib.optionalString (loc.proxyPass or null != null) ''
+            proxy_pass ${loc.proxyPass};
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-Host $host;
+            proxy_set_header X-Forwarded-Port $server_port;
+          ''}
+          ${lib.optionalString (loc.alias or null != null) "alias ${loc.alias};"}
+          ${lib.optionalString (loc.return or null != null) "return ${loc.return};"}
+          ${loc.extraConfig or ""}
+        }
+      '') locations
+    );
 in
 {
   apps.funkwhale = {
@@ -146,10 +259,14 @@ in
           cat > "$DATA_DIR/nginx/funkwhale.conf" <<'EOF'
           server {
             listen 5000;
-            ${import ./_nginx.conf.nix {
-              frontendPath = "/var/lib/funkwhale/frontend/";
+            ${baseCSP}
+            ${mkNginxConf (nginxLocations {
+              frontendPath = "/var/lib/funkwhale/frontend";
               backendUrl = "http://127.0.0.1:5001";
-            }}
+              mediaRoot = "/var/lib/funkwhale/media";
+              musicDir = "/var/lib/funkwhale/music";
+              staticRoot = "/var/lib/funkwhale/static";
+            })}
           }
           EOF
 
@@ -279,9 +396,13 @@ in
                 port = 5000;
               }
             ];
-            extraConfig = import ./_nginx.conf.nix {
-              frontendPath = "${pkgs.funkwhale-frontend}/";
+            extraConfig = baseCSP;
+            locations = nginxLocations {
+              frontendPath = "${pkgs.funkwhale-frontend}";
               backendUrl = "http://127.0.0.1:5001";
+              mediaRoot = commonEnv.MEDIA_ROOT;
+              musicDir = commonEnv.MUSIC_DIRECTORY_PATH;
+              staticRoot = "${pkgs.funkwhale-server}/lib/funkwhale_api/static";
             };
           };
         };
