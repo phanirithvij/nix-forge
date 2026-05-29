@@ -1,6 +1,7 @@
 {
   lib,
   name,
+  specialArgs,
   ...
 }:
 {
@@ -263,7 +264,27 @@
 
     recipePath = lib.mkOption {
       type = lib.types.str;
-      default = "";
+      default =
+        let
+          locs = builtins.map (
+            def: builtins.unsafeGetAttrPos name def.value
+          ) specialArgs.forgeOptions.packages.definitionsWithLocations;
+          validLocs = builtins.filter (loc: loc != null) locs;
+          absPath = if validLocs != [ ] then (builtins.head validLocs).file else "";
+        in
+        if absPath == "" then
+          ""
+        else if
+          specialArgs ? inputs
+          && specialArgs.inputs ? self
+          && lib.hasPrefix "${specialArgs.inputs.self.outPath}/" absPath
+        then
+          lib.removePrefix "${specialArgs.inputs.self.outPath}/" absPath
+        else
+          let
+            match = builtins.match "^/nix/store/[a-z0-9]+-[^/]+/(.*)$" absPath;
+          in
+          if match != null then builtins.head match else "";
       internal = true;
       description = "Path to the recipe.nix file relative to the flake root. Set automatically by the recipe loader.";
     };
