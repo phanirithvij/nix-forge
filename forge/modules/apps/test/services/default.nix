@@ -16,6 +16,17 @@
       example = lib.literalExpression "[ pkgs.curl pkgs.jq ]";
     };
 
+    nixosConfig = lib.mkOption {
+      type = lib.types.submoduleWith {
+        modules = [
+          # We just allow arbitrary options to be passed through to nodes.machine
+          { freeformType = lib.types.attrsOf lib.types.anything; }
+        ];
+      };
+      default = { };
+      description = "Extra configuration to pass to the NixOS VM nodes.machine definition.";
+    };
+
     sandbox = lib.mkOption {
       type = lib.types.bool;
       default = true;

@@ -23,13 +23,16 @@
       in
       (pkgs.testers.runNixOSTest {
         name = "${app.name}-container-test";
-        nodes.machine = {
-          virtualisation.podman.enable = true;
-          virtualisation.containers.enable = true;
-          virtualisation.diskSize = 4096;
-          system.stateVersion = "25.11";
-          environment.systemPackages = app.programs.packages ++ config.packages ++ [ pkgs.podman-compose ];
-        };
+        nodes.machine = lib.mkMerge [
+          {
+            virtualisation.podman.enable = true;
+            virtualisation.containers.enable = true;
+            virtualisation.diskSize = 4096;
+            system.stateVersion = "25.11";
+            environment.systemPackages = app.programs.packages ++ config.packages ++ [ pkgs.podman-compose ];
+          }
+          config.nixosConfig
+        ];
         testScript = ''
           machine.start()
           machine.wait_for_unit("multi-user.target")
