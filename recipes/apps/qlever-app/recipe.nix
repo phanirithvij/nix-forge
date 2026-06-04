@@ -131,6 +131,7 @@
     };
 
     test.services = {
+      nixosConfig.virtualisation.memorySize = 4096;
       script = ''
         curl="curl --retry 40 --retry-max-time 240 --retry-all-errors"
 

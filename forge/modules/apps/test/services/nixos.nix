@@ -34,7 +34,10 @@
       (pkgs.testers.runNixOSTest {
         name = "${app.name}-test";
         nodes.machine = {
-          imports = [ app.services.runtimes.nixos.result.nixosModule ];
+          imports = [
+            app.services.runtimes.nixos.result.nixosModule
+            config.nixosConfig
+          ];
           # Pass entropy from host to VM to prevent slow service startup due to entropy starvation.
           virtualisation.qemu.options = [ "-device virtio-rng-pci" ];
           system.stateVersion = "25.11";

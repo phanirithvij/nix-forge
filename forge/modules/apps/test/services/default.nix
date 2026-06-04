@@ -16,6 +16,17 @@
       example = lib.literalExpression "[ pkgs.curl pkgs.jq ]";
     };
 
+    nixosConfig = lib.mkOption {
+      type = with lib.types; deferredModule;
+      default = { };
+      description = "Extra configuration to pass to the NixOS VM nodes.machine definition.";
+      example = lib.literalExpression ''
+        {
+          virtualisation.memorySize = 2048;
+        }
+      '';
+    };
+
     sandbox = lib.mkOption {
       type = lib.types.bool;
       default = true;
