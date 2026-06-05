@@ -203,34 +203,68 @@
               }
             );
 
-        build-oci-images = pkgs.writeShellScriptBin "build-oci-images" (
-          lib.concatMapAttrsStringSep "\n" (name: value: ''
-            ${value.copyTo}/bin/copy-to oci-archive:${name}.tar:${name}:latest
-            echo "Created container image in $(pwd)/${name}.tar"
-          '') config.result.recipes
-        );
+        build-oci-images =
+          pkgs.writeShellScriptBin "build-oci-images" ''
+            export CACHE_DIR="${cacheDir}"
+          ''
+          ++ (lib.concatMapAttrsStringSep "\n" (name: value: /* bash */ ''
+            TAR_FILE="$CACHE_DIR/${name}-$(basename ${value.copyTo} | cut -d'-' -f1).tar"
+            if [ ! -f "$TAR_FILE" ]; then
+              echo "Building container image ${name} in $TAR_FILE"
+              ${value.copyTo}/bin/copy-to oci-archive:"$TAR_FILE.tmp":${name}:latest
+              mv "$TAR_FILE.tmp" "$TAR_FILE"
+            else
+              echo "Using cached container image ${name} from $TAR_FILE"
+            fi
+
+            podman load < "$TAR_FILE"
+
+            touch -m "$TAR_FILE"
+          '') config.result.recipes);
 
         compose-file = pkgs.runCommand "compose-file" { } ''
           install -D ${effectiveComposeFile} $out/${app.name}/compose.yaml
         '';
 
-        cacheDir = "\${XDG_CACHE_HOME:-$HOME/.cache}/ngi-forge/${builtins.hashString "md5" specialArgs.forgeConfig.forge.repositoryUrl}/tmp";
+        cacheDir = "\${XDG_CACHE_HOME:-$HOME/.cache}/ngi-forge/${builtins.hashString "md5" specialArgs.forgeConfig.forge.repositoryUrl}";
 
-        run-podman = pkgs.writeShellScriptBin "run-podman" ''
-          CACHE_DIR="${cacheDir}"
+        # The approach for garbage collection of the container tarballs:
+        # 1. CACHE_DIR is shared per-repository, and it contain oci tarballs for all apps built via run-container or build-oci-images.
+        # 2. `VALID_TARBALLS` is computed directly from Nix derivations. Any tarballs matching it are preserved.
+        # 3. If a tarball is not needed by a current run-container invocation, we remove it if it hasn't been touched in 7 days.
+        run-podman = pkgs.writeShellScriptBin "run-podman" /* bash */ ''
+          export CACHE_DIR="${cacheDir}"
           mkdir -p "$CACHE_DIR"
-          TMPDIR=$(mktemp -d -p "$CACHE_DIR")
 
-          trap 'rm -rf "$TMPDIR"' EXIT
+          VALID_TARBALLS="${
+            lib.concatStringsSep " " (
+              lib.mapAttrsToList (
+                name: value: "${name}-$(basename ${value.copyTo} | cut -d'-' -f1).tar"
+              ) config.result.recipes
+            )
+          }"
 
-          pushd $TMPDIR
-            ${lib.getExe build-oci-images}
+          for cached_tar in "$CACHE_DIR"/*.tar; do
+            if [ -f "$cached_tar" ]; then
+              basename_tar=$(basename "$cached_tar")
+              is_valid=false
+              for valid_tar in $VALID_TARBALLS; do
+                if [ "$basename_tar" = "$valid_tar" ]; then
+                  is_valid=true
+                  break
+                fi
+              done
 
-            for image in *.tar; do
-              podman load < "$image"
-              rm "$image"
-            done
-          popd
+              if [ "$is_valid" = false ]; then
+                if [ -n "$(find "$cached_tar" -mtime +7 2>/dev/null)" ]; then
+                  echo "Removing stale cached tarball: $cached_tar"
+                  rm -f "$cached_tar"
+                fi
+              fi
+            fi
+          done
+
+          ${lib.getExe build-oci-images}
 
           ${lib.getExe pkgs.podman-compose} \
             -f ${compose-file}/${app.name}/compose.yaml \
