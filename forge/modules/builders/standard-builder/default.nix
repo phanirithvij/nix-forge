@@ -5,7 +5,7 @@
   ...
 }:
 {
-  packages = lib.mapAttrs (
+  forge.builtPackages = lib.mapAttrs (
     packageName: package:
     # Note that `packages` is a `lazyAttrsOf`,
     # hence `lib.mkIf false` does not remove the attribute key.

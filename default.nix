@@ -34,7 +34,11 @@ let
 
     # derivations
     apps = lib.filterAttrs (name: value: lib.hasSuffix "-app" name) flake.outputs.packages.${system};
-    pkgs = lib.filterAttrs (name: value: !(lib.hasSuffix "-app" name)) flake.outputs.packages.${system};
+    pkgs = builtins.removeAttrs (flake.outputs.packages.${system}.pkgs or { }) [
+      "type"
+      "name"
+      "system"
+    ];
     shells = flake.outputs.devShells.${system};
   });
 in

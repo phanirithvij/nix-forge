@@ -20,7 +20,13 @@
           {
             config = {
               # Convenient alias to use `packages` instead of `config.packages`
-              _module.args.packages = forgeArgs.config.packages;
+              _module.args.packages = forgeArgs.config.builtPackages // forgeArgs.config.packages;
+            };
+            options.builtPackages = lib.mkOption {
+              type = lib.types.lazyAttrsOf lib.types.package;
+              default = { };
+              internal = true;
+              description = "Internal attrset where builders output the raw derivations.";
             };
             options.packages = lib.mkOption {
               default = { };

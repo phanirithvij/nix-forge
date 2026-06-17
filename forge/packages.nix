@@ -47,6 +47,21 @@ let
 in
 {
   packages = {
+    pkgs =
+      let
+        mkDummyGroup =
+          name: attrs:
+          attrs
+          // {
+            inherit name;
+            type = "derivation";
+            system = pkgs.stdenv.hostPlatform.system;
+          };
+      in
+      mkDummyGroup "pkgs" config.forge.builtPackages;
+  }
+  // lib.mapAttrs' (name: value: lib.nameValuePair "pkgs.${name}" value) config.forge.builtPackages
+  // {
     _forge-config = pkgs.writeTextFile {
       name = "forge-config.json";
       text =

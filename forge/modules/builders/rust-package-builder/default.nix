@@ -6,7 +6,7 @@
   ...
 }:
 {
-  packages = lib.mapAttrs (
+  forge.builtPackages = lib.mapAttrs (
     packageName: package:
     lib.mkIf package.build.rustPackageBuilder.enable (
       pkgs.rustPlatform.buildRustPackage (

@@ -20,7 +20,13 @@
         pkgs = pkgs.extend (
           finalPkgs: previousPkgs:
           # Extend `pkgs` with the `packages` from the forge.
-          config.packages
+          (lib.mapAttrs' (
+            name: value:
+            if lib.hasPrefix "pkgs." name then
+              lib.nameValuePair (lib.removePrefix "pkgs." name) value
+            else
+              lib.nameValuePair name value
+          ) (lib.filterAttrs (name: _: name != "pkgs" && name != "apps") config.packages))
           // {
             # `pkgs.pkgsOriginal` provides packages from the original `pkgs` (usually from Nixpkgs)
             # Eg. `pkgs.pkgsOriginal.offen` (Nixpkgs) and `pkgs.offen` (ngi-forge).
