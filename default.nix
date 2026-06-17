@@ -17,7 +17,6 @@ let
   default = lib.makeScope pkgs.newScope (def: {
     inherit
       lib
-      pkgs
       flake
       system
       inputs
@@ -34,11 +33,9 @@ let
     inherit (default.debug) forge;
 
     # derivations
-    forgeApps = lib.filterAttrs (
-      name: value: lib.hasSuffix "-app" name
-    ) flake.outputs.packages.${system};
-    forgePkgs = flake.outputs.packages.${system};
+    apps = lib.filterAttrs (name: value: lib.hasSuffix "-app" name) flake.outputs.packages.${system};
+    pkgs = lib.filterAttrs (name: value: !(lib.hasSuffix "-app" name)) flake.outputs.packages.${system};
     shells = flake.outputs.devShells.${system};
   });
 in
-default // flake.outputs.packages.${system}
+default
