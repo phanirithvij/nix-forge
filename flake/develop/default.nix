@@ -42,8 +42,8 @@
         pkgs.podman-compose
         pkgs.systemd-manager-tui
         pkgs.watchman
-        forge-inputs.self.packages.${system}.elm-watch
-        forge-inputs.self.packages.${system}.elm2nix
+        forge-inputs.self.legacyPackages.${system}.elm-watch
+        forge-inputs.self.legacyPackages.${system}.elm2nix
         sphinxEnv
       ];
     in

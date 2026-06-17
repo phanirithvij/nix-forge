@@ -46,4 +46,4 @@ let
     shells = flake.outputs.devShells.${system};
   });
 in
-default
+default // flake.outputs.legacyPackages.${system}

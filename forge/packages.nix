@@ -60,8 +60,9 @@ in
       in
       mkDummyGroup "pkgs" config.forge.builtPackages;
   }
-  // lib.mapAttrs' (name: value: lib.nameValuePair "pkgs.${name}" value) config.forge.builtPackages
-  // {
+  // lib.mapAttrs' (name: value: lib.nameValuePair "pkgs.${name}" value) config.forge.builtPackages;
+
+  legacyPackages = {
     _forge-config = pkgs.writeTextFile {
       name = "forge-config.json";
       text =
@@ -85,7 +86,7 @@ in
     '';
 
     _forge-ui = pkgs.callPackage ../ui/package.nix {
-      inherit (config.packages)
+      inherit (config.legacyPackages)
         _forge-config
         _forge-docs
         _forge-options
@@ -96,7 +97,7 @@ in
     };
 
     _forge-ui-dev = pkgs.callPackage ../flake/packages/forge-ui-dev.nix {
-      inherit (config.packages)
+      inherit (config.legacyPackages)
         _forge-ui
         _forge-docs
         _forge-options
