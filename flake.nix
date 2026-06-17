@@ -42,6 +42,8 @@
   outputs =
     inputs@{ self, flake-parts, ... }:
 
+    let
+      flake =
     flake-parts.lib.mkFlake
       {
         inherit inputs;
@@ -88,4 +90,17 @@
             };
           };
       });
+
+      # The `apps` output is disallowed because we are exposing `apps` through `packages.${system}`.
+      # `flake-parts` creates empty `apps.${system}` by default, so we filter out empty sets.
+      apps = inputs.nixpkgs.lib.filterAttrs (_: v: v != { }) (flake.apps or { });
+    in
+    if apps != { } then
+      throw ''
+        The top-level `apps` flake output is disallowed in this project.
+        We instead treat `apps` as packages and expose them via `packages.''${system}`
+        Please remove any direct `apps` definitions which were mistakenly added.
+      ''
+    else
+      builtins.removeAttrs flake [ "apps" ];
 }
