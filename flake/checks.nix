@@ -14,13 +14,13 @@
     }:
 
     let
-      # Helper function to extract passthru attribute
+      # Helper function to extract passthru attribute, ensuring it is a valid derivation
       passthruAttr =
         attr:
         lib.filterAttrs (_: v: v != null) (
           lib.mapAttrs' (
             name: package:
-            if lib.hasAttr attr package then
+            if lib.hasAttr attr package && lib.isDerivation package.${attr} then
               lib.nameValuePair "${name}-${attr}" package.${attr}
             else
               lib.nameValuePair name null

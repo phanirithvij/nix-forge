@@ -33,7 +33,11 @@ let
     inherit (default.debug) forge;
 
     # derivations
-    apps = lib.filterAttrs (name: value: lib.hasSuffix "-app" name) flake.outputs.packages.${system};
+    apps = builtins.removeAttrs (flake.outputs.packages.${system}.apps or { }) [
+      "type"
+      "name"
+      "system"
+    ];
     pkgs = builtins.removeAttrs (flake.outputs.packages.${system}.pkgs or { }) [
       "type"
       "name"
