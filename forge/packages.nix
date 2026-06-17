@@ -67,7 +67,7 @@ in
         # if using `lix` you can see this description in the output of `nix flake show`
         pkgsBundleWithDesc = pkgsBundle.overrideAttrs { meta.description = "Build all pkgs at once"; };
       in
-      pkgsBundleWithDesc // (mkDummyGroup "pkgs" config.forge.builtPackages);
+      mkDummyGroup "pkgs" (config.forge.builtPackages // { all = pkgsBundleWithDesc; });
   }
   // lib.mapAttrs' (name: value: lib.nameValuePair "pkgs.${name}" value) config.forge.builtPackages;
 

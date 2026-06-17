@@ -133,7 +133,7 @@
     in
     {
       packages = {
-        apps = appsBundleWithDesc // (mkDummyGroup "apps" bundledApps);
+        apps = mkDummyGroup "apps" (bundledApps // { all = appsBundleWithDesc; });
       }
       // lib.concatMapAttrs (
         appName: bundled:
