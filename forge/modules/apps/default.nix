@@ -112,16 +112,12 @@
           );
         };
       bundledApps = lib.mapAttrs (appName: app: shellBundle app) config.forge.apps;
-      buildableApps = lib.filterAttrs (_: val: lib.isDerivation val) bundledApps;
-      appsBundle = pkgs.linkFarm "all-apps-bundle" (
+      appsBundle = pkgs.linkFarm "apps" (
         lib.mapAttrsToList (name: drv: {
           inherit name;
           path = drv;
-        }) buildableApps
+        }) bundledApps
       );
-      # In case flake schemas ever gets merged, this will be useful
-      # if using `lix` you can see this description in the output of `nix flake show`
-      appsBundleWithDesc = appsBundle.overrideAttrs { meta.description = "Build all apps at once"; };
       mkDummyGroup =
         name: attrs:
         attrs
@@ -129,11 +125,15 @@
           inherit name;
           type = "derivation";
           system = pkgs.stdenv.hostPlatform.system;
+          inherit (appsBundle) drvPath outPath outputName;
+          # In case flake schemas ever gets merged, this will be useful
+          # if using `lix` you can see this description in the output of `nix flake show`
+          meta.description = "Build all apps at once";
         };
     in
     {
       packages = {
-        apps = mkDummyGroup "apps" (bundledApps // { all = appsBundleWithDesc; });
+        apps = mkDummyGroup "apps" bundledApps;
       }
       // lib.concatMapAttrs (
         appName: bundled:

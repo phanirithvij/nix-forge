@@ -56,18 +56,19 @@ in
             inherit name;
             type = "derivation";
             system = pkgs.stdenv.hostPlatform.system;
+            inherit (pkgsBundle) drvPath outPath outputName;
+            # In case flake schemas ever gets merged this will be useful
+            # if using `lix` you can see this description in the output of `nix flake show`
+            meta.description = "Build all pkgs at once";
           };
-        pkgsBundle = pkgs.linkFarm "all-pkgs-bundle" (
+        pkgsBundle = pkgs.linkFarm "pkgs" (
           lib.mapAttrsToList (name: drv: {
             inherit name;
             path = drv;
           }) config.forge.builtPackages
         );
-        # In case flake schemas ever gets merged this will be useful
-        # if using `lix` you can see this description in the output of `nix flake show`
-        pkgsBundleWithDesc = pkgsBundle.overrideAttrs { meta.description = "Build all pkgs at once"; };
       in
-      mkDummyGroup "pkgs" (config.forge.builtPackages // { all = pkgsBundleWithDesc; });
+      mkDummyGroup "pkgs" config.forge.builtPackages;
   }
   // lib.mapAttrs' (name: value: lib.nameValuePair "pkgs.${name}" value) config.forge.builtPackages;
 
