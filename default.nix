@@ -33,16 +33,13 @@ let
     inherit (default.debug) forge;
 
     # derivations
-    apps = builtins.removeAttrs (flake.outputs.packages.${system}.apps or { }) [
-      "type"
-      "name"
-      "system"
-    ];
-    pkgs = builtins.removeAttrs (flake.outputs.packages.${system}.pkgs or { }) [
-      "type"
-      "name"
-      "system"
-    ];
+    apps = flake.outputs.packages.${system}.apps or { };
+    pkgs = flake.outputs.packages.${system}.pkgs or { };
+
+    # In repl use these to debug
+    appsRepl = flake.outputs.legacyPackages.${system}.appsRepl or { };
+    pkgsRepl = flake.outputs.legacyPackages.${system}.pkgsRepl or { };
+
     shells = flake.outputs.devShells.${system};
   });
 in

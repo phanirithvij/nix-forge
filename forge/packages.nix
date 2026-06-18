@@ -73,6 +73,9 @@ in
   // lib.mapAttrs' (name: value: lib.nameValuePair "pkgs.${name}" value) config.forge.builtPackages;
 
   legacyPackages = {
+    # in repl use this to debug
+    pkgsRepl = config.forge.builtPackages;
+
     _forge-config = pkgs.writeTextFile {
       name = "forge-config.json";
       text =

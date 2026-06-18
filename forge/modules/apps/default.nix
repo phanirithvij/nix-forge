@@ -144,5 +144,10 @@
         // lib.optionalAttrs (bundled ? program) { "apps.${appName}.program" = bundled.program; }
         // lib.optionalAttrs (bundled ? vm) { "apps.${appName}.vm" = bundled.vm; }
       ) bundledApps;
+
+      legacyPackages = {
+        # in repl use this to debug
+        appsRepl = bundledApps;
+      };
     };
 }
