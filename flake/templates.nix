@@ -8,5 +8,9 @@
       path = ../templates/provider;
       description = "Template for self hosting your own NGI Forge instance";
     };
+    vm = {
+      path = ../templates/vm;
+      description = "Stateless NixOS VM for testing modules and forge services";
+    };
   };
 }
