@@ -10,6 +10,7 @@
   imports = [
     # Some values in ./personal.nix need to be changed!
     ./personal.nix
+    ./pixelfed.nix
   ];
 
   # Declarative users

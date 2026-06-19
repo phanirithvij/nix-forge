@@ -6,8 +6,8 @@
     # nixpkgs.url = "path:/path/to/local/nixpkgs";
     # ngi-forge.url = "path:/path/to/local/ngi-nix-forge";
 
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    ngi-forge.url = "github:ngi-nix/forge";
+    nixpkgs.url = "path:/shed/Projects/nixhome/nixpkgs/master";
+    ngi-forge.url = "path:../..";
   };
 
   outputs =
