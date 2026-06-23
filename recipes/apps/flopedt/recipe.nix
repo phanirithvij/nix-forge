@@ -29,13 +29,13 @@
           '';
           ports = [ "8000:8000" ];
           environment = {
-            CELERY_BROKER_URL = "redis://valkey:6379/0";
-            CELERY_RESULT_BACKEND = "redis://valkey:6379/1";
-            POSTGRES_HOST = "database";
+            CELERY_BROKER_URL = "redis://data:6379/0";
+            CELERY_RESULT_BACKEND = "redis://data:6379/1";
+            POSTGRES_HOST = "data";
             POSTGRES_DB = "postgres";
             POSTGRES_USER = "postgres";
             POSTGRES_PASSWORD = "password";
-            VALKEY_HOST = "valkey";
+            VALKEY_HOST = "data";
             VALKEY_PORT = "6379";
             FLOP_ENVIRONMENT = "production";
             FLOP_DATA_DIR = "/tmp/flop";
@@ -47,13 +47,13 @@
             exec ${pkgs.flopedt}/bin/flopedt-celery -A flop worker -l info
           '';
           environment = {
-            CELERY_BROKER_URL = "redis://valkey:6379/0";
-            CELERY_RESULT_BACKEND = "redis://valkey:6379/1";
-            POSTGRES_HOST = "database";
+            CELERY_BROKER_URL = "redis://data:6379/0";
+            CELERY_RESULT_BACKEND = "redis://data:6379/1";
+            POSTGRES_HOST = "data";
             POSTGRES_DB = "postgres";
             POSTGRES_USER = "postgres";
             POSTGRES_PASSWORD = "password";
-            VALKEY_HOST = "valkey";
+            VALKEY_HOST = "data";
             VALKEY_PORT = "6379";
             FLOP_ENVIRONMENT = "production";
             FLOP_DATA_DIR = "/tmp/flop";
@@ -65,13 +65,13 @@
             exec ${pkgs.flopedt}/bin/flopedt-celery -A flop beat -l info --scheduler flop.core.celery:CeleryBeatScheduler
           '';
           environment = {
-            CELERY_BROKER_URL = "redis://valkey:6379/0";
-            CELERY_RESULT_BACKEND = "redis://valkey:6379/1";
-            POSTGRES_HOST = "database";
+            CELERY_BROKER_URL = "redis://data:6379/0";
+            CELERY_RESULT_BACKEND = "redis://data:6379/1";
+            POSTGRES_HOST = "data";
             POSTGRES_DB = "postgres";
             POSTGRES_USER = "postgres";
             POSTGRES_PASSWORD = "password";
-            VALKEY_HOST = "valkey";
+            VALKEY_HOST = "data";
             VALKEY_PORT = "6379";
             FLOP_ENVIRONMENT = "production";
             FLOP_DATA_DIR = "/tmp/flop";
