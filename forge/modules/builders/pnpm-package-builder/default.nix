@@ -21,9 +21,9 @@
               pname
               src
               version
-              sourceRoot
               ;
             inherit (builderCfg) pnpm fetcherVersion;
+            ${if builderCfg.sourceRoot != null then "sourceRoot" else null} = builderCfg.sourceRoot;
             hash = builderCfg.pnpmDepsHash;
           });
         in
