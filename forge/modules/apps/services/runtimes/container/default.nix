@@ -313,7 +313,6 @@
               podman load < "$image"
               rm "$image"
             done
-            ${arionImages}
           popd
 
           ${lib.getExe pkgs.podman-compose} \
@@ -323,6 +322,9 @@
         '';
 
         run-container = pkgs.writeShellScriptBin "run-container" ''
+          set -euo pipefail
+          ${arionImages}
+
           ${lib.getExe run-podman} "$@"
         '';
       in
