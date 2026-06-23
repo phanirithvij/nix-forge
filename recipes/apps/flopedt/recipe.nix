@@ -25,6 +25,12 @@
       components = {
         backend = {
           command = pkgs.writeShellScriptBin "flopedt-backend" ''
+            mkdir -p /tmp/flop
+            until ${pkgs.postgresql}/bin/pg_isready -h data -U postgres; do
+              echo "Waiting for postgres..."
+              sleep 2
+            done
+            ${pkgs.flopedt}/bin/flopedt migrate --noinput
             exec ${pkgs.flopedt}/bin/flopedt runserver 0.0.0.0:8000 --noreload
           '';
           ports = [ "8000:8000" ];
@@ -44,6 +50,12 @@
 
         celery-worker = {
           command = pkgs.writeShellScriptBin "flopedt-celery-worker" ''
+            mkdir -p /tmp/flop
+            until ${pkgs.postgresql}/bin/pg_isready -h data -U postgres; do
+              echo "Waiting for postgres..."
+              sleep 2
+            done
+            ${pkgs.flopedt}/bin/flopedt migrate --noinput
             exec ${pkgs.flopedt}/bin/flopedt-celery -A flop worker -l info
           '';
           environment = {
@@ -62,6 +74,12 @@
 
         celery-beat = {
           command = pkgs.writeShellScriptBin "flopedt-celery-beat" ''
+            mkdir -p /tmp/flop
+            until ${pkgs.postgresql}/bin/pg_isready -h data -U postgres; do
+              echo "Waiting for postgres..."
+              sleep 2
+            done
+            ${pkgs.flopedt}/bin/flopedt migrate --noinput
             exec ${pkgs.flopedt}/bin/flopedt-celery -A flop beat -l info --scheduler flop.core.celery:CeleryBeatScheduler
           '';
           environment = {
@@ -126,9 +144,18 @@
       runtimes = {
         container = {
           enable = true;
-          components.backend.packages = [ pkgs.flopedt ];
-          components.celery-worker.packages = [ pkgs.flopedt ];
-          components.celery-beat.packages = [ pkgs.flopedt ];
+          components.backend.packages = [
+            pkgs.flopedt
+            pkgs.postgresql
+          ];
+          components.celery-worker.packages = [
+            pkgs.flopedt
+            pkgs.postgresql
+          ];
+          components.celery-beat.packages = [
+            pkgs.flopedt
+            pkgs.postgresql
+          ];
           components.frontend.packages = [
             pkgs.caddy
             pkgs.flopedt
@@ -169,7 +196,7 @@
 
     test.services = {
       script = ''
-        curl="curl --retry 5 --retry-max-time 120 --retry-all-errors"
+        curl="curl -f --retry 5 --retry-max-time 120 --retry-all-errors"
         $curl localhost:8000
         $curl localhost:8080
       '';
