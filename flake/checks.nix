@@ -98,6 +98,27 @@
             else
               pkgs.runCommand "downstream-neochat-eval-failed-as-expected" { } "touch $out";
 
+          end-user-eval-flake-neochat-succeeds =
+            let
+              downstream = inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+                systems = [ "x86_64-linux" ];
+                imports = [ self.flakeModules.default ];
+                perSystem = { config, ... }: {
+                  forge.repositoryUrl = "foo";
+                  forge.allowInsecurePackages = [ "olm-3.2.16" ];
+                };
+              };
+              result = builtins.tryEval (
+                downstream.packages.x86_64-linux.apps.neochat.program ? drvPath
+                && builtins.seq downstream.packages.x86_64-linux.apps.neochat.program.drvPath true
+              );
+            in
+            if result.success && result.value then
+              pkgs.runCommand "downstream-neochat-eval-succeeded-as-expected" { } "touch $out"
+            else
+              throw "Failed! Downstream flake WAS forced to allowlist neochat, but it still threw!";
+
+
           end-user-eval-legacy =
             let
               forgeLegacy = import ../default.nix { inherit system; };
