@@ -98,34 +98,5 @@
         Please remove any direct `apps` definitions which were mistakenly added.
       ''
     else
-      let
-        flake' = builtins.removeAttrs flake [ "apps" ];
-
-        # Recursively tryEval derivations to omit any that throw (like insecure packages)
-        filterThrowing =
-          attrs:
-          inputs.nixpkgs.lib.filterAttrs
-            (
-              name: value:
-              if inputs.nixpkgs.lib.isDerivation value then
-                (builtins.tryEval (value ? drvPath && builtins.seq value.drvPath true)).success
-              else if builtins.isAttrs value then
-                true # We don't filter the attrset itself, we filter its children later if needed
-              else
-                true
-            )
-            (
-              inputs.nixpkgs.lib.mapAttrs (
-                name: value:
-                if builtins.isAttrs value && !inputs.nixpkgs.lib.isDerivation value then
-                  filterThrowing value
-                else
-                  value
-              ) attrs
-            );
-      in
-      flake'
-      // {
-        packages = inputs.nixpkgs.lib.mapAttrs (system: pkgs: filterThrowing pkgs) flake'.packages;
-      };
+      builtins.removeAttrs flake [ "apps" ];
 }
