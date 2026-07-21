@@ -7,11 +7,11 @@
   inputs ? flake.inputs,
   system ? builtins.currentSystem,
   nixpkgs ? import inputs.nixpkgs {
-    inherit config overlays system;
+    config = { };
+    overlays = [ ];
+    inherit system;
   },
   lib ? import "${inputs.nixpkgs}/lib",
-  config ? { },
-  overlays ? [ ],
 }:
 let
   drvToAttrs =
