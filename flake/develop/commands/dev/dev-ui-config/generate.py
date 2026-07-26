@@ -13,14 +13,19 @@ def run_command(cmd, **kwargs):
     return subprocess.run(cmd, **kwargs)
 
 
-def generate_grants():
-    grants = {"Commons": [], "Core": [], "Entrust": [], "Review": []}
+def generate_grants() -> dict[str, list[str]]:
+    grants: dict[str, list[str]] = {
+        "Commons": [],
+        "Core": [],
+        "Entrust": [],
+        "Review": [],
+    }
     for _ in range(fake.random_int(min=1, max=3)):
         grants[fake.random_element(elements=list(grants.keys()))].append(fake.word())
     return grants
 
 
-def generate_pkg_recipe(name, index):
+def generate_pkg_recipe(name: str, index: int) -> str:
     return f"""{{
   config,
   lib,
@@ -44,10 +49,10 @@ pkgs."{name}" = {{
 """
 
 
-def generate_app_recipe(name, index, is_test_app=False):
+def generate_app_recipe(name: str, is_test_app: bool = False):
     grants = generate_grants()
 
-    grant_lines = []
+    grant_lines: list[str] = []
     for cat, items in grants.items():
         if items:
             vals = " ".join(f'"{v}"' for v in items)
@@ -151,25 +156,25 @@ def main():
         test_app_name = "mock-test"
         (apps_dir / test_app_name).mkdir(parents=True)
         with open(apps_dir / test_app_name / "recipe.nix", "w") as f:
-            _ = f.write(generate_app_recipe(test_app_name, 0, is_test_app=True))
+            _ = f.write(generate_app_recipe(test_app_name, is_test_app=True))
 
         for i in range(num_apps):
             app_name = f"mock-{i}"
             (apps_dir / app_name).mkdir(parents=True)
             with open(apps_dir / app_name / "recipe.nix", "w") as f:
-                f.write(generate_app_recipe(app_name, i))
+                _ = f.write(generate_app_recipe(app_name))
 
         # Generate a unchanging test package
         test_pkg_name = "mock-test-pkg"
         (pkgs_dir / test_pkg_name).mkdir(parents=True)
         with open(pkgs_dir / test_pkg_name / "recipe.nix", "w") as f:
-            f.write(generate_pkg_recipe(test_pkg_name, 0))
+            _ = f.write(generate_pkg_recipe(test_pkg_name, 0))
 
         for i in range(num_pkgs):
             pkg_name = f"mock-pkg-{i}"
             (pkgs_dir / pkg_name).mkdir(parents=True)
             with open(pkgs_dir / pkg_name / "recipe.nix", "w") as f:
-                f.write(generate_pkg_recipe(pkg_name, i))
+                _ = f.write(generate_pkg_recipe(pkg_name, i))
 
         run_command(["git", "init"], cwd=str(temp_path), check=True)
         run_command(
@@ -207,7 +212,7 @@ def main():
     tmp_dir.mkdir(parents=True, exist_ok=True)
     real_file = tmp_dir / "dev-ui-config.json"
     with open(real_file, "w") as f:
-        f.write(config_text)
+        _ = f.write(config_text)
 
     if out_path.exists() or out_path.is_symlink():
         out_path.unlink()
