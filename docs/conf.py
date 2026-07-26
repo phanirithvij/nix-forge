@@ -49,7 +49,7 @@ todo_include_todos = True
 
 pygments_style = "sphinx"
 
-exclude_patterns = []
+exclude_patterns: list[str] = []
 
 html_baseurl = "https://ngi-nix.github.io/forge/"
 
@@ -104,7 +104,7 @@ man_pages = [
     ),
 ]
 
-intersphinx_mapping = {}
+intersphinx_mapping: dict[str, tuple[str, None]] = {}
 
 linkcheck_ignore = [
     r"https://matrix.to",

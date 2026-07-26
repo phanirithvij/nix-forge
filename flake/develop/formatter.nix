@@ -18,6 +18,34 @@ lib.makeExtensible (self: {
     programs.shellcheck.enable = true;
     programs.shfmt.enable = true;
 
+    programs.mypy = {
+      enable = true;
+      directories = {
+        "docs" = {
+          options = [ "--check-untyped-defs" ];
+          extraPythonPackages = [
+            pkgs.python3.pkgs.sphinx
+          ];
+        };
+        "flake/develop/commands/dev/dev-ui-config" = {
+          options = [ "--check-untyped-defs" ];
+          extraPythonPackages = [
+            pkgs.python3.pkgs.faker
+          ];
+        };
+        "flake/develop/commands/dev/forge-ui" = {
+          options = [ "--check-untyped-defs" ];
+        };
+        "flake/develop/commands/dev/update" = {
+          modules = [ "forge_update" ];
+          options = [ "--check-untyped-defs" ];
+          extraPythonPackages = [
+            pkgs.python3.pkgs.colorama
+          ];
+        };
+      };
+    };
+
     programs.dprint = {
       enable = true;
       includes = [

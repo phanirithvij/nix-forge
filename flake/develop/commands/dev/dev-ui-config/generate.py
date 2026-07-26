@@ -3,12 +3,13 @@ import subprocess
 import shutil
 import tempfile
 from pathlib import Path
-from faker import Faker
+from typing import Any
+from faker import Faker  # type: ignore[import-not-found,import-untyped]
 
 fake = Faker()
 
 
-def run_command(cmd, **kwargs):
+def run_command(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[Any]:
     print(f"\n+ {' '.join(map(str, cmd))}")
     return subprocess.run(cmd, **kwargs)
 
@@ -49,10 +50,10 @@ pkgs."{name}" = {{
 """
 
 
-def generate_app_recipe(name: str, is_test_app: bool = False):
+def generate_app_recipe(name: str, index: int, is_test_app: bool = False) -> str:
     grants = generate_grants()
 
-    grant_lines: list[str] = []
+    grant_lines = []
     for cat, items in grants.items():
         if items:
             vals = " ".join(f'"{v}"' for v in items)
@@ -112,7 +113,7 @@ apps."{name}" = {{
 """
 
 
-def main():
+def main() -> None:
     try:
         num_apps = int(sys.argv[1]) if len(sys.argv) > 1 else 20
         num_pkgs = int(sys.argv[2]) if len(sys.argv) > 2 else 20
@@ -150,31 +151,32 @@ def main():
             shutil.rmtree(mock_recipes_root)
 
         apps_dir, pkgs_dir = mock_recipes_root / "apps", mock_recipes_root / "pkgs"
-        _ = apps_dir.mkdir(parents=True), pkgs_dir.mkdir(parents=True)
+        apps_dir.mkdir(parents=True)
+        pkgs_dir.mkdir(parents=True)
 
         # Generate an unchanging test app
         test_app_name = "mock-test"
         (apps_dir / test_app_name).mkdir(parents=True)
         with open(apps_dir / test_app_name / "recipe.nix", "w") as f:
-            _ = f.write(generate_app_recipe(test_app_name, is_test_app=True))
+            _ = f.write(generate_app_recipe(test_app_name, 0, is_test_app=True))
 
         for i in range(num_apps):
             app_name = f"mock-{i}"
             (apps_dir / app_name).mkdir(parents=True)
             with open(apps_dir / app_name / "recipe.nix", "w") as f:
-                _ = f.write(generate_app_recipe(app_name))
+                f.write(generate_app_recipe(app_name, i))
 
         # Generate a unchanging test package
         test_pkg_name = "mock-test-pkg"
         (pkgs_dir / test_pkg_name).mkdir(parents=True)
         with open(pkgs_dir / test_pkg_name / "recipe.nix", "w") as f:
-            _ = f.write(generate_pkg_recipe(test_pkg_name, 0))
+            f.write(generate_pkg_recipe(test_pkg_name, 0))
 
         for i in range(num_pkgs):
             pkg_name = f"mock-pkg-{i}"
             (pkgs_dir / pkg_name).mkdir(parents=True)
             with open(pkgs_dir / pkg_name / "recipe.nix", "w") as f:
-                _ = f.write(generate_pkg_recipe(pkg_name, i))
+                f.write(generate_pkg_recipe(pkg_name, i))
 
         run_command(["git", "init"], cwd=str(temp_path), check=True)
         run_command(
@@ -212,7 +214,7 @@ def main():
     tmp_dir.mkdir(parents=True, exist_ok=True)
     real_file = tmp_dir / "dev-ui-config.json"
     with open(real_file, "w") as f:
-        _ = f.write(config_text)
+        f.write(config_text)
 
     if out_path.exists() or out_path.is_symlink():
         out_path.unlink()
@@ -223,7 +225,9 @@ def main():
 
     sys.path.append("@forgeUIDir@")
     try:
-        from build_app_resources import populate_resources_dir
+        from build_app_resources import (  # type: ignore[import-not-found,import-untyped]
+            populate_resources_dir,
+        )
 
         populate_resources_dir()
     except ImportError:

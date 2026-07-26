@@ -29,7 +29,7 @@ def get_git_root() -> Path | None:
         return None
 
 
-def populate_resources_dir():
+def populate_resources_dir() -> None:
     try:
         root_dir = get_git_root()
         if not root_dir:
@@ -60,13 +60,13 @@ def populate_resources_dir():
 
         try:
             with open(config_file, "r", encoding="utf-8") as f:
-                config: dict[str, str | list[Any] | Any] = json.load(f)
+                config: dict[str, Any] = json.load(f)
         except json.JSONDecodeError:
             print(f"[build-app-resources] Error parsing JSON in {config_file}")
             return
 
         app_count = 0
-        apps: dict[dict[str, [str, str]]] = config.get("apps", [])
+        apps: dict[str, dict[str, Any]] = config.get("apps", {})
 
         for app_name, app in apps.items():
             if not app_name:
@@ -75,7 +75,7 @@ def populate_resources_dir():
             app_dir: Path = apps_dir / app_name
             app_dir.mkdir(parents=True, exist_ok=True)
 
-            app_icon: str = app.get("icon")
+            app_icon: str | None = app.get("icon")
             dest_icon: Path = app_dir / "icon.svg"
             icon_copied = False
 

@@ -8,8 +8,8 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
-from colorama import Fore, Style
-from colorama import init as colorama_init
+from colorama import Fore, Style  # type: ignore[import-untyped]
+from colorama import init as colorama_init  # type: ignore[import-untyped]
 
 from .builder import BuilderHashUpdater
 from .errors import ForgeUpdateError
