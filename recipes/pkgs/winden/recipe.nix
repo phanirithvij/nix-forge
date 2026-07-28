@@ -64,6 +64,7 @@
         wasm-bindgen-cli_0_2_99
         lld
         binaryen
+        python3
         rustPlatform.cargoSetupHook
       ];
       cargoDeps = pkgs.rustPlatform.fetchCargoVendor {
@@ -81,15 +82,27 @@
 
       makeCacheWritable = true;
       npmDepsFetcherVersion = 2;
-      env.SENTRYCLI_SKIP_DOWNLOAD = "1";
-      env.RUSTFLAGS = "-C target-feature=-reference-types,-multivalue";
-      env.CFLAGS_wasm32_unknown_unknown = "-mno-reference-types -mno-multivalue";
+      SENTRYCLI_SKIP_DOWNLOAD = "1";
+      WASM_BINDGEN_EXTERNREF = "0";
+      WASM_BINDGEN_MULTI_VALUE = "0";
+      WASM_BINDGEN_REFERENCE_TYPES = "0";
+      RUSTFLAGS = "-C target-feature=-reference-types,-multivalue,-bulk-memory,-mutable-globals,-nontrapping-fptoint,-sign-ext";
+      CFLAGS_wasm32_unknown_unknown = "-mno-reference-types -mno-multivalue -mno-bulk-memory -mno-mutable-globals -mno-nontrapping-fptoint -mno-sign-ext";
 
       postPatch = ''
-        # Prevent npmConfigHook from running automatically
         npmConfigHook() {
-          echo "Bypassing npmConfigHook..."
+          echo "Bypassing default npmConfigHook..."
         }
+
+        # Remove WasmPackPlugin from webpack.config.js so we can run wasm-pack and wasm-opt manually in buildPhase
+        python3 -c '
+        import re
+        with open("webpack.config.js", "r") as f:
+            c = f.read()
+        c = re.sub(r"new WasmPackPlugin\(\{.*?\}\),", "", c, flags=re.DOTALL)
+        with open("webpack.config.js", "w") as f:
+            f.write(c)
+        '
 
         # Fix ESM import of pkg in Webpack 5 (where pkg.default is undefined)
         substituteInPlace src/app/sagas.ts \
@@ -98,14 +111,11 @@
 
       configurePhase = ''
         runHook preConfigure
-        echo "Configuring npm manually to bypass fsevents lockfile bug"
-        export npm_config_cache="$(mktemp -d)"
+
+        export HOME=$(mktemp -d)
+        export npm_config_cache=$(mktemp -d)
         cp -r "$npmDeps"/* "$npm_config_cache"
         chmod -R +w "$npm_config_cache"
-
-        # Instruct WasmPackPlugin not to attempt online cargo install of wasm-bindgen-cli
-        substituteInPlace webpack.config.js \
-          --replace-fail 'outDir: path.resolve(__dirname, "./pkg"),' 'outDir: path.resolve(__dirname, "./pkg"), extraArgs: "--mode no-install",'
 
         npm install --cache "$npm_config_cache" --offline --ignore-scripts --no-audit --legacy-peer-deps --omit=optional
 
@@ -116,12 +126,22 @@
 
       buildPhase = ''
         export HOME=$(mktemp -d)
+        touch .env
+        echo "Running wasm-pack build with explicit RUSTFLAGS..."
+        export RUSTFLAGS="-C target-feature=-reference-types,-multivalue,-bulk-memory,-mutable-globals,-nontrapping-fptoint,-sign-ext"
+        wasm-pack build ./wasm --out-dir ../pkg --mode no-install --target bundler --no-opt
+        echo "Running npm run build (Webpack)..."
         npm run build
       '';
 
       installPhase = ''
         mkdir -p $out/share/winden
         cp -r dist/* $out/share/winden/
+        if grep -q "Module parse failed" $out/share/winden/app/*.js; then
+          echo "ERROR: Webpack module parse failure detected in Winden JS bundle!"
+          grep -o "Module parse failed[^\"']*" $out/share/winden/app/*.js || true
+          exit 1
+        fi
       '';
     };
   };
