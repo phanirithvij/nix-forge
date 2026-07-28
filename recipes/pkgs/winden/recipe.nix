@@ -61,28 +61,39 @@
         cargo
         rustc
         wasm-pack
-        wasm-bindgen-cli_0_2_126
+        wasm-bindgen-cli_0_2_99
         lld
         binaryen
         rustPlatform.cargoSetupHook
       ];
       cargoDeps = pkgs.rustPlatform.fetchCargoVendor {
-        src = pkgs.winden.src;
-        sourceRoot = "source/client/wasm";
-        hash = "sha256-8j1iKpdFXumq09gkqzPpsBzxe/Az+DY6hhWMAjd8NPA=";
-        patches = [ ./0002-use-git-for-magic-wormhole-wasm.patch ];
+        name = "winden-cargo-deps-0.2.99";
+        src = pkgs.applyPatches {
+          name = "source";
+          src = pkgs.winden.src;
+          sourceRoot = "source/client";
+          patches = [ ./0001-use-git-for-magic-wormhole.patch ];
+        };
+        sourceRoot = "source/wasm";
+        hash = "sha256-ZCJWAqx/64PhJMVOKxZsf29NgBW9nKlYlbsWLAJLTSM=";
       };
       cargoRoot = "wasm";
 
       makeCacheWritable = true;
       npmDepsFetcherVersion = 2;
       env.SENTRYCLI_SKIP_DOWNLOAD = "1";
+      env.RUSTFLAGS = "-C target-feature=-reference-types,-multivalue";
+      env.CFLAGS_wasm32_unknown_unknown = "-mno-reference-types -mno-multivalue";
 
       postPatch = ''
         # Prevent npmConfigHook from running automatically
         npmConfigHook() {
           echo "Bypassing npmConfigHook..."
         }
+
+        # Fix ESM import of pkg in Webpack 5 (where pkg.default is undefined)
+        substituteInPlace src/app/sagas.ts \
+          --replace-fail 'import("../../pkg").then((pkg) => pkg.default);' 'import("../../pkg").then((pkg) => pkg.default || pkg);'
       '';
 
       configurePhase = ''
