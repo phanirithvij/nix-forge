@@ -115,19 +115,22 @@
         export HOME=$(mktemp -d)
         touch .env
 
-        # 1. Compile Rust WASM module without post-MVP target features (reference-types/externref)
-        #    that are unsupported by Webpack 5's @webassemblyjs parser
+        # 1. Compile Rust WASM module
         cargo build --manifest-path ./wasm/Cargo.toml --target wasm32-unknown-unknown --release
 
-        # 2. Generate JavaScript bundler bindings
-        wasm-bindgen ./wasm/target/wasm32-unknown-unknown/release/wormhole_rs_wasm.wasm --out-dir pkg --target bundler
+        # 2. Generate JavaScript web bindings (loads WASM via asset URL without Webpack parser)
+        wasm-bindgen ./wasm/target/wasm32-unknown-unknown/release/wormhole_rs_wasm.wasm --out-dir pkg --target web
 
-        # 3. Write package.json so Webpack can resolve import("../../pkg") to the generated JS/WASM
+        # 3. Optimize WASM binary
+        wasm-opt -O pkg/wormhole_rs_wasm_bg.wasm -o pkg/wormhole_rs_wasm_bg.wasm
+
+        # 4. Write package.json so Webpack can resolve import("../../pkg") to the generated JS/WASM
         cat <<EOF > pkg/package.json
         {
           "name": "wormhole-rs-wasm",
           "version": "0.1.0",
           "main": "wormhole_rs_wasm.js",
+          "module": "wormhole_rs_wasm.js",
           "types": "wormhole_rs_wasm.d.ts",
           "sideEffects": [
             "./wormhole_rs_wasm.js",
@@ -136,7 +139,7 @@
         }
         EOF
 
-        # 4. Bundle Web application
+        # 5. Bundle Web application
         npm run build
       '';
 
