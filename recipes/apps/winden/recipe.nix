@@ -44,7 +44,7 @@
             :8080 {
               root * ${pkgs.winden}/share/winden
 
-              handle_path /mailbox/* {
+              handle_path /mailbox* {
                 reverse_proxy 127.0.0.1:4000
               }
 
@@ -100,6 +100,7 @@
         python3 - << 'EOF'
         import time
         import sys
+        import shutil
         from selenium import webdriver
         from selenium.webdriver.chrome.options import Options
         from selenium.webdriver.chrome.service import Service
@@ -109,9 +110,11 @@
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-gpu")
+        options.add_argument("--remote-debugging-pipe")
+        options.binary_location = "${pkgs.chromium}/bin/chromium"
         options.set_capability("goog:loggingPrefs", {"browser": "ALL"})
 
-        service = Service()
+        service = Service(executable_path="${pkgs.chromedriver}/bin/chromedriver")
         driver = webdriver.Chrome(service=service, options=options)
 
         try:

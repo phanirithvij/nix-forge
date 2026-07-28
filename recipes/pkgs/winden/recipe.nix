@@ -46,6 +46,7 @@
       patches = [
         ./0001-use-git-for-magic-wormhole.patch
         ./0002-webpack-wasm-bindgen.patch
+        ./0003-webpack-env.patch
       ];
     };
 
@@ -78,6 +79,7 @@
           patches = [
             ./0001-use-git-for-magic-wormhole.patch
             ./0002-webpack-wasm-bindgen.patch
+            ./0003-webpack-env.patch
           ];
         };
         sourceRoot = "source/wasm";
@@ -139,7 +141,8 @@
         }
         EOF
 
-        # 5. Bundle Web application
+        export MAILBOX_URL="''${MAILBOX_URL:-ws://127.0.0.1:8080/mailbox/v1}"
+        export RELAY_URL="''${RELAY_URL:-ws://127.0.0.1:8080/relay}"
         npm run build
       '';
 
