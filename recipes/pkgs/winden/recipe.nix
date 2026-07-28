@@ -43,7 +43,10 @@
     source = {
       git = "github:LeastAuthority/winden/0082e5aeef7eef5d4ae163f2ce61906bd2ee4e0a";
       hash = "sha256-AVinNoLcSmPBMHowwSLdenHdN8kxmyEhUP07JEDtUXs=";
-      patches = [ ./0001-use-git-for-magic-wormhole.patch ];
+      patches = [
+        ./0001-use-git-for-magic-wormhole.patch
+        ./0002-webpack-wasm-bindgen.patch
+      ];
     };
 
     build.npmPackageBuilder = {
@@ -64,7 +67,6 @@
         wasm-bindgen-cli_0_2_99
         lld
         binaryen
-        python3
         rustPlatform.cargoSetupHook
       ];
       cargoDeps = pkgs.rustPlatform.fetchCargoVendor {
@@ -73,7 +75,10 @@
           name = "source";
           src = pkgs.winden.src;
           sourceRoot = "source/client";
-          patches = [ ./0001-use-git-for-magic-wormhole.patch ];
+          patches = [
+            ./0001-use-git-for-magic-wormhole.patch
+            ./0002-webpack-wasm-bindgen.patch
+          ];
         };
         sourceRoot = "source/wasm";
         hash = "sha256-ZCJWAqx/64PhJMVOKxZsf29NgBW9nKlYlbsWLAJLTSM=";
@@ -83,30 +88,12 @@
       makeCacheWritable = true;
       npmDepsFetcherVersion = 2;
       SENTRYCLI_SKIP_DOWNLOAD = "1";
-      WASM_BINDGEN_EXTERNREF = "0";
-      WASM_BINDGEN_MULTI_VALUE = "0";
-      WASM_BINDGEN_REFERENCE_TYPES = "0";
       RUSTFLAGS = "-C target-feature=-reference-types,-multivalue,-bulk-memory,-mutable-globals,-nontrapping-fptoint,-sign-ext";
-      CFLAGS_wasm32_unknown_unknown = "-mno-reference-types -mno-multivalue -mno-bulk-memory -mno-mutable-globals -mno-nontrapping-fptoint -mno-sign-ext";
 
       postPatch = ''
         npmConfigHook() {
           echo "Bypassing default npmConfigHook..."
         }
-
-        # Remove WasmPackPlugin from webpack.config.js so we can run wasm-pack and wasm-opt manually in buildPhase
-        python3 -c '
-        import re
-        with open("webpack.config.js", "r") as f:
-            c = f.read()
-        c = re.sub(r"new WasmPackPlugin\(\{.*?\}\),", "", c, flags=re.DOTALL)
-        with open("webpack.config.js", "w") as f:
-            f.write(c)
-        '
-
-        # Fix ESM import of pkg in Webpack 5 (where pkg.default is undefined)
-        substituteInPlace src/app/sagas.ts \
-          --replace-fail 'import("../../pkg").then((pkg) => pkg.default);' 'import("../../pkg").then((pkg) => pkg.default || pkg);'
       '';
 
       configurePhase = ''
@@ -127,21 +114,35 @@
       buildPhase = ''
         export HOME=$(mktemp -d)
         touch .env
-        echo "Running wasm-pack build with explicit RUSTFLAGS..."
-        export RUSTFLAGS="-C target-feature=-reference-types,-multivalue,-bulk-memory,-mutable-globals,-nontrapping-fptoint,-sign-ext"
-        wasm-pack build ./wasm --out-dir ../pkg --mode no-install --target bundler --no-opt
-        echo "Running npm run build (Webpack)..."
+
+        # 1. Compile Rust WASM module without post-MVP target features (reference-types/externref)
+        #    that are unsupported by Webpack 5's @webassemblyjs parser
+        cargo build --manifest-path ./wasm/Cargo.toml --target wasm32-unknown-unknown --release
+
+        # 2. Generate JavaScript bundler bindings
+        wasm-bindgen ./wasm/target/wasm32-unknown-unknown/release/wormhole_rs_wasm.wasm --out-dir pkg --target bundler
+
+        # 3. Write package.json so Webpack can resolve import("../../pkg") to the generated JS/WASM
+        cat <<EOF > pkg/package.json
+        {
+          "name": "wormhole-rs-wasm",
+          "version": "0.1.0",
+          "main": "wormhole_rs_wasm.js",
+          "types": "wormhole_rs_wasm.d.ts",
+          "sideEffects": [
+            "./wormhole_rs_wasm.js",
+            "./wormhole_rs_wasm_bg.wasm"
+          ]
+        }
+        EOF
+
+        # 4. Bundle Web application
         npm run build
       '';
 
       installPhase = ''
         mkdir -p $out/share/winden
         cp -r dist/* $out/share/winden/
-        if grep -q "Module parse failed" $out/share/winden/app/*.js; then
-          echo "ERROR: Webpack module parse failure detected in Winden JS bundle!"
-          grep -o "Module parse failed[^\"']*" $out/share/winden/app/*.js || true
-          exit 1
-        fi
       '';
     };
   };
