@@ -45,11 +45,11 @@
               root * ${pkgs.winden}/share/winden
 
               handle_path /mailbox* {
-                reverse_proxy 127.0.0.1:4000
+                reverse_proxy mailbox:4000
               }
 
               handle_path /relay* {
-                reverse_proxy 127.0.0.1:4002
+                reverse_proxy transit:4002
               }
 
               handle {
@@ -84,7 +84,15 @@
       };
 
       runtimes.container.enable = true;
-      runtimes.nixos.enable = true;
+      runtimes.nixos = {
+        enable = true;
+        nixosConfig = {
+          networking.hosts."127.0.0.1" = [
+            "mailbox"
+            "transit"
+          ];
+        };
+      };
     };
 
     test.services = {
