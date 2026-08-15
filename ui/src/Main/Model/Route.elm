@@ -29,6 +29,7 @@ type Route
 type alias RouteApp =
     { routeApp_name : AppName
     , routeApp_runShown : Bool
+    , routeApp_iconShown : Bool
 
     -- `Nothing` means to select the first available `AppRuntime`.
     -- The selected `AppRuntime` will then be in `pageApp_runtime`
@@ -41,6 +42,7 @@ defaultRouteApp : RouteApp
 defaultRouteApp =
     { routeApp_name = ""
     , routeApp_runShown = False
+    , routeApp_iconShown = False
     , routeApp_runRuntime = Nothing
     , routeApp_focus = Nothing
     }
@@ -271,6 +273,12 @@ appUrlToRoute url =
                                 , routeApp_runShown = True
                             }
 
+                        Just "icon" ->
+                            { defaultRouteApp
+                                | routeApp_name = appName
+                                , routeApp_iconShown = True
+                            }
+
                         Just focusId ->
                             { defaultRouteApp
                                 | routeApp_name = appName
@@ -405,6 +413,9 @@ routeToAppUrl route =
                                                 "-nixos"
                                )
                         )
+
+                else if routeApp.routeApp_iconShown then
+                    Just "icon"
 
                 else
                     routeApp.routeApp_focus

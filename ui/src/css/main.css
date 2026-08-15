@@ -100,7 +100,7 @@ body {
 /* Unified Card and List Item styling across all pages (apps, packages, options) */
 .m-item-card,
 .list-group-item {
-  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
 .m-item-card {
@@ -237,8 +237,8 @@ body {
 }
 
 .item-header-icon {
-  width: 64px;
-  height: 64px;
+  width: 96px;
+  height: 96px;
   object-fit: contain;
   flex-shrink: 0;
   background-color: transparent;

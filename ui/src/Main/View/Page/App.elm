@@ -3,6 +3,8 @@ module Main.View.Page.App exposing (..)
 import Dict
 import Html exposing (Html, a, button, div, h2, h4, h6, hr, img, li, p, small, span, text, ul)
 import Html.Attributes exposing (attribute, class, href, id, rel, src, style, tabindex, target)
+import Html.Events exposing (stopPropagationOn)
+import Json.Decode as Decode
 import Main.Config exposing (..)
 import Main.Config.App exposing (..)
 import Main.Helpers.Html exposing (..)
@@ -28,6 +30,7 @@ viewPageApp model pageApp =
                 , viewPageAppHeader model pageApp
                 , viewPageAppDescription model pageApp
                 , viewPageAppRun model pageApp
+                , viewPageAppIconModal model pageApp
                 ]
             , div
                 [ class "col-12 col-lg-3 order-lg-first" ]
@@ -42,6 +45,13 @@ viewPageApp model pageApp =
 
 viewPageAppHeader : Model -> PageApp -> Html Update
 viewPageAppHeader _ pageApp =
+    let
+        routeApp =
+            pageApp.pageApp_route
+
+        onClickIcon =
+            Route_App { routeApp | routeApp_iconShown = True }
+    in
     div
         [ style "display" "flex"
         , style "justify-content" "space-between"
@@ -58,6 +68,8 @@ viewPageAppHeader _ pageApp =
                 , class "item-header-icon"
                 , attribute "loading" "lazy"
                 , attribute "alt" (pageApp.pageApp_app.app_displayName ++ " icon")
+                , style "cursor" "pointer"
+                , onClick (Update_RouteWithoutHistory onClickIcon)
                 ]
                 []
             , h2
@@ -452,3 +464,66 @@ getAppIconPath name =
 defaultAppIconPath : String
 defaultAppIconPath =
     "resources/apps/app-icon.svg"
+
+
+viewPageAppIconModal : Model -> PageApp -> Html Update
+viewPageAppIconModal _ pageApp =
+    let
+        routeApp =
+            pageApp.pageApp_route
+
+        onClickRoute =
+            Route_App { routeApp | routeApp_iconShown = False }
+    in
+    if not pageApp.pageApp_route.routeApp_iconShown then
+        text ""
+
+    else
+        div []
+            [ div
+                [ class "modal show"
+                , style "display" "block"
+                , attribute "data-testid" "icon-modal-container"
+                , tabindex -1
+                , style "background-color" "rgba(0,0,0,0.5)"
+                , onClick (Update_RouteWithoutHistory onClickRoute)
+                ]
+                [ div
+                    [ class "modal-dialog modal-dialog-centered modal-lg"
+                    , stopPropagationOn "click" (Decode.succeed ( Update_NoOp, True ))
+                    ]
+                    [ div
+                        [ class "modal-content bg-transparent border-0"
+                        , style "align-items" "center"
+                        , style "justify-content" "center"
+                        ]
+                        [ div
+                            [ style "position" "relative"
+                            , style "display" "inline-block"
+                            ]
+                            [ button
+                                [ class "btn-close btn-close-white opacity-100"
+                                , attribute "type" "button"
+                                , attribute "aria-label" "Close"
+                                , onClick (Update_RouteWithoutHistory onClickRoute)
+                                , style "position" "absolute"
+                                , style "top" "-40px"
+                                , style "right" "0"
+                                ]
+                                []
+                            , img
+                                [ src (getAppIconPath pageApp.pageApp_route.routeApp_name)
+                                , class "rounded bg-transparent"
+                                , style "width" "400px"
+                                , style "height" "400px"
+                                , style "object-fit" "contain"
+                                , style "max-width" "90vw"
+                                , style "max-height" "80vh"
+                                , attribute "alt" (pageApp.pageApp_app.app_displayName ++ " icon")
+                                ]
+                                []
+                            ]
+                        ]
+                    ]
+                ]
+            ]
