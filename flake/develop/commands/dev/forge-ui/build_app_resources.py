@@ -84,13 +84,13 @@ def populate_resources_dir():
                 _ = shutil.copy2(icon_file, dest_icon)
                 icon_copied = True
 
-            # Fallback to default icon if specific icon wasn't found or provided
-            if not icon_copied and default_icon_src.is_file():
-                _ = shutil.copy2(default_icon_src, dest_icon)
+            # Do not fallback to default icon here!
+            # We want the frontend to catch the 404 and generate a JS initials avatar.
 
             # Ensure icon is replaceable by subsequent calls to this script
-            icon_perm = stat.S_IMODE(os.lstat(dest_icon).st_mode)
-            os.chmod(dest_icon, icon_perm | stat.S_IWRITE)
+            if icon_copied:
+                icon_perm = stat.S_IMODE(os.lstat(dest_icon).st_mode)
+                os.chmod(dest_icon, icon_perm | stat.S_IWRITE)
 
             app_count += 1
 

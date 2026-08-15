@@ -69,3 +69,34 @@ test.describe("Icon Modal Contrast", () => {
     });
   }
 });
+
+test.describe("Avatar Icon Contrast", () => {
+  for (const colorScheme of ["light", "dark"] as const) {
+    test(`should have sufficient color contrast in ${colorScheme} mode for fallback icons`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme });
+      await page.goto(`${BASE_URL}/apps`);
+      await page.waitForSelector(".min-vh-100");
+
+      // Wait for at least one avatar-icon to be present.
+      await page.waitForSelector("avatar-icon");
+
+      const accessibilityScanResults = await new AxeBuilder({ page })
+        .include("avatar-icon")
+        .withRules(["color-contrast"])
+        .analyze();
+
+      if (accessibilityScanResults.violations.length > 0) {
+        console.error(`Violations in ${colorScheme} mode:`);
+        for (const v of accessibilityScanResults.violations) {
+          console.error(v.help);
+          for (const node of v.nodes) {
+            console.error(node.failureSummary);
+            console.error(node.html);
+          }
+        }
+      }
+
+      expect(accessibilityScanResults.violations).toEqual([]);
+    });
+  }
+});

@@ -43,7 +43,23 @@ viewPageApps model pageApps =
           div [ style "display" "none" ]
             (List.map
                 (\app ->
-                    img [ src (getAppIconPath app.app_name) ] []
+                    (if app.app_hasIcon then
+                        img
+
+                     else
+                        Html.node "avatar-icon"
+                    )
+                        ([ attribute "data-display-name" app.app_displayName
+                         , attribute "data-app-name" app.app_name
+                         ]
+                            ++ (if app.app_hasIcon then
+                                    [ src (getAppIconPath app.app_name) ]
+
+                                else
+                                    []
+                               )
+                        )
+                        []
                 )
                 nextPageApps
             )
@@ -74,11 +90,24 @@ viewPageAppsApp _ _ app =
         [ div
             [ class "d-flex flex-column align-items-center w-100"
             ]
-            [ img
-                [ src (getAppIconPath app.app_name)
-                , class "item-card-icon mb-2"
-                , attribute "alt" (app.app_displayName ++ " icon")
-                ]
+            [ (if app.app_hasIcon then
+                img
+
+               else
+                Html.node "avatar-icon"
+              )
+                ([ class "item-card-icon mb-2"
+                 , attribute "alt" (app.app_displayName ++ " icon")
+                 , attribute "data-display-name" app.app_displayName
+                 , attribute "data-app-name" app.app_name
+                 ]
+                    ++ (if app.app_hasIcon then
+                            [ src (getAppIconPath app.app_name) ]
+
+                        else
+                            []
+                       )
+                )
                 []
             , h5 [ class "mb-1 fw-bold item-card-title text-center text-truncate w-100 px-2" ] [ text app.app_displayName ]
             , p

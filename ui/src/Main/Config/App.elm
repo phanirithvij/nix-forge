@@ -17,6 +17,7 @@ type alias App =
     , app_links : AppLinks
     , app_recipePath : String
     , app_maintainers : List Maintainer
+    , app_hasIcon : Bool
     }
 
 
@@ -34,6 +35,7 @@ decodeApp =
         |> Decode.andMap (Decode.field "links" decodeAppLinks)
         |> Decode.andMap (Decode.field "recipePath" Decode.string)
         |> Decode.andMap (Decode.field "maintainers" (Decode.list decodeMaintainer))
+        |> Decode.andMap (Decode.field "icon" (Decode.nullable Decode.string |> Decode.map (\icon -> icon /= Nothing)))
 
 
 type alias AppName =

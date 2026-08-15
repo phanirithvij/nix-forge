@@ -63,14 +63,26 @@ viewPageAppHeader _ pageApp =
             , style "align-items" "center"
             , style "gap" "16px"
             ]
-            [ img
-                [ src (getAppIconPath pageApp.pageApp_route.routeApp_name)
-                , class "item-header-icon"
-                , attribute "loading" "lazy"
-                , attribute "alt" (pageApp.pageApp_app.app_displayName ++ " icon")
-                , style "cursor" "pointer"
-                , onClick (Update_RouteWithoutHistory onClickIcon)
-                ]
+            [ (if pageApp.pageApp_app.app_hasIcon then
+                img
+
+               else
+                Html.node "avatar-icon"
+              )
+                ([ class "item-header-icon"
+                 , attribute "alt" (pageApp.pageApp_app.app_displayName ++ " icon")
+                 , style "cursor" "pointer"
+                 , onClick (Update_RouteWithoutHistory onClickIcon)
+                 , attribute "data-display-name" pageApp.pageApp_app.app_displayName
+                 , attribute "data-app-name" pageApp.pageApp_route.routeApp_name
+                 ]
+                    ++ (if pageApp.pageApp_app.app_hasIcon then
+                            [ src (getAppIconPath pageApp.pageApp_route.routeApp_name) ]
+
+                        else
+                            []
+                       )
+                )
                 []
             , h2
                 [ class "mb-0 fw-bold"
@@ -511,16 +523,29 @@ viewPageAppIconModal _ pageApp =
                                 , style "right" "0"
                                 ]
                                 []
-                            , img
-                                [ src (getAppIconPath pageApp.pageApp_route.routeApp_name)
-                                , class "rounded bg-transparent"
-                                , style "width" "400px"
-                                , style "height" "400px"
-                                , style "object-fit" "contain"
-                                , style "max-width" "90vw"
-                                , style "max-height" "80vh"
-                                , attribute "alt" (pageApp.pageApp_app.app_displayName ++ " icon")
-                                ]
+                            , (if pageApp.pageApp_app.app_hasIcon then
+                                img
+
+                               else
+                                Html.node "avatar-icon"
+                              )
+                                ([ class "rounded bg-transparent"
+                                 , style "width" "400px"
+                                 , style "height" "400px"
+                                 , style "object-fit" "contain"
+                                 , style "max-width" "90vw"
+                                 , style "max-height" "80vh"
+                                 , attribute "alt" (pageApp.pageApp_app.app_displayName ++ " icon")
+                                 , attribute "data-display-name" pageApp.pageApp_app.app_displayName
+                                 , attribute "data-app-name" pageApp.pageApp_route.routeApp_name
+                                 ]
+                                    ++ (if pageApp.pageApp_app.app_hasIcon then
+                                            [ src (getAppIconPath pageApp.pageApp_route.routeApp_name) ]
+
+                                        else
+                                            []
+                                       )
+                                )
                                 []
                             ]
                         ]
