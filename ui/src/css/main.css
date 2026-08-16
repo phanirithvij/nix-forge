@@ -1,3 +1,5 @@
+@import "theme.css";
+
 html,
 body {
   height: 100%;
@@ -447,18 +449,24 @@ a:link {
 /* options filters colors */
 
 [data-bs-theme="light"] {
-  --bs-primary-rgb: 76, 110, 181; /* nixos logo color dark blue - Not enough contrast */
-  --bs-primary-text-emphasis: #00418f;
-  --bs-link-color: #00418f;
-  --bs-link-color-rgb: 0, 65, 143;
-  --bs-link-hover-color: #002d62;
-  --bs-link-hover-color-rgb: 0, 45, 98;
+  --bs-primary: var(--nixos-dark-blue-l55);
+  --bs-primary-rgb: 76, 110, 181; /* Approximate RGB for legacy */
+  --bs-primary-text-emphasis: var(--nixos-dark-blue-l45);
+  --bs-link-color: var(--nixos-dark-blue-l45);
+  --bs-link-color-rgb: 55, 80, 135;
+  --bs-link-hover-color: var(--nixos-dark-blue-l35);
+  --bs-link-hover-color-rgb: 36, 54, 94;
 }
 
 [data-bs-theme="dark"] {
-  --bs-primary-rgb: 117, 178, 219; /* nixos logo color light blue */
+  --bs-primary: var(--nixos-light-blue-l75);
+  --bs-primary-rgb: 117, 178, 219; /* Approximate RGB for legacy */
   --bs-secondary-rgb: 158, 158, 158;
-  --bs-primary-text-emphasis: #75b2db; /* nixos logo color light blue */
+  --bs-primary-text-emphasis: var(--nixos-light-blue-l85);
+  --bs-link-color: var(--nixos-light-blue-l85);
+  --bs-link-color-rgb: 174, 209, 234;
+  --bs-link-hover-color: var(--nixos-light-blue-l95);
+  --bs-link-hover-color-rgb: 227, 240, 248;
 }
 
 /* options tiles colors */
@@ -472,24 +480,23 @@ a:link {
 }
 
 [data-bs-theme="dark"] {
-  --option-name-color: #75b2db; /* nixos logo color light blue */
-  --option-type-color: #7fc741; /* nlnet logo color green adjusted for contrast - original #74aa00 */
+  --option-name-color: var(--bs-primary);
+  --option-type-color: var(--nixos-zambian-green-l75);
 }
 
 [data-bs-theme="light"] {
-  /*--option-name-color: #4c6eb5;*/ /* nixos logo color dark blue - Not enough contrast */
-  --option-name-color: #00418f;
-  --option-type-color: #2d6101; /* another green adjusted for contrast */
+  --option-name-color: var(--bs-primary);
+  --option-type-color: var(--nixos-zambian-green-l45);
 }
 
 /* packages tiles colors */
 
 [data-bs-theme="light"] {
-  --bs-code-color: #00408d;
+  --bs-code-color: var(--nixos-dark-blue-l35);
 }
 
 [data-bs-theme="dark"] {
-  --bs-code-color: #b2d5ff;
+  --bs-code-color: var(--nixos-light-blue-l85);
 }
 
 /* highlight js customised */

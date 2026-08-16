@@ -12,15 +12,15 @@
  */
 const AVATAR_COLORS = [
   // NixOS Dark Blue
-  { light: "oklch(0.75 0.12 264)", dark: "oklch(0.55 0.12 264)" },
+  { light: "var(--nixos-dark-blue-l55)", dark: "var(--nixos-dark-blue-l45)" },
   // NixOS Light Blue
-  { light: "oklch(0.75 0.12 240)", dark: "oklch(0.55 0.11 240)" },
-  // Favicon Teal (#00afbc to #205374)
-  { light: "#00afbc", dark: "#205374" },
-  // Favicon Sky to Navy (#77b6e1 to #3e5993)
-  { light: "#77b6e1", dark: "#3e5993" },
-  // Favicon Green (#74aa00 and a darkened version for white text)
-  { light: "#74aa00", dark: "#3a5500" },
+  { light: "var(--nixos-light-blue-l75)", dark: "var(--nixos-light-blue-l85)" },
+  // Favicon Teal
+  { light: "var(--favicon-teal-light)", dark: "var(--favicon-teal-dark)" },
+  // Favicon Sky to Navy
+  { light: "var(--favicon-sky-light)", dark: "var(--favicon-navy-dark)" },
+  // Favicon Green
+  { light: "var(--favicon-green-light)", dark: "var(--favicon-green-dark)" },
 ];
 const wordSplitRegex = /\s+|\.+|_+|;+|-+|,+|\|+|\/+|\\+|"+|'+|\(+|\)+|#+|&+/;
 

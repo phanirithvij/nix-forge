@@ -1,0 +1,25 @@
+:root {
+  /* NixOS Dark Blue (Afghani Blue) */
+  --nixos-dark-blue-l55: oklch(0.55 0.12 264);
+  --nixos-dark-blue-l45: oklch(0.45 0.09 264);
+  --nixos-dark-blue-l35: oklch(0.35 0.07 264);
+
+  /* NixOS Light Blue (Argentinian Blue) */
+  --nixos-light-blue-l75: oklch(0.75 0.12 240);
+  --nixos-light-blue-l85: oklch(0.85 0.07 240);
+  --nixos-light-blue-l95: oklch(0.95 0.02 240);
+
+  /* NixOS Zambian Green */
+  --nixos-zambian-green-l75: oklch(0.75 0.12 152);
+  --nixos-zambian-green-l45: oklch(0.45 0.09 152);
+
+  /* App Favicon Colors */
+  --favicon-teal-light: #00afbc;
+  --favicon-teal-dark: #205374;
+
+  --favicon-sky-light: #77b6e1;
+  --favicon-navy-dark: #3e5993;
+
+  --favicon-green-light: #74aa00;
+  --favicon-green-dark: #3a5500;
+}
