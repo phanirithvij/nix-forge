@@ -21,8 +21,8 @@ lib.makeExtensible (self: {
     programs.dprint = {
       enable = true;
       includes = [
-        "**/*.{json,jsonc,md,js,ts,yml,yaml}"
-        "*.{json,jsonc,md,js,ts,yml,yaml}"
+        "**/*.{css,json,jsonc,md,js,ts,yml,yaml}"
+        "*.{css,json,jsonc,md,js,ts,yml,yaml}"
       ];
       excludes = [
         "**/node_modules"
@@ -35,6 +35,7 @@ lib.makeExtensible (self: {
             dprint-plugin-markdown
             dprint-plugin-typescript
             g-plane-pretty_yaml
+            g-plane-malva
           ]
         );
       };
