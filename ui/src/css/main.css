@@ -84,12 +84,12 @@ body {
 }
 
 .button.copy.active {
-  background-color: var(--nixos-zambian-green-l45);
+  background-color: var(--nlnet-green-l45);
   opacity: 1;
 }
 
 .button.copy.active:hover {
-  background-color: var(--nixos-zambian-green-l45);
+  background-color: var(--nlnet-green-l45);
   opacity: 1;
 }
 
@@ -252,7 +252,7 @@ body {
 /* Hide the annoying border around search bar that bootstrap adds */
 .form-control:focus {
   box-shadow: none !important;
-  border-color: var(--bs-primary);
+  border-color: royalblue;
 }
 
 /* for Prev and Next pagination buttons hide focus with mouse click */
@@ -364,7 +364,7 @@ a:link {
 .anchor-link {
   padding: 0 0.175rem;
   font-weight: 400;
-  color: rgba(var(--bs-link-color-rgb), 0.5);
+  color: #0d6efd80;
   text-decoration: none;
   opacity: 0;
   transition: color 0.15s ease-in-out, opacity 0.15s ease-in-out;
@@ -381,14 +381,14 @@ a:link {
 .anchor-link:hover,
 :hover > .anchor-link,
 :target > .anchor-link {
-  color: var(--bs-link-color);
+  color: #0d6efd;
   text-decoration: none;
   opacity: 1;
 }
 
 /* box containers */
 .box-container {
-  background-color: oklch(0.97 0.02 264);
+  background-color: #f6f6ff;
   padding: 10px;
   margin: 10px 0;
   font-size: 14px;
@@ -396,7 +396,7 @@ a:link {
 }
 
 [data-bs-theme="dark"] .box-container {
-  background-color: oklch(0.20 0.03 264);
+  background-color: #28283f;
 }
 
 .box-container {
@@ -409,15 +409,16 @@ a:link {
 
 @keyframes highlight-pulse {
   0% {
-    box-shadow: 0 0 0 0px rgba(var(--bs-primary-rgb), 0);
+    box-shadow: 0 0 0 0px rgba(0, 0, 0, 0);
     background-color: transparent;
   }
   10% {
-    box-shadow: 0 0 0 4px rgba(var(--bs-primary-rgb), 0.5);
-    background-color: rgba(var(--bs-primary-rgb), 0.1);
+    /* Adjust these colors to match your app's theme */
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5);
+    background-color: rgba(59, 130, 246, 0.1);
   }
   100% {
-    box-shadow: 0 0 0 0px rgba(var(--bs-primary-rgb), 0);
+    box-shadow: 0 0 0 0px rgba(59, 130, 246, 0);
     background-color: transparent;
   }
 }
@@ -445,7 +446,7 @@ a:link {
 
 [data-bs-theme="light"] {
   --bs-primary: var(--nixos-dark-blue-l55);
-  --bs-primary-rgb: 76, 110, 181; /* Approximate RGB for legacy */
+  --bs-primary-rgb: 76, 110, 181;
   --bs-primary-text-emphasis: var(--nixos-dark-blue-l45);
   --bs-link-color: var(--nixos-dark-blue-l45);
   --bs-link-color-rgb: 55, 80, 135;
@@ -455,13 +456,13 @@ a:link {
 
 [data-bs-theme="dark"] {
   --bs-primary: var(--nixos-light-blue-l75);
-  --bs-primary-rgb: 117, 178, 219; /* Approximate RGB for legacy */
+  --bs-primary-rgb: 117, 178, 219;
   --bs-secondary-rgb: 158, 158, 158;
-  --bs-primary-text-emphasis: var(--nixos-light-blue-l85);
-  --bs-link-color: var(--nixos-light-blue-l85);
-  --bs-link-color-rgb: 174, 209, 234;
-  --bs-link-hover-color: var(--nixos-light-blue-l95);
-  --bs-link-hover-color-rgb: 227, 240, 248;
+  --bs-primary-text-emphasis: var(--nixos-light-blue-l75);
+  --bs-link-color: var(--nixos-light-blue-l75);
+  --bs-link-color-rgb: 117, 178, 219;
+  --bs-link-hover-color: var(--nixos-light-blue-l85);
+  --bs-link-hover-color-rgb: 174, 209, 234;
 }
 
 /* options tiles colors */
@@ -476,12 +477,12 @@ a:link {
 
 [data-bs-theme="dark"] {
   --option-name-color: var(--bs-primary);
-  --option-type-color: var(--nixos-zambian-green-l75);
+  --option-type-color: var(--nlnet-green-l75);
 }
 
 [data-bs-theme="light"] {
   --option-name-color: var(--bs-primary);
-  --option-type-color: var(--nixos-zambian-green-l45);
+  --option-type-color: var(--nlnet-green-l45);
 }
 
 /* packages tiles colors */
@@ -533,16 +534,16 @@ pre code.hljs {
 }
 
 .markdown-alert-tip {
-  border-left-color: var(--nixos-zambian-green-l45);
+  border-left-color: var(--nlnet-green-l45);
 }
 [data-bs-theme="dark"] .markdown-alert-tip {
-  border-left-color: var(--nixos-zambian-green-l75);
+  border-left-color: var(--nlnet-green-l75);
 }
 .markdown-alert-tip .markdown-alert-title {
-  color: var(--nixos-zambian-green-l45);
+  color: var(--nlnet-green-l45);
 }
 [data-bs-theme="dark"] .markdown-alert-tip .markdown-alert-title {
-  color: var(--nixos-zambian-green-l75);
+  color: var(--nlnet-green-l75);
 }
 
 .markdown-alert-important {
