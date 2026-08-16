@@ -22,4 +22,14 @@
 
   --favicon-green-light: #74aa00;
   --favicon-green-dark: #3a5500;
+
+  /* NixOS Accents (for Alerts) */
+  --nixos-persian-orange-l75: oklch(0.75 0.12 54);
+  --nixos-persian-orange-l55: oklch(0.55 0.11 54);
+
+  --nixos-norwegian-pink-l75: oklch(0.75 0.12 16);
+  --nixos-norwegian-pink-l55: oklch(0.55 0.11 16);
+
+  --nixos-italian-violet-l75: oklch(0.75 0.12 288);
+  --nixos-italian-violet-l55: oklch(0.55 0.11 288);
 }
