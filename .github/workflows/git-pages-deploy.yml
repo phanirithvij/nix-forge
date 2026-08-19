@@ -58,12 +58,22 @@ jobs:
               target_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
             });
 
+      - name: Setup Tailscale
+        uses: tailscale/github-action@6cae46e2d796f265265cfcf628b72a32b4d7cade # v3.3.0
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          version: latest
+          use-cache: "true"
+
       - name: Deploy to Git-Pages
         if: env.PR_NUMBER != ''
         env:
           GIT_PAGES_PASSWORD: ${{ secrets.GIT_PAGES_PASSWORD }}
         run: |
           PREVIEW_URL="https://preview.ngi.nixos.org"
+          PREVIEW_URL="http://nixus:3000"
           PREVIEW_URL_BASE="${PREVIEW_URL}/pr-${PR_NUMBER}"
           COMMIT_URL_BASE="${PREVIEW_URL}/${PR_REV}"
 
