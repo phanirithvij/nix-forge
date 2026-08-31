@@ -5,7 +5,6 @@
   forge-inputs,
   forge-lib,
   flake-parts-lib,
-  system,
   ...
 }:
 
@@ -65,7 +64,11 @@ let
     ui = pkgs.callPackage ../ui/package.nix {
       inherit (config.packages) _forge;
       inherit appIcons;
-      buildElmApplication = forge-inputs.self.legacyPackages.${system}.elm2nix.buildElmApplication;
+      # TODO remove once https://github.com/dwayne/elm2nix/pull/5 is available
+      buildElmApplication =
+        (pkgs.callPackage "${forge-inputs.elm2nix}/nix" {
+          elmVersion = pkgs.elmPackages.elm.version;
+        }).buildElmApplication;
       highlight-js = pkgs.callPackage ../flake/packages/highlight-js.nix { };
     };
 
