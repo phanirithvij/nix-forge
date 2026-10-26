@@ -54,7 +54,7 @@
           pkgs.git-cliff
           pkgs.podman-compose
           pkgs.systemd-manager-tui
-          forge-inputs.self.legacyPackages.${system}.elm2nix
+          #forge-inputs.self.legacyPackages.${system}.elm2nix
         ];
 
         docs = [
