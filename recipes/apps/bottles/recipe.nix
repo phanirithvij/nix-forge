@@ -1,9 +1,18 @@
 {
   config,
+  pkgs,
   ...
 }:
 
 {
+  pkgs.bottles = {
+    nixpkgsPin = config.apps.bottles.nixpkgsPin;
+    build.identityBuilder = {
+      enable = true;
+      derivation = p: p.bottles;
+    };
+  };
+
   apps.bottles = {
     displayName = "Bottles";
     description = "Easy-to-use wineprefix manager.";
