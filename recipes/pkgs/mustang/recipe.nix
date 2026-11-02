@@ -36,33 +36,8 @@ in
     };
 
     build.extraAttrs = {
-      # None of app/, desktop/, desktop/backend/, lib/ ship a yarn.lock
-      # upstream.
-      # yarn.lock file is generated via a synthetic root package.json:
-      #
-      # {
-      #   "name": "mustang-synthetic-root",
-      #   "private": true,
-      #   "workspaces": [
-      #     "app",
-      #     "desktop",
-      #     "desktop/backend",
-      #     "lib"
-      #   ],
-      #   "resolutions": {
-      #     "vite": "^7.3.1"
-      #   }
-      # }
-      #
-      # to get a single merged lockfile / fetchYarnDeps cache instead of one
-      # per subdir.
-      #
-      # How to update yarn.lock file:
-      #
-      # nix develop .#pkgs.mustang.env
-      # cp -r --no-preserve=mode,ownership /nix/store/<hash>-source src
-      # yarn install --mode=update-lockfile --ignore-scripts
-      # cp yarn.lock ../recipes/pkgs/mustang/yarn.lock
+      # To update yarn.lock:
+      #   ./recipes/pkgs/mustang/update.sh
       yarnDeps = pkgs.fetchYarnDeps {
         yarnLock = ./yarn.lock;
         hash = "sha256-n7HBQbZSYbWlMcxIhfVNniE6lnJONxUdeTCNW14uggA=";
