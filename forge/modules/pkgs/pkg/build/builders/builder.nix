@@ -88,8 +88,18 @@ in
                 shellHook = config.develop.shellHook;
               };
 
+              updateScript = config.update.script;
+
               forge = {
                 broken = config.broken;
+                update = {
+                  inherit (config.update)
+                    enable
+                    script
+                    preScript
+                    postScript
+                    ;
+                };
               };
             }
             // lib.optionalAttrs (!config.test.broken) {

@@ -20,3 +20,16 @@ GIT_REV = r"(?:rev|tag)=([^&]+)"
 NIX_BUILD_GOT_HASH = r"got:\s+(sha256-\S+)"
 
 NUMERIC_VERSION = r"(\d+(?:\.\d+)*)"
+
+FIELD_SKIP_UPDATE = r"\bskipUpdate\s*=\s*(true|false)"
+FIELD_UPDATE_ENABLE = r"\bupdate\.enable\s*=\s*(true|false)"
+FIELD_UPDATE_DECL = r"\bupdate\s*=\s*\{"
+FIELD_UPDATE_SCRIPT = (
+    r"\b(?:update\.script|updateScript)\s*=\s*(?:(\./[^\s;]+)|\"([^\"]+)\")"
+)
+FIELD_PRE_UPDATE_SCRIPT = (
+    r"\b(?:update\.preScript|preUpdateScript)\s*=\s*(?:(\./[^\s;]+)|\"([^\"]+)\")"
+)
+FIELD_POST_UPDATE_SCRIPT = (
+    r"\b(?:update\.postScript|postUpdateScript)\s*=\s*(?:(\./[^\s;]+)|\"([^\"]+)\")"
+)

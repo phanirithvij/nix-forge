@@ -67,6 +67,14 @@ class BuilderHashes:
 
 
 @dataclass
+class UpdateConfig:
+    enable: bool = True
+    script: str | None = None
+    pre_script: str | None = None
+    post_script: str | None = None
+
+
+@dataclass
 class PackageEntry:
     """A single package declared within a recipe.nix file."""
 
@@ -75,6 +83,7 @@ class PackageEntry:
     source: Source
     builder_type: BuilderType
     builder_hashes: BuilderHashes = field(default_factory=BuilderHashes)
+    update: UpdateConfig = field(default_factory=UpdateConfig)
 
 
 @dataclass

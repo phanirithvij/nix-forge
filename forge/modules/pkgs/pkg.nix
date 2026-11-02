@@ -185,6 +185,106 @@
       description = "Test configuration";
     };
 
+    # Update configuration
+    update = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Whether forge-update should update this package.";
+      };
+      script = lib.mkOption {
+        type =
+          with lib.types;
+          nullOr (oneOf [
+            path
+            str
+            package
+            (listOf (either str path package))
+          ]);
+        default = null;
+        description = ''
+          Custom update script to fully handle updating this package.
+          When set, forge-update delegates the update entirely to this script
+          and skips its built-in version detector, source hash updater, and builder hash updater.
+        '';
+        example = lib.literalExpression "./update.sh";
+      };
+      preScript = lib.mkOption {
+        type =
+          with lib.types;
+          nullOr (oneOf [
+            path
+            str
+            package
+            (listOf (either str path package))
+          ]);
+        default = null;
+        description = ''
+          Hook script executed before forge-update detects versions and updates hashes.
+          If this script exits with status code 77, the update for this package will be skipped.
+        '';
+        example = lib.literalExpression "./pre-update.sh";
+      };
+      postScript = lib.mkOption {
+        type =
+          with lib.types;
+          nullOr (oneOf [
+            path
+            str
+            package
+            (listOf (either str path package))
+          ]);
+        default = null;
+        description = ''
+          Hook script executed after forge-update updates the version and source hash in recipe.nix.
+          Ideal for updating auxiliary lockfiles (e.g. yarn.lock) or recalculating dependency hashes.
+        '';
+        example = lib.literalExpression "./update.sh";
+      };
+    };
+
+    skipUpdate = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Alias to disable updates (sets update.enable = false).";
+    };
+    updateScript = lib.mkOption {
+      type =
+        with lib.types;
+        nullOr (oneOf [
+          path
+          str
+          package
+          (listOf (either str path package))
+        ]);
+      default = null;
+      description = "Alias for update.script.";
+    };
+    preUpdateScript = lib.mkOption {
+      type =
+        with lib.types;
+        nullOr (oneOf [
+          path
+          str
+          package
+          (listOf (either str path package))
+        ]);
+      default = null;
+      description = "Alias for update.preScript.";
+    };
+    postUpdateScript = lib.mkOption {
+      type =
+        with lib.types;
+        nullOr (oneOf [
+          path
+          str
+          package
+          (listOf (either str path package))
+        ]);
+      default = null;
+      description = "Alias for update.postScript.";
+    };
+
     # Development configuration
     develop = {
       packages = lib.mkOption {
@@ -243,6 +343,13 @@
   };
 
   config = {
+    update.enable = lib.mkIf config.skipUpdate (lib.mkDefault false);
+    update.script = lib.mkIf (config.updateScript != null) (lib.mkDefault config.updateScript);
+    update.preScript = lib.mkIf (config.preUpdateScript != null) (lib.mkDefault config.preUpdateScript);
+    update.postScript = lib.mkIf (config.postUpdateScript != null) (
+      lib.mkDefault config.postUpdateScript
+    );
+
     assertions =
       let
         builderNames = map (name: "build.builders.${name}") (lib.attrNames config.build.builders);

@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import shlex
 import subprocess
 import sys
 from collections.abc import Iterator
@@ -43,13 +44,46 @@ def _progress(label: str) -> Iterator[None]:
         _ = sys.stdout.write("\r\033[K")
 
 
-def _commit_recipe(recipe: Recipe, pkg: PackageEntry, result: VersionResult) -> None:
-    msg = f"recipes({pkg.pname}): {pkg.version} -> {result.version}"
-    _ = subprocess.run(
-        ["git", "add", str(recipe.abs_path)], check=True, capture_output=True
+def _commit_recipe(recipe: Recipe, pkg: PackageEntry, version_str: str) -> None:
+    msg = (
+        f"recipes({pkg.pname}): {pkg.version} -> {version_str}"
+        if version_str != pkg.version
+        else f"recipes({pkg.pname}): update"
     )
-    _ = subprocess.run(["git", "commit", "-m", msg], check=True, capture_output=True)
-    print(f"  {style('committed', Style.DIM)}")
+    _ = subprocess.run(
+        ["git", "add", str(recipe.abs_path.parent)], check=True, capture_output=True
+    )
+    diff = subprocess.run(["git", "diff", "--cached", "--quiet"])
+    if diff.returncode != 0:
+        _ = subprocess.run(
+            ["git", "commit", "-m", msg], check=True, capture_output=True
+        )
+        print(f"  {style('committed', Style.DIM)}")
+    else:
+        print(f"  {style('nothing to commit', Style.DIM)}")
+
+
+def _run_script(script_str: str, recipe: Recipe, pkg: PackageEntry) -> int:
+    """Execute a hook or update script in recipe directory."""
+    recipe_dir = recipe.abs_path.parent
+    cmd = shlex.split(script_str)
+    if cmd[0].startswith("./") or (recipe_dir / cmd[0]).exists():
+        script_file = (recipe_dir / cmd[0]).resolve()
+        if script_file.exists():
+            cmd[0] = str(script_file)
+            try:
+                script_file.chmod(script_file.stat().st_mode | 0o111)
+            except OSError:
+                pass
+
+    env = os.environ.copy()
+    env["FORGE_PACKAGE_NAME"] = pkg.pname
+    env["FORGE_PACKAGE_VERSION"] = pkg.version
+    env["FORGE_RECIPE_PATH"] = str(recipe.abs_path)
+    env["FORGE_RECIPE_DIR"] = str(recipe_dir)
+
+    res = subprocess.run(cmd, cwd=str(recipe_dir), env=env)
+    return res.returncode
 
 
 class Args(argparse.Namespace):
@@ -131,6 +165,57 @@ def main() -> None:
             pkg = recipe.packages[0]
             writer = RecipeWriter(dry_run=args.dry_run)
 
+            # 1. Check if updates are disabled
+            if not pkg.update.enable:
+                print(style(name, Fore.YELLOW + Style.BRIGHT))
+                print(f"  {style('skipped (update disabled)', Fore.YELLOW)}")
+                continue
+
+            # 2. Check if a full custom updateScript is specified (full override)
+            if pkg.update.script:
+                print(style(name, Fore.YELLOW + Style.BRIGHT))
+                print(
+                    f"  {style('running updateScript: ' + pkg.update.script, Style.DIM)}"
+                )
+                if not args.dry_run:
+                    code = _run_script(pkg.update.script, recipe, pkg)
+                    if code == 77:
+                        print(
+                            f"  {style('skipped by updateScript (exit 77)', Fore.YELLOW)}"
+                        )
+                        continue
+                    if code != 0:
+                        raise ForgeUpdateError(
+                            f"updateScript failed with exit code {code}"
+                        )
+
+                    new_version = pkg.version
+                    try:
+                        re_parsed = parser.parse(path)
+                        new_version = re_parsed.packages[0].version
+                    except Exception:
+                        pass
+
+                    if args.commit:
+                        _commit_recipe(recipe, pkg, new_version)
+                continue
+
+            # 3. Check preUpdateScript hook
+            if pkg.update.pre_script:
+                print(style(name, Fore.YELLOW + Style.BRIGHT))
+                print(f"  {style('running preUpdateScript', Style.DIM)}")
+                if not args.dry_run:
+                    code = _run_script(pkg.update.pre_script, recipe, pkg)
+                    if code == 77:
+                        print(
+                            f"  {style('skipped by preUpdateScript (exit 77)', Fore.YELLOW)}"
+                        )
+                        continue
+                    if code != 0:
+                        raise ForgeUpdateError(
+                            f"preUpdateScript failed with exit code {code}"
+                        )
+
             if args.version:
                 result = VersionResult(version=args.version, rev="")
             else:
@@ -141,7 +226,8 @@ def main() -> None:
             rev_changed = bool(result.rev) and result.rev != current_rev
             version_changed = pkg.version != result.version
 
-            print(style(name, Fore.YELLOW + Style.BRIGHT))
+            if not pkg.update.pre_script:
+                print(style(name, Fore.YELLOW + Style.BRIGHT))
 
             if not version_changed and not rev_changed:
                 print(f"  {style('already at ' + pkg.version, Fore.YELLOW)}")
@@ -180,8 +266,17 @@ def main() -> None:
 
             writer.apply(recipe)
 
+            # 4. Check postUpdateScript hook
+            if pkg.update.post_script and not args.dry_run:
+                print(f"  {style('running postUpdateScript', Style.DIM)}")
+                code = _run_script(pkg.update.post_script, recipe, pkg)
+                if code != 0:
+                    raise ForgeUpdateError(
+                        f"postUpdateScript failed with exit code {code}"
+                    )
+
             if args.commit and not args.dry_run:
-                _commit_recipe(recipe, pkg, result)
+                _commit_recipe(recipe, pkg, result.version)
         except ForgeUpdateError as e:
             print(style(name, Fore.YELLOW + Style.BRIGHT))
             print(f"  {style(str(e), Fore.RED)}")

@@ -21,6 +21,8 @@ in
       hash = "sha256-t6RkwfhY8heef3ALUdZ9/M0wApvtkfeH3yBX1HHiuyY=";
     };
 
+    update.postScript = ./update.sh;
+
     build.builders.standard = {
       enable = true;
       packages.build = with pkgs; [

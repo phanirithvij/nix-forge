@@ -13,6 +13,7 @@ from .types import (
     Recipe,
     Source,
     SourceType,
+    UpdateConfig,
     UrlSource,
 )
 
@@ -62,6 +63,7 @@ class RecipeParser:
                     ) from None
                 raise
             builder_type, builder_hashes = self._parse_builder(block_text)
+            update_config = self._parse_update(block_text)
             packages.append(
                 PackageEntry(
                     pname=pname,
@@ -69,6 +71,7 @@ class RecipeParser:
                     source=source,
                     builder_type=builder_type,
                     builder_hashes=builder_hashes,
+                    update=update_config,
                 )
             )
 
@@ -233,6 +236,59 @@ class RecipeParser:
                 return builder_type, hashes
 
         return BuilderType.STANDARD, BuilderHashes()
+
+    def _parse_update(self, text: str) -> UpdateConfig:
+        cfg = UpdateConfig()
+
+        skip_m = re.search(regexes.FIELD_SKIP_UPDATE, text)
+        if skip_m and skip_m.group(1) == "true":
+            cfg.enable = False
+
+        enable_m = re.search(regexes.FIELD_UPDATE_ENABLE, text)
+        if enable_m:
+            cfg.enable = enable_m.group(1) == "true"
+
+        for match in re.finditer(regexes.FIELD_UPDATE_DECL, text):
+            _, block_text = _extract_braced_block(text, match.end() - 1)
+            b_enable = re.search(r"\benable\b\s*=\s*(true|false)", block_text)
+            if b_enable:
+                cfg.enable = b_enable.group(1) == "true"
+            b_script = self._extract_script_val(block_text, r"\bscript\b\s*=\s*")
+            if b_script:
+                cfg.script = b_script
+            b_pre = self._extract_script_val(block_text, r"\bpreScript\b\s*=\s*")
+            if b_pre:
+                cfg.pre_script = b_pre
+            b_post = self._extract_script_val(block_text, r"\bpostScript\b\s*=\s*")
+            if b_post:
+                cfg.post_script = b_post
+
+        script = self._extract_script_val(text, regexes.FIELD_UPDATE_SCRIPT)
+        if script:
+            cfg.script = script
+        pre = self._extract_script_val(text, regexes.FIELD_PRE_UPDATE_SCRIPT)
+        if pre:
+            cfg.pre_script = pre
+        post = self._extract_script_val(text, regexes.FIELD_POST_UPDATE_SCRIPT)
+        if post:
+            cfg.post_script = post
+
+        return cfg
+
+    @staticmethod
+    def _extract_script_val(text: str, pattern: str) -> str | None:
+        pat = (
+            pattern
+            if pattern.endswith(")")
+            else pattern + r"(?:(\./[^\s;]+)|\"([^\"]+)\")"
+        )
+        m = re.search(pat, text)
+        if not m:
+            return None
+        for g in m.groups():
+            if g is not None:
+                return g
+        return None
 
 
 class RecipeWriter:
